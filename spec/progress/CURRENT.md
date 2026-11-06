@@ -1,5 +1,9 @@
 # 当前进度
 
+## B01任务分支继续：稳定批次
+
+当前任务分支task/B01-completion沿用G:/UEgame/.worktrees/B01，基线main为05c308d。用户补充已由df858bb落实为task级PR；每功能仍验证、独立审查后立即提交。稳定批次/死亡优先、死亡后果观察请求、空方式诊断及离开Rescue缓存清理已实现于任务工作树，验证与集成状态见[B01稳定批次记录](B01-SETTLEMENT.md)。Linux/UE共享用例各5/5，固定工具链Game/Editor构建成功；仅核心证据，不扩大到真实世界。B01仍InProgress，任务PR/CI/canonical集成未执行。下一步旧效果隔离、Subsystem/Director真实回执与可见反馈、Win64独立包。共享检查未移交B14；性能/完整游戏/本人体验未验收，架构未冻结。
+
 ## B01 最新集成：独立起点与使用统计
 
 功能提交 `4b765c036254595bdc671e44c4e973803008fb51` 经 [PR #7](https://github.com/nilesthump/UEgame/pull/7) 合并至 `9b00411ee64b535899b50a03dee6fb0f441ff191`。Linux与UE共用用例各3/3，Game/Editor固定MSVC14.38.33130及SDK22621构建成功；独立 b01_review 无剩余具体P1/P2。[PR CI](https://github.com/nilesthump/UEgame/actions/runs/42240803443)成功；canonical快进后RepositoryBaseline180文档/618链接/528来源通过且干净。详细范围和证据见[B01独立起点记录](B01-STARTS.md)。
