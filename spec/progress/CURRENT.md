@@ -1,5 +1,14 @@
 # 当前进度
 
+## B01 最新集成：独立起点与使用统计
+
+功能提交 `4b765c036254595bdc671e44c4e973803008fb51` 经 [PR #7](https://github.com/nilesthump/UEgame/pull/7) 合并至 `9b00411ee64b535899b50a03dee6fb0f441ff191`。Linux与UE共用用例各3/3，Game/Editor固定MSVC14.38.33130及SDK22621构建成功；独立 b01_review 无剩余具体P1/P2。[PR CI](https://github.com/nilesthump/UEgame/actions/runs/42240803443)成功；canonical快进后RepositoryBaseline180文档/618链接/528来源通过且干净。详细范围和证据见[B01独立起点记录](B01-STARTS.md)。
+
+B01仍InProgress。下一功能为稳定快照与同批死亡优先，包括死亡后果观察触发判定、成功方式为空的诊断，以及离开Rescue后清理阶段缓存；之后仍需旧效果隔离、Subsystem/Director真实回执与可见反馈、Win64独立包启动。旧轮事实已在本功能共用用例覆盖，不能扩大为旧效果或真实世界集成通过。共享检查未移交B14；性能、完整游戏和本人体验未验收；架构未冻结。
+
+本次沿用 G:/UEgame/.worktrees/B01，功能分支 task/B01-starts；集成记录分支 task/B01-starts-progress，基于9b00411。原 task/B01-progress 和其他工作树、既有证据均保留；最终分支/提交/工作区以Git复核为准。
+
+
 ## B01 当前实施（首个功能已集成，整体未完成）
 
 首个功能及CI修复已分别提交 `c3dbb96`、`88de166`，Linux/UE共享用例各1/1、Game/Editor构建成功，独立审查无剩余具体P1/P2，PR #5修复后CI `42237486987`成功。实测main已启用ruleset `26700391`，要求1次GitHub账号批准；用户明确[授权owner bypass](../requirements/001-causal-prototype/sources/2026-11-06-owner-bypass.md)后，PR #5已合并至 `01a22f4c3d7d672b784239ed1c247211859366b0`。canonical已快进复核且干净，RepositoryBaseline178文档615链接528来源通过，合并后main CI `42237939016`成功。整个B01仍InProgress，具体证据/剩余项见下方实施记录。后文“未配置保护”为B00时点记录，以本次ruleset实测为准。
