@@ -21,6 +21,7 @@ B00状态：**Blocked（实际环境缺项）**。核对报告是本次交付，
 - **缺少MSVC14.38**：VS2022只有14.44.35207，不能替代已确认版本。**缺少Linux CMake3.28/CTest**：版本命令、包与文件查询均未满足。
 - 详细命令、版本证据、双路径与唯一检查入口边界见[工具链核对报告](../../Validation/Toolchain/B00-2026-11-06.md)。仅核对环境，没有安装工具、运行核心/UE游戏构建或测性能。
 - 独立审查者`publication_review`已对照A03及本机原始回执核对报告、进度和任务表，未发现剩余具体P1/P2；已修正测试main目录的歧义。本地RepositoryBaseline实际通过（175文档、604链接、528来源），游戏测试数0/NotRun。
+- B00核对记录已通过[PR #1](https://github.com/nilesthump/UEgame/pull/1)集成至main（合并提交`8ff1ea2`），保留`8248361`发布结果记录和`89eea16`工具链核对两个功能提交。[PR检查](https://github.com/nilesthump/UEgame/actions/runs/42227659833)与[合并后检查](https://github.com/nilesthump/UEgame/actions/runs/42227811561)均实际success；canonical已同步同一完整提交并复跑RepositoryBaseline通过。Git HTTPS传输临时失败时通过官方API取得签名原文，精确Git对象哈希匹配后才快进本地，没有重写历史。
 - 其余B01–B15保持Assigned；不存在正在实施的领域游戏任务。发布工作树保留以便追溯，不清理其他任务数据。
 
 ## 下一步

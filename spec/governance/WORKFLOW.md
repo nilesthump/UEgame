@@ -24,7 +24,7 @@
 | 本地RepositoryBaseline | AVAILABLE | 统一脚本只检验仓库资料与结构 |
 | GitHub工作流/托管RepositoryBaseline | AVAILABLE | 与本地同入口；首次main运行42226638076已成功 |
 | GitHub公开仓库 | AVAILABLE | `nilesthump/UEgame`，origin已配置，MIT已识别 |
-| GitHub PR | 待首次实际执行 | 接入后的任务沿PR路线；创建和合并结果写进度 |
+| GitHub PR | AVAILABLE | B00 PR #1已实际经CI、独立agent审查并merge；保留功能提交 |
 | main分支保护 | NOT_CONFIGURED | GitHub返回protected=false；独立agent审查不是GitHub账号批准 |
 | UE/Linux实际构建及性能 | UNAVAILABLE | 构建入口与环境由B00/B01及后续任务交付，不用文档检查代替 |
 
