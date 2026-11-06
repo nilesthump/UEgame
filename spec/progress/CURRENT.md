@@ -14,7 +14,7 @@
 
 ## B00工具链环境准备
 
-B00状态：**Reviewed（环境缺项已补齐；本分支结果待集成）**。B01尚未启动；待本次环境证据集成至main后依赖可解锁。
+B00状态：**Integrated（环境缺项已补齐，安装与验证证据已集成）**。B01为Ready，尚未启动；B02–B15仍为Assigned。
 
 - 初次核对记录保持原样：[B00初次核对](../../Validation/Toolchain/B00-2026-11-06.md)。当时缺MSVC14.38与Linux CMake/CTest，已通过PR #1集成核对结果；这不代表当时环境已通过。
 - 本轮用户明确[授权安装依赖](../requirements/001-causal-prototype/sources/2026-11-06-dependency-installation.md)。分支`task/B00-dependencies`、工作树`.worktrees/B00-dependencies`，基线`ea06a66`。Windows由协调agent负责；Linux由`linux_dependencies` agent负责；各自仅写专属Validation/Toolchain报告及自身忽略输出，治理文件由协调者维护。
@@ -22,12 +22,13 @@ B00状态：**Reviewed（环境缺项已补齐；本分支结果待集成）**�
 - Linux缺项已解决：[安装记录](../../Validation/Toolchain/B00-LINUX-INSTALL-2026-11-06.md)。Ubuntu24.04.4/x86_64、GCC13.3.0保持；CMake与CTest均**3.28.3**（Ubuntu包3.28.3-1build7）。仅新增4个必要包，未升级/移除其他包；隔离C++20程序真实配置、编译、CTest **1/1通过**。
 - UE5.6.1/CL44394996、SDK22621、PowerShell7.6.9沿用实测基线；B01须在真实UBT/CMake构建输出中进一步核对选择。工具链smoke不是ExperimentCore/UE构建、游戏用例或性能验收；这些仍NotRun。
 - 原始安装失败、重试/接续、包清单、版本和smoke报告保留在本任务忽略目录`Validation/Runs/B00-install-20261106/{windows,linux}/`。初次Windows尝试因安装器需要自更新而失败，未覆盖成成功。
-- 独立审查由`dependency_review`对照原始安装/版本/执行证据与实际diff进行；最终审查、仓库检查及集成身份按本次提交和PR记录核对。
+- 独立审查由`dependency_review`对照原始安装/版本/执行证据与实际diff进行，无剩余具体P1/P2。Linux安装、handoff治理、Windows安装和环境进度分别提交为`10ddd03`、`bb84137`、`5964967`、`6ff2720`，由[PR #3](https://github.com/nilesthump/UEgame/pull/3)保留功能提交合并至`29a2e4c`。[PR检查](https://github.com/nilesthump/UEgame/actions/runs/42232422269)与[合并后main检查](https://github.com/nilesthump/UEgame/actions/runs/42232598960)均实际成功。
+- canonical已复核`29a2e4c`，工作区干净，RepositoryBaseline通过（177文档、611本地链接、528来源）；WORKING哈希保持`8E4350992F0A37B0449F11B0AEC687675310F355B79E1FE50F47E54BB30F1CDA`。常规Git传输连接失败后，通过GitHub API逐提交核对树与SHA，并恢复哈希精确匹配的远端签名合并对象；没有改写提交历史。本次集成状态由`task/B00-completion` / `.worktrees/B00-completion`基于`29a2e4c`记录；最终提交以Git和PR记录为准。
 - 已依[新增用户指示](../requirements/001-causal-prototype/sources/2026-11-06-agent-completion-handoff.md)在AGENTS要求每个agent任务完成后于对话最终回复提供可复制handoff prompt；此治理独立提交`bb84137`。
 - B01–B15均未启动。安装及验证没有创建游戏工程或改变已确认架构；各既有工作树保留，不清理其他任务数据。
 
 ## 下一步
 
-本次B00环境证据经PR集成并在canonical复核后，下一入口为B01同源核心双编译与Win64最小独立启动，随后B02跨域契约。B01须固定本次实测CompilerVersion=14.38.33130和SDK22621，Linux使用GCC13/CMake3.28，并核对同份核心源清单；本次未启动B01实现。B01最小共享检查集成后再显式移交B14。
+B00环境证据已通过PR集成与canonical复核，下一入口为B01同源核心双编译与Win64最小独立启动，随后B02跨域契约。B01须固定本次实测CompilerVersion=14.38.33130和SDK22621，Linux使用GCC13/CMake3.28，并核对同份核心源清单；本次未启动B01实现。B01最小共享检查集成后再显式移交B14。
 
 单UEgame Runtime模块、无UE依赖的同源C++20核心保持不变。端到端性能、UE/Linux游戏构建、独立包与本人试玩均NotRun；实际呈现是延迟终点，不能以核心耗时或平均帧率替代。详细范围和验收见[任务表](../tasks/001-causal-prototype/TASKS.md)、[验证契约](../governance/VALIDATION.md)与[性能契约](../performance/001-input-to-render.md)。
