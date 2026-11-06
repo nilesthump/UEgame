@@ -3,6 +3,8 @@
 执行者：本聊天协调 agent（核心/集成）。基线：`3a058befd82cb4424393f1de664c06195cf47472`。
 分支：`task/B01-bootstrap`；工作树：`G:/UEgame/.worktrees/B01`。既有工作树保留。
 
+首个功能合并后，同一任务工作树切至独立记录分支 `task/B01-progress`（基线 `01a22f4`）提交本次集成结果及owner bypass来源；实际最新提交与工作区状态以Git复核为准。
+
 写入边界沿用[任务表](../tasks/001-causal-prototype/TASKS.md)B01：Session 核心、ExperimentAdapter、模块入口、Game/Editor/Build.cs/uproject/CMake、启动配置/地图，以及最小共享测试入口和 Bootstrap 检查；协调者串行维护本记录、进度、任务、验证契约/机器清单和 CI。共享检查尚未移交 B14。其他领域、原始 sources、WORKING 和引擎安装只读。
 
 ## 功能 1：同源编译与世界就绪边界
@@ -23,6 +25,14 @@ Linux CMake 显式源清单与模块核心 src 的 cpp 集合配置时核对；�
 
 ## 后续与限制
 
-PR #5 首次远端检查 `42237099783`：RepositoryBaseline 成功，Linux配置失败（runner不存在 `/usr/bin/cmake`），未运行核心测试，缺JUnit导致上传步骤也失败。不得记通过。独立修复为在一次性 Ubuntu runner 安装已验证的发行版 CMake/CTest 3.28.3 包，再运行原有入口；不修改开发机环境。修复后的远端结果待实际验证。
+功能提交 `c3dbb961794ab5da5271d7fd87fac0fcbc254086`；CI修复提交 `88de166d9310917f5eaf145f3987ea5f072ef846`。两项分别经 `b01_review` 独立审查，无剩余具体P1/P2；修复前另实测apt模拟0升级/新增/移除。普通Git连接失败后经本机已授权GitHub登录API逐树/提交校验SHA上传，未改写历史。
 
-B01 InProgress，尚未集成。后续须完成独立起点/统计、稳定快照/同批死亡优先、旧轮事实/效果隔离、实际世界回执与可见反馈，以及 Win64 独立包启动。当前没有完整游戏功能、性能或本人体验通过证据；架构未冻结。
+[PR #5](https://github.com/nilesthump/UEgame/pull/5)首次远端检查 `42237099783`：RepositoryBaseline 成功，Linux配置失败（runner不存在 `/usr/bin/cmake`），未运行核心测试，缺JUnit导致上传步骤也失败。独立修复为在一次性 Ubuntu runner 安装已验证的发行版 CMake/CTest 3.28.3 包，再运行原有入口；不修改开发机环境。[修复后CI](https://github.com/nilesthump/UEgame/actions/runs/42237486987)已实际全部成功，包含核心执行与JUnit上传。
+
+## 实际集成与 owner bypass
+
+首次合并PR #5时GitHub拒绝，`mergeStateStatus=BLOCKED`、`reviewDecision=REVIEW_REQUIRED`。只读核对发现 main 生效的 repository ruleset `26700391`：要求1次账号批准、推送后撤销旧批准、解决审查讨论、严格RepositoryBaseline、仅merge，另禁止删除与非快进。传统branch protection接口仍404；不能因此推断没有规则。
+
+用户随后明确[授权owner bypass](../requirements/001-causal-prototype/sources/2026-11-06-owner-bypass.md)，实际使用 `--admin --merge --match-head-commit` 合并PR #5，保留两个原提交；未改规则、未伪造账号批准、未发送审查通知。远端合并为 `01a22f4c3d7d672b784239ed1c247211859366b0`，canonical精确导入已验证签名对象并核对父提交及树后快进；工作区干净，RepositoryBaseline178/615/528通过。[合并后main CI](https://github.com/nilesthump/UEgame/actions/runs/42237939016)成功。既有工作树与失败证据保留，WORKING摘要未变。
+
+B01首个功能已Integrated，整个B01仍InProgress，账号审查阻塞已按授权解除。接下来继续独立起点/统计、稳定快照/同批死亡优先、旧轮事实/效果隔离、实际世界回执与可见反馈，以及 Win64 独立包启动。共享检查尚未移交B14。当前没有完整游戏功能、性能或本人体验通过证据；架构未冻结。

@@ -1,8 +1,10 @@
 # 当前进度
 
-## B01 当前实施（任务分支，尚未集成）
+## B01 当前实施（首个功能已集成，整体未完成）
 
-本聊天已按接手指示在基线 `3a058befd82cb4424393f1de664c06195cf47472` 创建 `task/B01-bootstrap` / `G:/UEgame/.worktrees/B01`，由协调 agent 担任核心/集成 owner，B01 为 InProgress。精确范围、实际验证、未完成项见[B01实施记录](B01-BOOTSTRAP.md)。以下 B00 交付段落中的“B01尚未启动”是该次交付时点记录，以本段及任务表新状态为准。未将分支工作视为 canonical 已集成；共享检查尚未移交 B14。
+首个功能及CI修复已分别提交 `c3dbb96`、`88de166`，Linux/UE共享用例各1/1、Game/Editor构建成功，独立审查无剩余具体P1/P2，PR #5修复后CI `42237486987`成功。实测main已启用ruleset `26700391`，要求1次GitHub账号批准；用户明确[授权owner bypass](../requirements/001-causal-prototype/sources/2026-11-06-owner-bypass.md)后，PR #5已合并至 `01a22f4c3d7d672b784239ed1c247211859366b0`。canonical已快进复核且干净，RepositoryBaseline178文档615链接528来源通过，合并后main CI `42237939016`成功。整个B01仍InProgress，具体证据/剩余项见下方实施记录。后文“未配置保护”为B00时点记录，以本次ruleset实测为准。
+
+本聊天已按接手指示在基线 `3a058befd82cb4424393f1de664c06195cf47472` 创建 `task/B01-bootstrap` / `G:/UEgame/.worktrees/B01`，由协调 agent 担任核心/集成 owner。精确范围、实际验证、未完成项见[B01实施记录](B01-BOOTSTRAP.md)。以下 B00 交付段落中的“B01尚未启动”是该次交付时点记录，以本段及任务表新状态为准。仅首个功能已集成；共享检查尚未移交 B14。
 
 日期：2026-11-06。canonical：`G:/UEgame`；本地集成分支：`main`。当前提交以`git log -1`和远端记录为准，避免自引用哈希。
 
