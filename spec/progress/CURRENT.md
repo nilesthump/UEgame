@@ -12,20 +12,22 @@
 - main分支保护查询返回`protected=false`；没有强制PR、账号批准或管理员保护。接入后的任务按分支→PR→相同CI→独立agent审查→合并执行；agent审查不冒充GitHub账号批准。
 - WORKING及原始sources未改写，讨论revision118/contentRevision119不变。没有新增游戏工程、素材或冻结产物。
 
-## B00工具链核对
+## B00工具链环境准备
 
-B00状态：**Blocked（实际环境缺项）**。核对报告是本次交付，B00整体验收尚未通过；B01未解锁。
+B00状态：**Reviewed（环境缺项已补齐；本分支结果待集成）**。B01尚未启动；待本次环境证据集成至main后依赖可解锁。
 
-- 分支`task/B00-toolchain`；独立工作树`.worktrees/B00`；基线`c834714`。执行者为本聊天`b00_discovery`工具链agent；仅写`Validation/Toolchain/B00-2026-11-06.md`及自身忽略输出，治理/进度由integration-owner维护。
-- 真实发现：UE5.6.1/CL44394996、VS2022 17.14.37、SDK10.0.22621.0、PowerShell7.6.9；WSL2内实际运行Ubuntu24.04.4 LTS/x86_64及GCC13.3.0版本查询。
-- **缺少MSVC14.38**：VS2022只有14.44.35207，不能替代已确认版本。**缺少Linux CMake3.28/CTest**：版本命令、包与文件查询均未满足。
-- 详细命令、版本证据、双路径与唯一检查入口边界见[工具链核对报告](../../Validation/Toolchain/B00-2026-11-06.md)。仅核对环境，没有安装工具、运行核心/UE游戏构建或测性能。
-- 独立审查者`publication_review`已对照A03及本机原始回执核对报告、进度和任务表，未发现剩余具体P1/P2；已修正测试main目录的歧义。本地RepositoryBaseline实际通过（175文档、604链接、528来源），游戏测试数0/NotRun。
-- B00核对记录已通过[PR #1](https://github.com/nilesthump/UEgame/pull/1)集成至main（合并提交`8ff1ea2`），保留`8248361`发布结果记录和`89eea16`工具链核对两个功能提交。[PR检查](https://github.com/nilesthump/UEgame/actions/runs/42227659833)与[合并后检查](https://github.com/nilesthump/UEgame/actions/runs/42227811561)均实际success；canonical已同步同一完整提交并复跑RepositoryBaseline通过。Git HTTPS传输临时失败时通过官方API取得签名原文，精确Git对象哈希匹配后才快进本地，没有重写历史。
-- 其余B01–B15保持Assigned；不存在正在实施的领域游戏任务。发布工作树保留以便追溯，不清理其他任务数据。
+- 初次核对记录保持原样：[B00初次核对](../../Validation/Toolchain/B00-2026-11-06.md)。当时缺MSVC14.38与Linux CMake/CTest，已通过PR #1集成核对结果；这不代表当时环境已通过。
+- 本轮用户明确[授权安装依赖](../requirements/001-causal-prototype/sources/2026-11-06-dependency-installation.md)。分支`task/B00-dependencies`、工作树`.worktrees/B00-dependencies`，基线`ea06a66`。Windows由协调agent负责；Linux由`linux_dependencies` agent负责；各自仅写专属Validation/Toolchain报告及自身忽略输出，治理文件由协调者维护。
+- Windows缺项已解决：[安装记录](../../Validation/Toolchain/B00-WINDOWS-INSTALL-2026-11-06.md)。MSVC目录/CompilerVersion为**14.38.33130**，cl文件**19.38.33145.0**、link文件14.38.33145.0。显式选择SDK**10.0.22621.0**，隔离C++20程序实际编译、链接、运行退出0。VS2022保持17.14.37，原14.44保留；安装器因必要前置升级为4.11.24，未重启。
+- Linux缺项已解决：[安装记录](../../Validation/Toolchain/B00-LINUX-INSTALL-2026-11-06.md)。Ubuntu24.04.4/x86_64、GCC13.3.0保持；CMake与CTest均**3.28.3**（Ubuntu包3.28.3-1build7）。仅新增4个必要包，未升级/移除其他包；隔离C++20程序真实配置、编译、CTest **1/1通过**。
+- UE5.6.1/CL44394996、SDK22621、PowerShell7.6.9沿用实测基线；B01须在真实UBT/CMake构建输出中进一步核对选择。工具链smoke不是ExperimentCore/UE构建、游戏用例或性能验收；这些仍NotRun。
+- 原始安装失败、重试/接续、包清单、版本和smoke报告保留在本任务忽略目录`Validation/Runs/B00-install-20261106/{windows,linux}/`。初次Windows尝试因安装器需要自更新而失败，未覆盖成成功。
+- 独立审查由`dependency_review`对照原始安装/版本/执行证据与实际diff进行；最终审查、仓库检查及集成身份按本次提交和PR记录核对。
+- 已依[新增用户指示](../requirements/001-causal-prototype/sources/2026-11-06-agent-completion-handoff.md)在AGENTS要求每个agent任务完成后于对话最终回复提供可复制handoff prompt；此治理独立提交`bb84137`。
+- B01–B15均未启动。安装及验证没有创建游戏工程或改变已确认架构；各既有工作树保留，不清理其他任务数据。
 
 ## 下一步
 
-先补齐已确认的MSVC14.38工具集和Ubuntu CMake3.28/CTest，再复核实际完整补丁版本；安装及环境变更须按实际授权推进。B00通过后才进入B01同源核心双编译与Win64最小独立启动，随后B02跨域契约。B01最小共享检查集成后再显式移交B14。
+本次B00环境证据经PR集成并在canonical复核后，下一入口为B01同源核心双编译与Win64最小独立启动，随后B02跨域契约。B01须固定本次实测CompilerVersion=14.38.33130和SDK22621，Linux使用GCC13/CMake3.28，并核对同份核心源清单；本次未启动B01实现。B01最小共享检查集成后再显式移交B14。
 
 单UEgame Runtime模块、无UE依赖的同源C++20核心保持不变。端到端性能、UE/Linux游戏构建、独立包与本人试玩均NotRun；实际呈现是延迟终点，不能以核心耗时或平均帧率替代。详细范围和验收见[任务表](../tasks/001-causal-prototype/TASKS.md)、[验证契约](../governance/VALIDATION.md)与[性能契约](../performance/001-input-to-render.md)。

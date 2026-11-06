@@ -33,3 +33,5 @@ pwsh -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
 后续新增命令必须先有真实工程、实现及所需工具，并同时更新本契约、机器配置和CI可执行范围。没有能力就记录NotRun/Blocked及原因；未发现或执行零用例、Skipped、未知、缺报告、超时、仅进程退出0都不能代替验收。
 
 首轮基线应验证隔离副本中的断链与错误摘要能返回非零，且修复后回到成功。原始输出存入本机忽略的Validation/Runs/，摘要、限制及独立审查记录进入spec/progress。检查入口不得碰普通游戏存档或终止非本任务进程。
+
+B00依赖安装后已取得[Windows安装smoke](../../Validation/Toolchain/B00-WINDOWS-INSTALL-2026-11-06.md)与[Linux安装smoke](../../Validation/Toolchain/B00-LINUX-INSTALL-2026-11-06.md)证据。它们只验证隔离的小程序和工具安装，没有引入新的持久游戏检查入口，也不计入上表游戏验收。UE/ExperimentCore构建和端到端性能仍NotRun。
