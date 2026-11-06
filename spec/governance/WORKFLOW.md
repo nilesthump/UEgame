@@ -47,3 +47,7 @@
 - 已公开提交不通过amend、rebase或强推改写。PR集成保留功能提交，可用merge或fast-forward；不将多个功能点squash为一个提交。进度/集成记录可独立提交，写清对应功能与证据。
 - 本轮公开仓库初始化先在独立发布worktree准备MIT与流程，验证、独立审查后由协调者快进main并首次推送。远端建立后B00及后续任务使用分支→PR→RepositoryBaseline CI→独立审查→合并；每次集成后canonical复核。独立agent审查不冒充另一GitHub账户的批准，未配置分支保护也不得声称已强制执行。
 - 本轮发布授权仅覆盖本项目的公开仓库、任务分支及正常集成；不自动发布游戏包、创建其他远端服务或发送通知。
+
+## PR粒度：task
+
+依据[用户补充](../requirements/001-causal-prototype/sources/2026-11-06-task-pr-granularity.md)，后续PR以task为单位汇集功能提交，任务验收完成后统一评审、CI与集成。每个功能点验证和独立审查后仍立即单独提交；不逐功能另开PR，不squash功能提交。已有已合并PR保持历史，不回写。B01剩余实现沿任务分支持续提交。

@@ -25,3 +25,5 @@
 Git提交粒度为一个功能点：每实现或修复一个可独立验收的功能点，完成对应验证和独立审查后立即提交，不积攒多个功能点。功能所需的代码、用例和说明同提交；后续修复另提交，不改写已发布历史。依据见[本轮授权](spec/requirements/001-causal-prototype/sources/2026-11-06-public-repository-and-commits.md)。本轮明确授权将本仓库公开发布并采用MIT；后续任务分支推送、PR与集成沿本仓库流程执行，不扩大为发布其他仓库或服务。
 
 agent任务完成后，必须在当前对话的最终回复中给出可直接复制的handoff prompt，不能只说“可继续”或仅留下文件链接。提示须包含仓库/分支/实际提交与工作区状态、已完成工作、真实验证与独立审查结果、未完成项/阻塞、下一步入口及写入边界，并要求接手agent先读AGENTS.md、按规定顺序恢复上下文。未知值明确标记，不把未测、未集成或未冻结写成已完成。子agent向协调者交付时同样适用；不得自动新建对话或发送给其他人。依据见[用户原文](spec/requirements/001-causal-prototype/sources/2026-11-06-agent-completion-handoff.md)。
+
+PR粒度对齐为task：同一任务的功能提交汇入该任务PR，完成任务验收后统一集成；每个功能点仍须验证、独立审查后立即单独提交，不将task压成一个提交。既有已合并PR保留。依据见[用户补充](spec/requirements/001-causal-prototype/sources/2026-11-06-task-pr-granularity.md)。
