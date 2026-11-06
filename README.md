@@ -19,3 +19,7 @@ pwsh -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
 该命令检查目录、治理、文档链接和确认来源，**不编译游戏，也不证明50ms达标**。[验证契约](spec/governance/VALIDATION.md)说明后续检查。GitHub Actions使用相同入口，但远端仓库尚未配置。
 
 `Source/`、`Content/`等目前是按职责建立的目录占位；`.uproject`、CMake和UBT实际入口由B00/B01任务交付。所有源码/资产版本都应沿任务范围维护，运行数据及构建产物放入忽略目录。
+
+## 许可
+
+本仓库原创代码与文档采用 [MIT License](LICENSE)。Unreal Engine、Epic 模板及以后引入的第三方素材遵循各自许可；它们不因项目采用 MIT 而被重新许可。第三方素材的来源、使用条件及署名记录在 Assets/Provenance/。
