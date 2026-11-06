@@ -1,0 +1,36 @@
+# Local agent tooling and credentials are not project sources.
+/.agents/
+/.codex/
+/.aws/
+.env
+.env.*
+!.env.example
+
+# Generated UE / IDE / build products.
+/Binaries/
+/Intermediate/
+/Saved/
+/DerivedDataCache/
+/.vs/
+/.idea/
+/.vscode/
+/.build/
+/Deliverables/
+/Artifacts/
+/.worktrees/
+*.sln
+*.suo
+*.VC.db
+*.VC.opendb
+*.code-workspace
+*.user
+*.log
+
+# Local execution / material scratch; provenance belongs under Assets.
+/Assets/Incoming/
+/Assets/Generated/
+/Validation/Runs/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

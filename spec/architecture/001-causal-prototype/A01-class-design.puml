@@ -1,0 +1,90 @@
+@startuml A01-class-design
+!pragma layout smetana
+title A01 类图（已确认，2026-11-05）\n类职责与所有权；具体玩法类在后续项细化
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+class UGameInstanceSubsystem <<UE>>
+class AActor <<UE>>
+class UDataAsset <<UE>>
+class UObject <<UE>>
+
+class UExperimentSubsystem {
+  - RunState : FExperimentRunState
+  + StartRun()
+  + RequestManualRestart()
+  + HandleActionUsed()
+  + HandleAttackDirectedAtGoblin()
+  + HandleEncounterFact()
+  - EvaluateSettledOutcome()
+  + GetViewState() : FExperimentViewState
+  - FinalizeAttempt() : FExperimentResult
+}
+class AExperimentWorldDirector {
+  + InitializeWorld()
+  + RegisterParticipant()
+  + StopCurrentRun()
+  + RestoreInitialWorld()
+  + RequestEnvironmentSettlement()
+  + ApplyRevisit()
+}
+class UExperimentConfig {
+  初始配置 / 参数 / 预设结果
+  运行时只读
+}
+class UExperimentLogWriter {
+  + TryAppend(Result) : 写入结果
+  不持有世界对象
+}
+interface IExperimentParticipant {
+  + StopRun(RunId)
+  + ResetForRun(RunId)
+}
+class "玩法 Actor / Component" as Gameplay <<后续项细化>> {
+  独占角色 / 战斗 / 环境状态
+  提交类型化事实通知
+}
+class FExperimentRunState <<USTRUCT>> {
+  RunId / Phase
+  三个起点 / 阶段计时
+  方式统计 / 已确定因果结果
+}
+class FExperimentResult <<USTRUCT>> {
+  RunId / 方式 / 分支 / 原因
+  阶段实际耗时
+  纯值快照，无 Actor 引用
+}
+class FExperimentViewState <<USTRUCT>> {
+  当前允许展示的信息
+  排除尚未揭示的因果分支
+}
+
+UGameInstanceSubsystem <|-- UExperimentSubsystem
+AActor <|-- AExperimentWorldDirector
+UDataAsset <|-- UExperimentConfig
+UObject <|-- UExperimentLogWriter
+UExperimentSubsystem *-- "1" FExperimentRunState : 独占
+UExperimentSubsystem *-- "1" UExperimentLogWriter : 拥有 / 强引用
+UExperimentSubsystem --> "1" UExperimentConfig : 只读强引用
+UExperimentSubsystem --> "0..1" AExperimentWorldDirector : 非拥有 / 弱引用
+AExperimentWorldDirector --> "0..*" IExperimentParticipant : 登记弱引用
+IExperimentParticipant <|.. Gameplay
+Gameplay ..> UExperimentSubsystem : 必要事实
+UExperimentSubsystem ..> FExperimentResult : 结束时生成
+UExperimentLogWriter ..> FExperimentResult : 读取并落盘
+UExperimentSubsystem ..> FExperimentViewState : 输出给 Blueprint / UMG
+
+legend bottom
+  实心菱形：组合拥有；空心三角：继承或接口实现。
+  Config 是共享只读资产；Director 与玩法实体由世界拥有。
+  方法省略参数细节；后续具体玩法类不在本次确认范围。
+endlegend
+@enduml

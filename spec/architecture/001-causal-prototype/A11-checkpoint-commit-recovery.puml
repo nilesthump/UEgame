@@ -1,0 +1,63 @@
+@startuml A11-checkpoint-commit-recovery
+title A11 固定快照提交、最多三次重试与恢复（总体已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+participant "Session / 世界所有者" as W
+participant "统一快照作业" as C
+participant "本地快照存储" as S
+participant "恢复协调 / 界面" as R
+W -> C : 同一稳定切点的完整不可变值
+C -> C : 固定 CommitId / 字节 / 摘要\nAttempt=0，旧点保留，玩法暂停
+loop 尚未确认成功 且 !StopRequested 且 Attempt < 4
+  C -> S : 先验证该 CommitId 是否已完整提交
+  S --> C : 完整匹配 / 未提交 / 冲突
+  alt 已完整匹配
+    C -> C : 标记 Committed，不再写入或重试
+  else 未提交且具备合法写入条件
+    C -> S : 临时载荷：Open → Write → Flush → 读回\n逐步成功才继续，无覆盖发布 bundle
+    alt 载荷完整有效
+      C -> S : 临时清单同样校验，最后发布 commit.json
+      S --> C : 发布返回值
+    else 载荷任一步失败
+      C -> C : 不发布清单，保留原固定字节
+    end
+    C -> S : 复核整代，处理“返回失败但已提交”
+    S --> C : 完整提交 / 无效或未提交
+    C -> C : 成功则终止后续循环；否则消耗一次尝试
+  else 冲突 / 不可安全重试
+    C -> C : 设置 StopRequested / FailureKind\n身份或历史冲突标为必须暂停，不覆盖
+  end
+end
+alt Committed
+  C -> W : 提交确认，保持当前分支
+  C -> S : 按已提交记录幂等导出 JSONL
+  note over C,S
+  导出失败重试最多3次；耗尽后从最新提交重建记录并暂停导出。
+  已提交终态仍 Ended，绝不退回较早可玩快照。
+  end note
+else 身份冲突 / 提交历史不明
+  C -> R : 暂停诊断；即使有旧点也不得猜测恢复
+else 普通提交首次＋3次重试耗尽 / 可恢复技术故障
+  C -> C : 失效旧候选回执与正式结果发布资格\n保留故障上下文与不回滚的重试计数
+  C -> S : 找本轮最近兼容、整代有效恢复点
+  S --> C : 有效快照 / 无可用点或历史不明
+  alt 有合法恢复点
+    C -> R : 同 Run 一致恢复，签发新 RecoveryGeneration
+    R -> W : 全领域恢复与重新就绪验证
+    W --> R : 恢复完成 / 错误
+    R -> R : 保持 RecoveryPaused\n存储修复＋继续点提交成功才开放
+  else 无可用点 / 不兼容 / 终态历史不明
+    C -> R : 暂停诊断，不猜测世界状态或新开一轮
+  end
+end
+note over W,R
+重试只重投同一快照，不重做伤害/砍树/Spawn。
+恢复失败或继续点提交再次耗尽保持暂停；同故障不自动循环恢复。
+end note
+@enduml

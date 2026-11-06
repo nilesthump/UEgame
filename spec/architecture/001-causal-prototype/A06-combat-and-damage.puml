@@ -1,0 +1,45 @@
+@startuml A06-combat-and-damage
+!pragma layout smetana
+title A06 战斗总体数据流（已确认；非类图）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+
+rectangle "A05 输入与最终相机帧\n挥砍按下；仅魔法按住瞄准、松开发射\n合法执行请求 / 绑定 / AimFrame" as Input
+rectangle "同源空间 / 已确认\n北轴与零经度；合法弹道范围准备校验\n恒当地航向 / 俯仰 / 总速度" as Spatial
+rectangle "UE 战斗步\n已有攻击接触 → 新攻击接纳\n使用与指向事实独立于命中" as Step
+rectangle "UE 空间事实\n剑刃/挥棒轨迹、球面升降弹道分段扫掠\n爆炸范围、落地入射速度" as World
+rectangle "A05 Movement\n受击发生时采样短窗口\n不重查历史、不复制计时器" as Dodge
+rectangle "ExperimentCore / 标准 C++20\n无状态路径/方向与战斗规则\n防反 / 免伤 / 伤害计划\nLinux GCC 独立检查" as Rules
+rectangle "UE 所属实体提交\n生命 / 硬直 / 攻击失效\n击飞、掉棒、弹体结束" as Commit
+rectangle "A08/A09 环境\n切面几何 / 火球覆盖\n雨湿与火灾规则" as Forest
+rectangle "A07 哥布林行为\n全体转向 / 落地存活\n捡棒或徒手" as AI
+rectangle "Subsystem → Session\n事实先登记；完整稳定快照\n同批死亡优先，再判救援成功" as Session
+
+Input --> Step
+Spatial --> World
+Step --> World
+Step --> Rules : 发射纯值 / 路径请求
+Rules --> World : 曲线路径采样
+World --> Rules : 纯值接触快照
+Dodge --> Rules : 本次事件保护样本
+Rules --> Commit : 计划；不写世界
+Commit --> Forest : 环境事实
+Commit --> AI : 防反 / 落地事实
+Step --> AI : 朝哥布林攻击，未命中也成立
+Step --> Session : 实际使用 / 指向 / 原始时序
+Commit --> Session : 本批全部提交后读取状态
+
+note bottom of Session
+火球杀最后敌人并误伤小孩：全部结算后判失败。
+发现前使用不补统计；非活动区不建模。
+六组取舍已确认；具体类图单独确认。
+按住瞄准不产生使用 / 指向 / 首次攻击计时。
+无敌拒伤不占伤害额度；窗口后仍需真实接触。
+end note
+@enduml

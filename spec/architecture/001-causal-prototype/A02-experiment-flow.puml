@@ -1,0 +1,56 @@
+@startuml A02-experiment-flow
+!pragma layout smetana
+title A02 实验阶段与结束条件（总体方案与类图均已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ArrowColor #475569
+skinparam stateBackgroundColor #EFF6FF
+skinparam stateBorderColor #2563EB
+hide empty description
+top to bottom direction
+
+state "准备 Preparing" as Prepare
+state "救援现场 Rescue" as Rescue {
+  state "尚未发现遇险" as Unseen
+  state "已发现活体遇险\n救助方式统计开启" as Seen
+  state "小孩已死亡\n等待玩家发现后果" as Await
+  [*] --> Unseen
+  Unseen --> Seen : 发现小孩仍受威胁
+  Unseen --> Await : 小孩先遇难
+}
+state "跳时 TimeSkip\n锁定方式 / 结算环境 / 布置回访" as Skip
+state "回访 Revisit\n玩家从镇上恢复行动" as Revisit
+state "结束 Ended\n记录结果 / 等待手动重启" as Ended
+
+[*] -down-> Prepare
+Prepare -down-> Rescue : 世界与模块就绪\n新 RunId / 世界开始运行
+Seen --> Ended : 小孩死亡 → 失败
+Await --> Ended : 发现死亡后果 → 失败
+Rescue --> Ended : 玩家死亡 → 失败
+Rescue -down-> Skip : 同批次全部结算完成\n玩家、小孩存活 + 五只哥布林死亡
+Skip -down-> Revisit : 环境结算、回访布置\n及过渡表现完成 / 剧情 +30 年
+Revisit -down-> Ended : 已听到群众学习风气闲聊\n且教师提起救援 → 完成
+Ended -up-> Prepare : 用户手动重启\n恢复同一实验世界 / 保留日志
+
+note right of Rescue
+世界启动：遇险发展、雨计划开始。
+发现活体遇险：开始方式统计。
+首次朝哥布林攻击：开始救援日志计时。
+三者独立，未攻击记“未开始”。
+同批次死亡条件先于清怪成功。
+end note
+
+note right of Skip
+即使提前获救，也要结算
+旧时代 180 秒开雨、300 秒停雨的后果。
+不把雨计划延迟到 30 年后。
+end note
+
+legend bottom
+  5 / 2 / 3 分钟为体验目标，不是失败倒计时。
+  方式为空的异常成功不伪造教师分支；场景约束待验证。
+  已结束的轮次不接受旧玩法通知改写结果。
+endlegend
+@enduml

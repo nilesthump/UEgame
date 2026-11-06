@@ -1,0 +1,72 @@
+@startuml A13-media-delivery
+title A13 已确认媒体交付 · 一份内容作业、一个最终回执
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+hide footbox
+participant "Narrative /\nRevisitRules" as N
+participant "Presentation" as P
+participant "AudioComponent" as A
+participant "DialogueWidget" as W
+participant "Subsystem /\nSession" as S
+
+N -> P : PresentSegment(Key, 内容版本, 媒体政策)
+P -> W : 显示完整文本与说话者；绑定同一 Key
+P -> P : 检查静音选择、资源与当前资格
+alt VoiceAndText
+  P -> A : 先绑定不可变身份，再 Play（非循环）
+  loop 当前作业有效
+    W --> P : 真实可读采样；无效区间不累计
+    A --> P : 状态 / 结束候选 / 故障（排队处理）
+    P -> P : 有界检查启动/播放状态，保留完整字幕
+  end
+  note over P,A
+  Finished 也可能由 Stop 引出；启动失败可能没有 Finished。
+  不独立证明完整语音输出；超时只能触发异常。
+  end note
+else TextOnlyChosen
+  P -> W : 从头建立完整字幕连续可读区间
+end
+
+alt 离开 / 地图 / 失焦 / 旧代次 / Ended / 恢复
+  N -> N : 先封存 Interrupted 或 Canceled，撤销身份
+  N -> P : Cancel(Key)
+  P -> P : 先使媒体句柄失效
+  P -> A : Stop / FadeOut
+  P -> W : 取消当前字幕
+  A --> P : 迟到 Finished 只属旧实例，拒绝提交
+else 当前资格有效，但声音故障需降级
+  P --> N : Fault(Key, 原因)，不是 Completed
+  N -> N : 撤销旧代次，保留未送达状态
+  N -> P : Cancel 后，新 Key + TextFallback
+  P -> A : 停止旧声音，不自动反复尝试
+  P -> W : 全文从头显示，重建完整可读证据
+  W --> P : 新代次连续可读区间；仍可被取消
+  note over N,W
+  降级会重新经过同一单通道调度及取消检查。
+  模式/故障保留；不得记成语音验证成功。
+  end note
+else 默认或主动字幕模式正常收尾
+  P -> P : 文本合格 + 作业收尾；不能提前提交字幕事实
+end
+
+opt 当前作业仍有效，所属模式条件全部满足
+  P --> N : Receipt(Key, Policy, DeliveryMode, 采样依据)
+  N -> N : 在有序点复核；先封存 Completed
+  alt 关键片段
+    N -> S : 单个 RevisitContentFact（原完成时刻/稳定身份）
+    S -> S : 幂等登记；两项齐备才 Ended
+    S --> N : 先处理核心效果，再考虑下一片段
+  else Optional / 挽留
+    N -> N : 不发关键事实，不等核心确认
+  end
+end
+note over N,S
+共同保存冻结期间不推进媒体完成；恢复失效旧句柄。
+新恢复代次从头补未送达片段，已提交终态不重播。
+end note
+@enduml

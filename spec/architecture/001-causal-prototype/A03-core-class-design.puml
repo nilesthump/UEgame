@@ -1,0 +1,93 @@
+@startuml A03-core-class-design
+!pragma layout smetana
+title A03 核心与 UE 适配类图（修订已确认，2026-11-05）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+package "ExperimentCore：标准 C++20，无 UE 依赖" {
+ class ExperimentSession <<新增 / 唯一提交者>> {
+  - State : ExperimentRunState
+  + PrepareRun(Id, ConfigValues) : Effects
+  + OnWorldReady(Context) : Effects
+  + OnActionUsed(ActionUsedFact) : Effects
+  + OnAttackDirectedAtGoblin(AttackFact) : Effects
+  + OnThreatDiscovered(ThreatFact) : Effects
+  + OnAftermathObserved(AftermathFact) : Effects
+  + OnBatchSettled(Context, Snapshot) : Effects
+  + OnSkipReady(ReadyFact) : Effects
+  + OnControlRestored(RestoredFact) : Effects
+  + OnRevisitContent(ContentFact) : Effects
+  + MakeView() : ViewProjection
+  - Commit(Decision)
+ }
+ class ExperimentRunState <<迁移 / 私有值>> {
+  RunId / Phase / Timing
+  观察进度 / 方式统计 / 锁定结果
+  Token / 跳时就绪 / 回访进度
+ }
+ class ExperimentFlowRules <<迁移 / 无状态>> {
+  {static} + EvaluateRescue(State, Snapshot) : Decision
+  {static} + EvaluateRevisit(State) : Decision
+  {static} + CanRestorePlayerControl(State) : bool
+ }
+ class ExperimentStepEffects <<新增 / 临时输出值>> {
+  有序强类型世界命令
+  可选最终 ExperimentResult
+  不含回调或 UObject 指针
+ }
+}
+
+package "UE 运行层：世界模拟与适配" {
+ class UGameInstanceSubsystem
+ class UExperimentSubsystem <<修改 / 引擎适配>> {
+  - Session : ExperimentSession
+  - Director : WeakObjectPtr
+  + CaptureContext() : CoreFactContext
+  + DispatchTrustedFact()
+  - ExecuteEffects(Effects)
+  - DrainQueuedFacts()
+ }
+ class FExperimentDataMapper <<新增 / 无状态>> {
+  {static} + ToCore(UEFact) : CoreFact
+  {static} + ToView(ViewProjection) : FExperimentViewState
+  {static} + ToLog(Result) : FExperimentResult
+ }
+ class AExperimentWorldDirector <<沿用 / 世界拥有>> {
+  + RequestSettledSnapshot()
+  + RequestEnvironmentSettlement(Token)
+  + ApplyRevisit(Token)
+  + RestorePlayerControl(Token)
+  回报事实与实际完成时刻
+ }
+ class UExperimentLogWriter <<沿用>> {
+  + TryAppend(FExperimentResult)
+ }
+}
+class "Blueprint / UMG" as UI <<表现消费方>>
+
+UGameInstanceSubsystem <|-- UExperimentSubsystem
+UExperimentSubsystem *-- "1" ExperimentSession : 拥有；不另存 State
+ExperimentSession *-- "1" ExperimentRunState : 唯一拥有和写入
+ExperimentSession ..> ExperimentFlowRules : 只读求值
+ExperimentFlowRules ..> ExperimentRunState : 读取
+ExperimentSession ..> ExperimentStepEffects : 提交后返回
+UExperimentSubsystem ..> ExperimentStepEffects : 串行执行
+UExperimentSubsystem ..> FExperimentDataMapper : 边界值转换
+UExperimentSubsystem --> AExperimentWorldDirector : 弱引用；命令 / 完成事实
+UExperimentSubsystem *-- UExperimentLogWriter : 原有强引用
+UExperimentSubsystem ..> UI : 发布映射后的受限表现 DTO
+
+legend bottom
+  核心命名空间为 experiment。其他类型化事实/稳定快照/时刻也是标准 C++ 值。
+  核心不反向调用 UE；世界实体状态仍归 Actor/Component，不复制进 RunState。
+  图中省略部分类型化入口、配置强引用及数据字段；完整语义沿用 A01/A02。
+  分层、本类图和 Windows 集成已确认；Linux 具体构建选型见 A03 补充方案。
+endlegend
+@enduml

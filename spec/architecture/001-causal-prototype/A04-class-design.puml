@@ -1,0 +1,101 @@
+@startuml A04-class-design
+!pragma layout smetana
+title A04 类职责与引用（类图已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+package "实际世界 / UE" as WorldLayer {
+ class UExperimentConfig <<既有>>
+ class AExperimentWorldDirector <<既有>>
+ class USphericalWorldConfig <<UDataAsset>> {
+  FrameSpec / LocalSurfaceMesh
+  AirWallSpecs / PublicLandmarkSpecs
+  PublicRegionOutlines
+  MinimapStyle
+ }
+ class ASphericalWorldRoot <<AActor>> {
+  - Config: strong
+  + InitializeSpatial(Config)
+  + GetResolvedFrame()
+  + GetPublicMapLayout()
+ }
+ class "局部地表组件 / 空气墙组件" as SpatialComponents <<UE 提供>> {
+  UStaticMeshComponent / UBoxComponent
+ }
+}
+package "纯数值边界" as PureLayer {
+ class FSphericalDataMapper <<UE C++ / 无状态>> {
+  {static} ToCoreMeters(UEVector)
+  {static} ToUECentimeters(Vec3d)
+ }
+ class "experiment::SphericalMath" as Math <<标准 C++20 / 无状态>> {
+  {static} ValidateFrame(Frame)
+  {static} TryProject(Frame, Position, Forward)
+  {static} TryRadialUp(Frame, Position)
+ }
+}
+package "本地地图 / UE" as MapLayer {
+ class "本地 PlayerController" as PC <<既有引擎边界 / A05 细化>>
+ class UExperimentSubsystem <<既有 / Session 宿主>>
+ class USphericalMinimapComponent <<UActorComponent>> {
+  - Root / Pawn / Rig / Subsystem: weak
+  - Widget: strong
+  - RunId / BindingGeneration
+  + BindCurrentContext()
+  + RefreshVisibleMap()
+  + InvalidateBinding()
+  + ShutdownMap()
+ }
+ class ASphericalMinimapRig <<AActor / 仅表现>> {
+  - Sphere / Markers / Capture
+  - RenderTarget: strong
+  + ApplyFrame(MapFrame)
+  + SetMapView(Rotation, Distance)
+  + RequestCapture()
+  + ClearPresentation()
+ }
+ class USphericalMinimapWidget <<UUserWidget>> {
+  + ShowTexture(Target)
+  + ShowPlaceholder()
+  + RotateRequested / ZoomRequested
+ }
+ class "捕获与输出资源" as RenderResources <<UE 提供>> {
+  USceneCaptureComponent2D
+  UTextureRenderTarget2D
+ }
+}
+
+UExperimentConfig --> USphericalWorldConfig : 强引用
+AExperimentWorldDirector --> ASphericalWorldRoot : 弱绑定 / 唯一准备入口
+ASphericalWorldRoot --> USphericalWorldConfig : 强引用 / 只读
+ASphericalWorldRoot *-- "1..*" SpatialComponents
+ASphericalWorldRoot ..> FSphericalDataMapper : 解析参考
+FSphericalDataMapper ..> Math : 纯值输入输出
+PC *-- USphericalMinimapComponent
+UExperimentSubsystem --> USphericalMinimapComponent : 受限轮次 / 阶段通知
+USphericalMinimapComponent --> ASphericalWorldRoot : 弱绑定 / 只读参考与地标
+USphericalMinimapComponent ..> FSphericalDataMapper : 单位与类型转换
+USphericalMinimapComponent ..> Math : 投影
+USphericalMinimapComponent --> ASphericalMinimapRig : 创建 / 弱绑定 / 清理责任
+USphericalMinimapComponent --> USphericalMinimapWidget : 创建 / 强引用 / 解绑
+ASphericalMinimapRig *-- RenderResources : 组件与资源强引用
+ASphericalMinimapRig --> USphericalMinimapWidget : 纹理经组件交付
+USphericalMinimapWidget ..> USphericalMinimapComponent : 地图操作请求
+
+note left of SpatialComponents
+仅活动区地表和不可见空气墙。
+非活动区不建场景模型。
+end note
+note bottom of USphericalMinimapComponent
+UWorld 管理 Root/Rig 的 Actor 生命周期。
+地图组件统一请求创建/销毁 Rig，Director 不重复管理。
+地图清理包含旧纹理；不启动或暂停实验时间。
+end note
+@enduml

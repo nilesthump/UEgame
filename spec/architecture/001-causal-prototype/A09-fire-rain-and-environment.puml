@@ -1,0 +1,43 @@
+@startuml A09-fire-rain-and-environment
+!pragma layout smetana
+title A09 火灾、降雨与环境数据流（总体已确认；非类图）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+rectangle "A06 共同战斗子段\n已确认火球事件 / A08 实际运动\n环境火不产生角色伤害" as Combat
+rectangle "Director / A02\n阶段与驱动资格交接\n世界计时和真实耗时保持独立" as Director
+rectangle "A09 权威环境运行（UE）\n唯一燃料 / 火强 / 湿度 / 受烧覆盖\n雨程与旧时代游标 / 事件去重" as Env
+rectangle "规则火焰连续接触\n双方扫过范围 → 实际接触\n球面当地向上 / 草地小片" as Contact
+rectangle "ExperimentCore · 标准 C++20\n引燃来源政策 / 有限燃料\n180—300 秒雨程 / 潮湿 / 后果计划\n无 UObject、UE 时钟或特效依赖" as Core
+rectangle "A08 + A09 整组事务\n烧细 / 切口分段 / 状态裁分\n网格＋碰撞＋火源登记＋火湿一起发布\n失败保留旧状态" as Tx
+rectangle "Niagara / 动态材质\n火焰、雨、湿润与炭化\n只读表现，不决定传播" as FX
+rectangle "A07 导航\n实际碰撞快照 / 版本失效\n新布局真实构建就绪" as Nav
+rectangle "旧时代封存 → 三十年后局部布局\n旧雨已消费 / 旧火结束 / 无未决事务\n火灾枯木与新芽；清倒木、留树桩\n作为新年代初态，旧因果快照只读" as Revisit
+rectangle "环境完成的前置条件\n新 Epoch 状态 / 材料绑定 / 驱动已准备\n新布局碰撞 / 导航真实就绪\n随后匹配 TransitionToken 回报" as Ready
+Combat --> Env : 唯一实时调用 / 类型化输入
+Director --> Env : 撤旧驱动后授予结算驱动
+Env --> Contact : 分区、版本、两方运动
+Contact --> Core : 有时刻的真实接触
+Env --> Core : 同一规则：实时 / 补推进
+Core --> Tx : 准备计划 / 检查源版本
+Tx --> Env : 一次提交 / 更新火源集合
+Env --> FX : 已提交快照
+Tx --> Nav : 成功后的几何通知
+Env --> Revisit : 后果快照 / 新年代身份
+Revisit --> Nav : 新布局变更 / 请求构建
+Nav --> Ready : 新布局相关区域就绪
+Revisit --> Ready : 布局身份 / 版本
+Ready --> Director : 环境事实；其余就绪由 A02/A10 协调
+note right of Core
+  雨中：火球禁燃，残火可传播
+  共用雨程衰减，最迟 300 秒灭完
+  雨后潮湿：禁止新增引燃
+end note
+@enduml

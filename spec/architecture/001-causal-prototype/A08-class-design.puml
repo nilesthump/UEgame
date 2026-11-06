@@ -1,0 +1,98 @@
+@startuml A08-class-design
+!pragma layout smetana
+title A08 切口、几何事务与木体运动类图（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+class "AExperimentWorldDirector" as Director <<已有>>
+class "UExperimentCombatWorldComponent" as Combat <<A06 扩展>> {
+ + 唯一战斗步 / 共同子段
+ + 同组裁决 / 已确认前缀后接触
+}
+class "AExperimentWeapon" as Weapon <<A06 扩展>> {
+ - SwingRuntime / FWeaponCutProgress
+ + 提交预算差量与实际刀姿态
+}
+class "UTreeGeometryConfig" as Config <<UDataAsset>> {
+ 只读树形 / 几何精度 / 进深 / 运动参数
+}
+class "UTreeWorldComponent" as World <<UActorComponent>> {
+ - 登记弱绑定 / 事务 / DriverGeneration
+ + PrepareCutStep() / CommitPreparedStep()
+ + AdvanceMotion() / ResetForest()
+}
+class "ATreeMaterialActor" as Body <<AActor>> {
+ - 唯一 MaterialState / CutIds / 版本
+ + CaptureMaterial() / ApplyPreparedMaterial()
+ + ResetForRun()
+}
+class "UTreeGeometryComponent" as Geometry <<UDynamicMeshComponent>> {
+ - 派生 Mesh / Body / 凸体快照
+ + StageGeometry() / ValidateStagedBody()
+ + ActivatePreparedGeometry()
+}
+class "UTreeMotionComponent" as Motion <<UActorComponent>> {
+ - 唯一运动进度 / 受阻 / 重查资格
+ + PlanMotionSegment() / CommitMotionSegment()
+ + StopMotion()
+}
+class "FTreeMeshBuilder" as Builder <<UE 无状态>> {
+ + BuildCandidate() : 网格 / 封口 / 凸体
+}
+class "FTreeMotionQuery" as Query <<UE 无状态>> {
+ + CheckSweptMotion() / CheckSupportChange()
+}
+class "FTreeDataMapper" as Mapper <<UE 无状态>> {
+ + 冻结纯值 / 局部坐标 / 单位转换
+}
+class "experiment::TreeCutGeometry" as Math <<纯 C++20>> {
+ + 开口归属 / 实际可切前缀
+ + 投影并集 / 面积界 / 连接检查
+}
+class "experiment::TreeCutRules" as Rules <<纯 C++20>> {
+ + 资格 / 严格阈值 / 切削或断开计划
+}
+class "USphericalNavigationComponent" as Nav <<A07 已有>>
+
+Director *-- World
+Director ..> Body : 原始装配 / 派生身份预留
+Combat --> World : 共同子段 / 准备与提交
+Combat --> Weapon : 唯一攻击推进
+World --> Config : 强引用 / 只读
+World --> Body : 弱登记 / 唯一提交
+Body *-- Geometry : 活动体 + 隔离暂存体
+Body *-- Motion
+World ..> Mapper
+Mapper ..> Math : 纯值求算
+Mapper ..> Rules : 纯值求值
+World ..> Builder : 暂存构建
+World ..> Query : 运动 / 支撑检查
+World --> Motion : 唯一推进入口
+World --> Nav : 实际碰撞源版本 / 旧新范围
+Config -[hidden]down-> Mapper
+Mapper -[hidden]down-> Body
+Body -[hidden]down-> Builder
+Builder -[hidden]right-> Query
+
+note bottom of Weapon
+ 单刀预算按材料谱系 + CutId 累计
+ 只随成功事务消费；分段不补额度
+end note
+note bottom of Geometry
+ SceneRoot 无碰撞；显式查询本组件凸体
+ 暂存 NoCollision + AlwaysCreatePhysicsState
+ 新组有效后关闭旧组；失败保留旧组
+end note
+note bottom of Motion
+ 自身不 Tick / 不写角色生命或位置
+ 实际 World 变换唯一在 Actor
+ 导航、火湿状态不在本组件复制
+end note
+@enduml

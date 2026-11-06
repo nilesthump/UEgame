@@ -1,0 +1,76 @@
+@startuml A07-navigation-lifecycle
+title A07 路径请求与建图屏障（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+participant "Behavior / Director" as Caller
+participant "GoblinAIController" as AI
+participant "NavigationComponent" as Nav
+participant "PathFollowing" as Follow
+participant "Recast / Generator" as Backend
+
+group 正常请求：初版游戏线程同步求路
+Caller -> AI : 目标 + GoalRevision
+AI -> AI : 预登记 MoveRequestCookie / 结果接收上下文
+AI -> AI : 当前绑定 / 自有径向早期到达检查
+alt 绑定错误或真实已到达
+ AI --> Caller : 当前 Cookie 的明确结果（仅一次）
+else 需要路线
+ AI -> Nav : FindRoute(World 起终点 / 当前身份)
+ Nav -> Nav : 校验域 / 数据版本 / 区域 PendingBuild
+ opt 当前数据允许查询
+  Nav -> Backend : 显式后端，Nav 坐标查询
+  Backend --> Nav : 原生 Nav 路径 / NoPath
+  Nav -> Nav : 有路径才保留并派生 / 检查 World 路径
+ end
+ alt 得到合法路线
+  Nav --> AI : RouteKey / World 路径
+  AI -> Follow : RequestMove（旧 ID 仍保留至终止）
+  opt 替换旧请求同步产生取消
+   Follow --> AI : 旧 FAIRequestID 取消
+   AI --> Caller : 仅结算旧 Cookie / RouteKey，不结束替换后的请求
+  end
+  Follow --> AI : 新 FAIRequestID / 当前执行状态
+  AI -> AI : 关联新请求 ID；处理提前完成
+  Follow -> Follow : 读取实际移动进展 / 径向分段 / 真实目标到达
+  Follow --> AI : 当前 ID 完成或受阻（一次）
+  AI --> Caller : 当前目标结果 / 进展
+ else 不能建立路线
+  Nav --> AI : PendingBuild / NoPath / 几何或身份错误
+  AI --> Caller : 明确失败或等待，不能当作 Reached
+ end
+end
+end
+
+group 运行重启或更换导航域
+Caller -> Nav : 停止接纳，旧身份全部失效
+Nav -> Follow : 失效路径 / 取消自主导航
+note right of Follow : 不复位实际 Movement / 不清击飞速度
+Nav -> Backend : CancelBuild()
+activate Backend
+Backend -> Backend : 停止待建任务；等待已运行任务退出
+Backend -> Backend : 丢弃旧生成结果 / 清构建队列
+Backend --> Nav : 旧生成工作已排空
+deactivate Backend
+Nav --> Caller : 旧构建屏障完成
+Caller -> Caller : 各角色 ResetForRun 一次；准备本轮实体与环境
+Caller -> Nav : 使用新轮配置和几何准备导航
+Nav -> Nav : 替换几何快照 / 旧数据清理 / 新 BuildKey
+Nav -> Backend : 登记更新并请求新构建
+Backend --> Nav : 构建进度 / 完成通知
+Nav -> Nav : 核对索引更新、任务、版本和必需覆盖
+Nav --> Caller : 全部通过才发布新 NavRevision / Ready
+Caller -> Caller : 汇合其余 WorldReady 条件，按准备契约恢复
+end
+
+note over Nav, Backend
+ 普通动态障碍：物理先改变 → 相关旧/新区域 PendingBuild → 相交路径失效
+ 稳定快照批量构建，后到变化排下一批；不能每帧取消全部任务
+ 受影响区域更新完成且无更晚修订才可查询；未受影响区域可继续
+end note
+@enduml

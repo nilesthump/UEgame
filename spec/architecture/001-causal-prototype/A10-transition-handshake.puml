@@ -1,0 +1,55 @@
+@startuml A10-transition-handshake
+title A10 遮罩、共同布局与控制恢复（类接口已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+participant "Session\n经 Subsystem" as S
+participant "Director\n唯一协调 / 执行门" as D
+participant "Presentation\nTimeSkipWidget" as P
+participant "A09 Transition\nA10 Layout" as W
+participant "A07 Navigation" as N
+S -> D : TimeSkip 效果：Run / Token / LockedBranch
+D -> D : 关闭旧阶段接纳，保持旧支撑和实体
+D -> P : BeginCover(Token, Generation, Viewport)
+P -> P : 实际全视口不透明覆盖采样\n固定黑屏保持终态
+P --> D : Covered（内部凭据，不是第四项 Ready）
+D -> W : 许可旧时代结算＋回访准备
+W -> W : A09 独占环境 / A10 独占人物与内容\n依赖实际落点时等待环境准备
+W --> D : 两领域准备结果 / 版本
+D -> N : 联合最终布局 / BuildKey
+N --> D : 匹配构建排空 / 无更新脏版本
+D -> W : 验证实体、内容、环境、碰撞与版本
+W --> D : 同一联合布局的领域证明
+D -> S : EnvironmentReady + RevisitLayoutReady
+D -> P : BeginReveal(当前联合证明)
+P -> P : 最终场景淡入＋时间文字自然终点\n固定透明终态，执行门仍关闭
+P --> D : PresentationCompleted(当前代次/视口)
+D -> D : 重新验证本地证明
+D -> S : PresentationReady
+S -> D : RequestControlRestore（一次）
+opt 必需布局在就绪后又变化
+  D -> D : 撤销联合/表现凭据，保留待完成 Restore
+  D -> P : 失效旧代次，重新遮罩
+  P --> D : 新 Covered
+  D -> W : 才允许变更；重新联合构建与验证
+  W -> N : 经 Director 协调新 BuildKey
+  N --> D : 最新布局无更新脏版本
+  D -> P : 新证明自然淡入
+  P --> D : 新代次正常终点
+  D -> D : 重新验证全部本地凭据\n不等待 Session 再发第二次 Restore
+end
+D -> D : 启用新 Epoch 实时驱动，执行门仍关闭\n核对实际 Pawn / Movement / Camera / Input
+D -> S : ControlRestored(原 Token, 实际发生时刻)
+S -> S : 校验并提交 Revisit
+S --> D : Revisit 已提交效果
+D -> D : 同一线程开放合法动作 / BindRevisit
+note over S,N
+取消先失效身份再 Stop；任何旧 Token / 视口 / 代次不补成 Ready。
+无首次输入、松旧按键或地图捕获等待；没有三十年连续模拟。
+end note
+@enduml

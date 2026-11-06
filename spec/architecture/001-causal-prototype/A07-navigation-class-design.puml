@@ -1,0 +1,94 @@
+@startuml A07-navigation-class-design
+!pragma layout smetana
+title A07 球面导航适配类图（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+class "AExperimentWorldDirector" as Director <<已有>>
+class "ASphericalWorldRoot" as Root <<A04 已有>> {
+ 唯一球心 / 半径 / 参考基
+}
+class "USphericalNavigationConfig" as Config <<UDataAsset>> {
+ 只读有效域 / 精度 / 净空 / 更新参数
+}
+class "USphericalNavigationComponent" as Nav <<UActorComponent>> {
+ - ChartKey / BuildKey / 区域更新状态
+ - 原生 Nav 路径登记与失效观察
+ + PrepareNavigation() / FindRoute()
+ + InvalidateGeometry() / CancelAndDrain()
+}
+class "USphericalNavGeometryComponent" as Geometry <<UPrimitiveComponent>> {
+ - SourceKey / SourceGeometryRevision
+ - 冻结 Nav 三角形 / 保守 Bounds
+ + GetNavigationBounds()
+ + DoCustomNavigableGeometryExport()
+}
+class "experiment::NavChartMath" as Math <<纯 C++20>> {
+ + ValidateDomain()
+ + WorldToNav() / NavToWorld()
+ + 误差 / 尺度界
+}
+class "UNavigationSystemV1" as System <<引擎已有>> {
+ Nav 八叉树 / Bounds / dirty 更新
+ 后端登记与生成生命周期
+}
+class "ARecastNavMesh" as Backend <<引擎已有>> {
+ 原生 Nav 坐标 / tile / 查询
+ + CancelBuild()
+}
+class "AGoblinAIController" as Controller <<行为类图>> {
+ - 请求身份映射 / 提前完成上下文
+ + RequestSphericalMove()
+}
+class "USphericalPathFollowingComponent" as Follow <<UPathFollowingComponent>> {
+ - World 路径 / 唯一分段游标
+ - 当前引擎请求执行态
+ + FollowPathSegment() / UpdatePathSegment()
+ + 径向到达 / 暂停 / 取消 / 结果
+}
+class "USphericalCharacterMovementComponent" as Movement <<行为类图>> {
+ + SubmitAgentMove() : 实际胶囊扫掠
+}
+
+Director *-- Nav
+Director *-- Geometry : 按登记源创建
+Nav --> Root : 弱绑定 / 冻结参考
+Nav --> Config : 强引用 / 只读
+Nav --> Geometry : 登记 / 发布
+Nav ..> Math : 纯值求算
+Nav --> Backend : 唯一显式后端 / 弱绑定
+Geometry ..> System : Nav 域导出 / Bounds
+System --> Backend : 管理生成与提交
+Controller --> Nav : World 起终点 / GoalRevision
+Controller *-- Follow
+Nav --> Follow : 同 RouteKey 的 World 路径 / 失效
+Follow ..> Movement : 径向自主移动意图
+Follow --> Controller : 一次完成 / 失败 / 取消
+
+note bottom of Geometry
+ 原碰撞源弱关联，真实碰撞保持 World 空间
+ 派生组件无可见代理 / NoCollision
+ Nav 顶点以 Identity 导出，禁止普通重复导出
+ 非活动区不新增几何
+end note
+note bottom of Backend
+ 当前优先已有后端 + 派生几何 + 完整适配
+ 生成器扩展 / 源码补丁按验证缺口再具体提出
+ 旧任务须 CancelBuild 排空，不能只换版本号
+end note
+note bottom of Follow
+ AIController 唯一默认跟随子组件
+ 原生 FNavMeshPath 由 Nav 组件保留
+ World 普通路径不带 Recast NodeRef / NavData
+ 关闭默认 Actor 观察 / 自动重算 / 末段直追
+ HasReached 非 virtual，须接管早到达与分段链
+end note
+@enduml

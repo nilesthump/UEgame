@@ -1,0 +1,50 @@
+@startuml A03-linux-core-build
+!pragma layout smetana
+title A03 Linux/GCC 补充方案（已确认，2026-11-05）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+
+artifact "同一份 ExperimentCore 源码\n标准 C++20；无 UE / OS API 依赖" as Core
+package "Linux 核心路径：Ubuntu 24.04 / x86_64" {
+ component "CMake 3.28 + GCC 13（g++）\nC++20；关闭 GNU 扩展" as LinuxBuild
+ artifact "Linux 核心静态库" as LinuxLib
+ component "规则验证可执行程序\n测试事实 / 时间 → Session → 结果" as Check
+ component "CTest\n规则场景检查" as Tests
+ LinuxBuild --> LinuxLib
+ LinuxLib --> Check : 链接
+ Tests --> Check : 运行并检查结果
+}
+package "Windows UE 路径：已确认" {
+ component "UBT / MSVC 14.38\n同一源码重新编译" as WinBuild
+ component "UEgame Runtime 模块\n核心 + UE 适配 / 世界 / 表现" as Game
+ artifact "Win64 Development 包" as WinPackage
+ WinBuild --> Game
+ Game --> WinPackage : UE 原生打包流程
+}
+package "未来 Docker：构建边界已确认，宿主协议另行设计" {
+ component "Ubuntu 构建阶段\nGCC / CMake / 规则验证" as Builder
+ component "Ubuntu 运行阶段\n选定宿主 + 必要动态库 / 配置" as Container
+ component "Linux 可执行宿主\n输入事实和时间；接收效果" as Host
+ Builder --> Container : 复制宿主及匹配依赖
+ Host --> Container : 必须具备进程入口
+}
+Core --> LinuxBuild
+Core --> WinBuild
+Core ..> Builder : 后续镜像构建使用相同源码
+LinuxLib ..> Host : 源码/库复用；接口另行确认
+note bottom of Core
+共享源码，不跨平台共享二进制。
+Linux .a/.so 不直接链接进 Windows UE。
+end note
+note bottom of Container
+规则验证程序不是完整服务器。
+碰撞 / 物理 / 导航仍由 UE 世界模拟承担。
+本轮不构建或发布镜像。
+end note
+@enduml

@@ -1,0 +1,26 @@
+@startuml A06-latitude-trajectory
+!pragma layout smetana
+title A06 纬度圆与任意航向弹道（总体已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+top to bottom direction
+rectangle "同源空间\n球心 C + 北轴 K + 零经度 E0\n全部合法弹道覆盖准备验证" as Space
+rectangle "实际发射口 + A05 最终相机方向\n分解 r0 / 纬度 / 经度 / 俯仰 / 航向" as Launch
+rectangle "标准 C++20 / GCC 纯值求解\n径向速度、南北速度、东西速度\n东西向纬度圆；南北/斜向改变纬度" as Math
+rectangle "UE 唯一弹体状态\n按实际路程采样 / 分段碰撞复核\n命中或射程结束" as Runtime
+rectangle "A06 接触 / 伤害批次\n全部目标提交后统一判成败" as Result
+Space --> Launch
+Launch --> Math
+Math --> Runtime
+Runtime --> Result
+note right of Math
+纬圈半径 = r cos(纬度)
+纬圈圆心在北轴上，通常不在球心。
+俯仰改变 r，圈半径及圈心随之改变。
+合法弹道避开极点；不静默修改射程。
+end note
+@enduml

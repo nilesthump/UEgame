@@ -1,0 +1,38 @@
+@startuml A11-checkpoint-overview
+!pragma layout smetana
+title A11 快照记录点与统一恢复（总体已确认；类图单独确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+rectangle "记录点请求\n初始基线 / 阶段边界 / 阶段内间隔 / 终态" as Trigger
+rectangle "共同稳定边界 · 关闭状态写入口\n战斗/材料/环境提交完成，核心事实与效果对齐\n不是逐个读取仍在变化的 Actor" as Barrier
+rectangle "不可变完整快照\nSession + 各世界领域 + 诊断 + 结果/待导出记录\n同 CaptureId / CommitId / 版本 / 固定字节" as Bundle
+rectangle "统一提交作业\n载荷写入/刷写/核验 → 清单最后发布 → 整代校验\n首次失败后最多再试3次，共最多4次尝试" as Commit
+rectangle "已提交快照 · 唯一恢复依据\n上一有效代保留，终态一旦提交不可回到游玩" as Store
+rectangle "JSON Lines 导出\n由已提交记录重建，稳定结果身份\n失败也有限重试，不能撤销已提交终态" as Export
+rectangle "提交耗尽 / 必要技术故障\n核对是否实际上已成功；否则恢复最近有效点\n旧候选正式发布资格失效" as Failed #FFF7DD
+rectangle "同 Run 全场恢复\n新恢复代次，旧工作排空，遮罩，领域装入\n碰撞/导航/控制重新验证，不复用旧 Ready" as Restore
+rectangle "RecoveryPaused\n存储复核 + 新恢复血缘继续点持久提交\n成功才继续；仍失败则暂停，禁止循环回退" as Paused #FFF7DD
+rectangle "继续当前阶段\n只接纳新恢复代次的动作\n以后仍在稳定记录点捕获快照" as Resume
+rectangle "正常 Ended 后手动新轮\n新 RunId / 初始清单复位 / 日志与快照保留\n新初始快照提交成功后才开轮" as Reset
+Trigger --> Barrier
+Barrier --> Bundle
+Bundle --> Commit
+Commit --> Store : 完整提交确认
+Store --> Export : 可重建输出
+Commit --> Failed : 首次＋3次重试仍失败
+Failed --> Restore : 有本轮兼容有效点
+Restore --> Paused : 全部一致但尚未开放玩法
+Paused --> Resume : 继续点提交与实际准备全部成功
+Store --> Reset : 终态已提交 + 用户手动意图
+note bottom of Failed
+无有效点 / 恢复失败 / 历史不明 → 暂停诊断。
+重试计数和故障恢复锁不随游戏快照回滚归零。
+磁盘不可写时不能宣称新异常已持久保存。
+end note
+@enduml

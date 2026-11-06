@@ -1,0 +1,74 @@
+@startuml
+title A12 已确认类协作 · 执行、清理、证据和本人反馈
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam ArrowColor #475569
+skinparam sequenceParticipantBackgroundColor #EFF6FF
+skinparam sequenceParticipantBorderColor #2563EB
+participant Orchestrator as O
+participant ProcessRunner as P
+participant "Automation Test /\nLatent Command" as T
+participant ScenarioDriver as D
+participant "既有世界所有者" as W
+participant Evidence as E
+actor "用户 / 实际观察者" as U
+O -> E : 锁定内容、PlanDigest、预期Case清单
+E --> O : 已校验计划 / 明确缺项
+O -> P : StageInvocation + 专属目录 + 有限Deadline
+P -> T : 启动测试宿主；提供请求身份/Case
+alt 宿主正常推进并最终退出
+T -> T : GetTests / RunTest；核对资格
+T -> D : Begin(Case, WorldBinding)
+loop 有效世界与截止时间内
+  T -> D : latent Update → Pump
+  D -> W : 真实操作 / 既有接口
+  W --> D : 实际结果 / 只读证据
+end
+alt 断言失败 / 场景超时 / 意外卸载
+  D --> T : Failure + BeginCleanup
+  T -> T : AddError（不是仅返回true）
+else 断言完成
+  D --> T : AssertionsComplete + BeginCleanup
+end
+loop 有界清理
+  T -> D : PumpCleanup
+  D -> W : 先取消手势再释放键轴\n解绑 / 撤销故障 / 取消并排空
+  W --> D : 实际清理状态
+end
+alt 清理失败
+  D --> T : Failed + HostContaminated
+  T -> T : AddError；拒绝后续场景复用宿主
+else 清理成功
+  D --> T : FinalOutcome
+end
+T -> T : Update=true，结束该命令\n由框架保存最终测试状态
+T --> P : 原生报告 / 日志；进程退出
+else 外层超时 / 取消 / 提前崩溃
+  P -> P : 只终止本次拥有的进程组\n确认退出，无法确认则保留污染状态
+end
+P --> O : ProcessReceipt（不决定Passed）
+O -> E : 校验回执 + 原生逐项状态 + 证据身份
+E --> O : Passed / Failed / Blocked / NotRun
+note over O,E
+  Linux同样按原请求回收真实构建与CTest证据；不假定WSL/Docker。
+  缺报告、零执行、跳过、旧内容或清理失败不得通过。
+end note
+opt 独立包可运行，开展人工技术检查
+  O -> U : 指定包及检查项：试听 / 视觉 / 普通操作
+  U -> E : Import-ManualObservation（实际观察）
+  E --> O : 对应包的技术检查结果 / 未测限制
+end
+opt 必需技术项通过，形成实际受测候选包
+  O -> U : 对应BuildId的普通玩法与检查
+  U -> E : Import-ExperienceFeedback\n用户原话与人工两项评价
+  E -> E : 只读关联A11结果；四类覆盖\n恢复/各片段媒体/Unknown分别保留
+end
+O -> E : Evaluate-Acceptance / Write-ValidationSummary\n所有路径均汇总，缺反馈保持未完成
+E --> O : 分项结论 + 证据引用 + 已知限制\n写入或读回失败不宣称交付记录完整
+note over E,U
+  用户感受不由机器生成；反馈不修改游戏终态。
+  不限定试玩轮数；字幕送达不结清正常语音验证。
+end note
+@enduml

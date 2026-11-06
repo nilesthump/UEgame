@@ -1,0 +1,63 @@
+@startuml A09-material-transaction
+title A09 共同前缀与材料 / 环境一次发布（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+participant "当前唯一驱动\nA06 或 Transition" as Driver
+participant "A08 TreeWorld" as Tree
+participant "A09 World" as World
+participant "ContactQuery / Mapper\n纯 Geometry / Rules" as Core
+participant "Tree Actor / Geometry" as Body
+participant "A07 / Presentation" as View
+Driver -> Tree : PrepareMotionSpan(Lease / 区间 / 角色支撑)
+Tree --> Driver : 只读路径预演 / PoseRevision；不移动
+Driver -> World : PrepareAdvance(同源路径 / 已接纳输入)
+World -> Core : 天气 / 火焰接触 / 燃料边界，求共同最早前缀
+Core --> World : 纯计划 / 实际发生覆盖 / 烧细请求
+World --> Driver : PreparedPatch 句柄 / 最早边界
+Driver -> Driver : 与 A06 事件合并，封闭同刻接纳集合\n更早限制出现则截短重算；不沿用旧长前缀
+Driver -> Tree : PrepareCutStep / ShapeChange / MotionPrefix
+Tree -> Tree : 边界 Burn 候选 → 新剑切约束\n不倒改边界之前路径
+Tree -> World : PrepareMaterialTransfer(最终材料映射, PendingPatch)
+World -> Core : 只裁分已演算结果；不再次推进火雨
+Core --> World : 燃料守恒 / 父子分区 / 火源绑定候选
+World --> Tree : 完整环境参与句柄
+Tree -> Body : 准备完整几何 / 暂存碰撞 / 姿态前缀
+Body --> Tree : 已验证候选或明确错误
+Tree --> Driver : Prepared；尚未发布 / 未消费输入
+Driver -> Tree : CommitPreparedStep(预期版本)
+Tree -> World : ValidatePreparedPatch(身份 / 边界 / 源版本)
+alt 准备或版本无效
+  Tree -> World : AbortPreparedPatch()
+  Tree --> Driver : Rejected；旧姿态 / 火湿 / 消费位置保持
+else 候选全有效
+  Tree -> Tree : 进入禁止重入查询屏障
+  Tree -> Body : 全部新碰撞启用并复核，暂时保留旧组
+  alt 激活失败
+    Tree -> Body : 关闭新组 / 复核旧组
+    Tree -> World : AbortPreparedPatch()
+    Tree -> Tree : 关闭事务 / 释放屏障
+    Tree --> Driver : 失败；保留原输入待处理，不重放旧伤害
+  else 全组成功
+    Tree -> Body : 关闭旧组；发布材料 / 姿态 / 版本
+    Tree -> World : PublishPreparedPatchNoFail(CommitGuard)
+    note over Tree,World
+      无分配、无外部回调、无递归 Commit
+      火湿 / 活动火源 / 历史 / 游标 / 输入消费同次发布
+      需要时同一屏障提交 A06 刀预算与实际剑前缀
+    end note
+    Tree -> Tree : 记录唯一终态 / 释放屏障
+    Tree -> View : 实际几何变化 / 已提交环境 View
+    Tree --> Driver : CommittedReceipt；随后才推进后续区间
+  end
+end
+note over Driver,World
+  纯火湿且无木体变更时由 World 同等屏障提交
+  同一成功事务重投只返回回执，不再扣燃料
+end note
+@enduml

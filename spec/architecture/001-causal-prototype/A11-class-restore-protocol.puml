@@ -1,0 +1,89 @@
+@startuml A11-class-restore-protocol
+title A11 已确认类协作 · 全场装入、继续点提交、按阶段激活
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+hide footbox
+participant "Recovery\nCoordinator" as C
+participant "Store / Codec" as S
+participant "Session /\nClockRules" as Core
+participant "Director /\nSnapshotComponent" as W
+participant "各领域 /\nNavigation" as D
+participant "Presentation /\nController" as UI
+
+C -> S : FindRecoveryPoint / LoadVerified / DecodeAndValidate
+S --> C : 合法整代或明确错误
+alt 无合法点 / 版本不符 / 历史不明或冲突
+  C -> C : 保持暂停，不选择猜测分支
+else 已提交终态
+  C -> Core : RestoreCommittedTerminal(VerifiedResult)
+  Core --> C : Ended + 唯一结果
+  C -> C : 重建导出；不进入可玩恢复
+else 可恢复非终态
+  C -> C : 同 Run，新 RestoreId / RecoveryGeneration / ContinuationId
+  C -> W : 停止写入，失效旧运行凭据
+  W -> D : 退出临界区；CancelAndDrain 旧工作
+  W -> UI : 实际遮罩，清旧输入/播放/控制凭据
+  C -> Core : Validate + PrepareCheckpointRestore
+  C -> W : PrepareRestore(ImmutableTarget)
+  W -> D : 所有者只读预检，构造依赖步骤
+  break 任意预检/隔离失败
+    C -> C : RecoveryPaused；不装入、不开放
+  end
+  C -> Core : CommitCheckpointRestore（玩法门关闭）
+  break 核心装入失败
+    C -> C : 停止；不修改世界
+  end
+  loop 依赖顺序逐步装入，RestoreId + StepId + EntityId
+    C -> W : ApplyNextRestoreStep()
+    W -> D : RestoreCheckpointValue()
+    D --> W : 已核验成功 / 明确失败
+    break 任一步失败
+      W --> C : RecoveryPaused；保持遮罩和关闭写入口
+    end
+  end
+  W -> D : 重建碰撞 / 导航 / 绑定，保留逻辑动作去重
+  W -> UI : 重建内容/视口/输入资格（不补造送达）
+  break 任一重建或验证失败
+    W --> C : 停止；不得捕获半恢复世界
+  end
+  C -> Core : RebaseRecoveredTiming(新进程锚点)
+  Core --> C : 有效分支累计与技术恢复历史分开
+  C -> W : VerifyRestoredCut()
+  W --> C : FRecoveryReadinessProof 或失败
+  break 证明无效
+    C -> C : 保持暂停
+  end
+  note over Core,UI
+  旧 Ready/Token/RestoreControlIssued 不具新代次资格。
+  TimeSkip 只保留逻辑步骤，当前切点完整不等于最终回访完成。
+  end note
+  C -> S : 捕获一致继续点，首次 + 最多3次重试
+  S --> C : 对应当前作业的 Committed / 失败
+  break 继续点失败或身份不匹配
+    C -> C : RecoveryPaused；本 Incident 不再次自动回退
+  end
+  C -> W : 再核验当前恢复证明；变脏则先重建
+  break 实际资格不成立
+    C -> C : 暂停，不凭磁盘 Ready 放行
+  end
+  C -> Core : ActivateRecoveredCheckpoint(新代次 + 证明摘要)
+  Core --> C : 新签发类型化恢复效果，不重放旧事实
+  alt Preparing
+    C -> W : 完成初始世界/控制就绪与揭示
+    W -> Core : 实际 WorldReady → WorldStarted / Rescue
+  else Rescue / Revisit
+    C -> W : 解除遮罩并核验，开放当前阶段合法动作
+    note over Core,W : 不重发伤害/落地/ActionUsed；不重设回访起点
+  else TimeSkip
+    C -> W : 保持遮罩；只开放授权结算/布局驱动
+    W -> D : Resume 逻辑进度，不重置已恢复数据
+    W -> UI : A10 两世界 Ready → 淡入 → 第三 Ready
+    UI -> Core : 实际控制恢复握手 → Revisit
+  end
+end
+@enduml

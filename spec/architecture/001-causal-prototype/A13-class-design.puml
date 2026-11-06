@@ -1,0 +1,100 @@
+@startuml A13-class-design
+!pragma layout smetana
+title A13 类图 · 总体与具体类均已确认
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+top to bottom direction
+
+package "宿主与配置" {
+class "UExperimentSubsystem\n已有 · 生命周期与设置值" as Host {
+  FLocalAudioSettings（唯一）
+  + GetAudioSettings()
+  + ApplyAudioSettingsIntent()
+}
+class "UExperimentAudioConfig\n新增 · UDataAsset" as Config {
+  Cue / Voice 绑定与资产版本
+  + ValidateBindings(RevisitCatalog)
+  + ResolveCue() / ResolveVoice()
+}
+class "UExperimentAudioSettingsWidget\n新增 · UUserWidget" as Widget {
+  + ShowLevels()
+  + SubmitLevelsIntent()
+}
+Host o-- Config : 强引用
+Host *-- Widget
+Widget ..> Host : 意图，不直接播放
+}
+
+package "UE 世界 · Director 所有的默认组件" {
+class "URevisitNarrativeComponent\n已有 · 唯一内容作业" as Narrative {
+  PlaybackJob / 降级资格
+  + AcceptMediaReceipt()
+  + RestartAsTextFallback()
+}
+class "URevisitPresentationComponent\n已有 · 媒体证据聚合" as Present {
+  FMediaPresentationState
+  FVoiceDuckLease
+  + PresentMedia() / CaptureMediaSample()
+  + FreezePresentation() / ResumePresentation()
+  + CancelPresentation()
+}
+class "URevisitVoiceComponent\n新增 · 一份可取消语音实例" as Voice {
+  FVoiceInstanceKey / UAudioComponent
+  + PrepareVoice() / StartPreparedVoice()
+  + CaptureVoiceStatus() / RequestPause()
+  + ResumeOrFault() / CancelVoice()
+}
+class "UExperimentAudioWorldComponent\n新增 · 世界声音与项目混音" as World {
+  声音实例 / 去重水位 / Mix 句柄
+  + ConsumeCommittedEvents()
+  + ReconcileLoops() / ApplyLocalLevels()
+  + AcquireVoiceDuck() / ReleaseVoiceDuck()
+  + FreezeMedia() / ResetForBinding()
+}
+Narrative --> Present : 当前唯一作业
+Present --> Voice : 绑定后播放
+Voice ..> Present : 状态候选
+Present --> World : 当前作业 duck 租约
+}
+
+package "纯核心 · 标准 C++20 / Linux GCC13" {
+class "experiment::RevisitRules\n已有 · 无状态媒体政策" as Rules {
+  + EvaluateDelivery(纯值)
+  Wait / Complete / Interrupt /
+  RestartAsTextFallback
+}
+class "experiment::ExperimentSession\n已有 · 唯一送达事实和结果" as Session {
+  + 既有事实提交与版本/代次校验
+}
+}
+
+Host --> World : 设置快照\n弱绑定
+Host *-- Session
+World --> Config : Cue / 混音
+Voice --> Config : 只读语音绑定
+Narrative ..> Rules
+Narrative ..> Host : Completed 后提交单事实
+Present ..> Rules : 经既有 Mapper 传纯值
+World -[hidden]down-> Rules
+
+note bottom of Voice
+每次新播放用新实例和创建时身份。
+Finished 不是剧情 Completed。
+end note
+note bottom of Session
+素材 agent 在开发准备阶段工作，
+不是游戏运行时类；不增加 TTS 服务。
+end note
+legend bottom
+四个新增职责类；音量为 Subsystem 的值，不再造设置管理器。
+RevisitConfig 保留唯一 FText；既有 DialogueWidget 显示全文。
+A11 只保存逻辑片段/版本/事实，不保存音频设备游标。
+endlegend
+@enduml

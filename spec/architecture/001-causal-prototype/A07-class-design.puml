@@ -1,0 +1,104 @@
+@startuml A07-class-design
+!pragma layout smetana
+title A07 行为与共用移动类图（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+class "AExperimentWorldDirector" as Director <<已有>>
+class "UGoblinConfig" as Config <<UDataAsset>> {
+ 只读行为 / 进展 / 重试 / 移动参数
+}
+class "UEncounterBehaviorComponent" as Encounter <<UActorComponent>> {
+ - TargetEntityKey / TargetRevision
+ - 事实消费标记 / 本轮名单弱绑定
+ + ApplyDirectedFact()
+ + AdvanceDecisions() / StopRun()
+}
+class "AGoblinCharacter" as Goblin <<ACharacter>> {
+ + 接入落地事实
+ + ResetForRun() : 唯一角色复位入口
+}
+class "UGoblinBehaviorComponent" as Behavior <<UActorComponent>> {
+ - GoalRevision / 请求关联
+ - PickupAttempt / 下一招索引
+ + CaptureDecision() / ApplyDecision()
+ + OnMoveResult()
+}
+class "AGoblinAIController" as Controller <<AAIController>> {
+ - Cookie 与 FAIRequestID 对应
+ + RequestSphericalMove() / CancelGoal()
+ + MoveTo() / UpdateControlRotation()
+}
+class "USphericalCharacterMovementComponent" as Movement <<UCharacterMovementComponent>> {
+ - 实际速度 / 接地 / 径向姿态 / 档位
+ + BindMotionContext() / SubmitAgentMove()
+ + 适配 RequestPathMove / RequestDirectMove
+}
+class "UExperimentMovementComponent" as PlayerMovement <<A05 结构扩展已确认>> {
+ - 唯一 DodgeRuntime / ExecutionKey
+ + TryCommitDodge() / CaptureDodgeProtection()
+}
+class "UUnarmedAttackComponent" as Unarmed <<UActorComponent>> {
+ - 拳击 ActionKey / 阶段 / 轨迹 / 有效命中集
+ + TryStart() / SampleMotion() / Cancel()
+}
+class "UExperimentCombatantComponent" as Combatant <<A06 已有>> {
+ - 唯一生命 / 硬直 / LaunchSerial
+}
+class "UExperimentCombatWorldComponent" as Combat <<A06 已有 / 扩展>> {
+ + 统一接纳攻击与动作序号
+ + 唯一推进棒 / 拳 / 弹体
+ + 真实接触 / 计划提交 / 稳定批次
+}
+class "FGoblinDataMapper" as Mapper <<UE 无状态>> {
+ + UE 快照与纯值转换
+}
+class "experiment::GoblinRules" as Rules <<纯 C++20>> {
+ + EvaluateTarget()
+ + EvaluateBehavior()
+ + EvaluatePickupProgress()
+}
+class "USphericalPathFollowingComponent" as Follow <<详见导航类图>>
+
+Director *-- Encounter
+Encounter --> Config : 只读强引用
+Encounter --> Behavior : 稳定名单 / 弱绑定
+Encounter ..> Mapper : 最终目标求值
+Goblin *-- Behavior
+Goblin *-- Movement : 替换默认移动组件
+Goblin *-- Combatant
+Goblin *-- Unarmed
+Controller --> Goblin : UE Possess / 弱关联
+Controller *-- Follow : 替换默认跟随组件
+Movement <|-- PlayerMovement : 玩家仍只有一个移动组件
+Behavior --> Encounter : 只读共同目标
+Behavior ..> Mapper : 行为快照 / 计划
+Mapper ..> Rules : 值传入 / 值返回
+Behavior ..> Controller : 移动目标请求
+Behavior ..> Combat : 棒 / 拳 / 拾取请求
+Combat --> Unarmed : 登记并唯一推进
+Combat --> Combatant : 伤害 / 落地提交
+Combat --> Encounter : 同步提交可信指向事实
+
+note bottom of Rules
+ 无 UObject、无世界副本、无自行读时钟
+ 共同目标同步提交；完整行为在移动前决策
+end note
+note bottom of PlayerMovement
+ 通用基类接收普通 Run / Entity 移动绑定
+ NPC 不携玩家输入或相机身份
+ 停止自主导航不清除重力 / 外部击飞
+end note
+note bottom of Unarmed
+ 自身不 Tick；NPC 不发布玩家使用统计
+ 每只仅一个棒或拳实例；阶段由 A06 保存
+end note
+@enduml

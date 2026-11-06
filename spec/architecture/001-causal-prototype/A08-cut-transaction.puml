@@ -1,0 +1,54 @@
+@startuml A08-cut-transaction
+title A08 切削事务与实际剑轨迹（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+participant "A06 CombatWorld / Weapon" as Combat
+participant "TreeWorld" as World
+participant "Mapper / 纯 Geometry / Rules" as Core
+participant "Builder / GeometryComponent" as Geometry
+participant "Tree Actor / Motion" as Body
+participant "A07 Navigation" as Nav
+Combat -> World : PrepareCutStep(Action / 预算版本 / 共同子段候选)
+World -> Body : 冻结材料、GeometryKey、运动 / 支撑样本
+World -> Core : 局部纯值 / 进深 / 切口 / 外轮廓
+Core --> World : 暂定前缀 / 材料计划 / 预算差量或拒绝
+World -> World : 多木体取共同最早前缀，重算相关候选
+World -> Geometry : 同步构建完整网格 / 封口 / 凸体
+Geometry -> Geometry : 隔离暂存 body；验证实际 shapes
+alt 规则、支撑、构建或版本失败
+ Geometry --> World : 明确失败
+ World --> Combat : Rejected + 旧材料允许前缀
+ note over Combat, Body : 不消费预算 / 不扩大切口 / 不排队补刀 / 不先穿木
+else 准备完成
+ Geometry --> World : Prepared（仍未公开几何或允许穿木）
+ World --> Combat : 暂定前缀 / TransactionKey
+ Combat -> Combat : 完成同组裁决，重查攻击与预算版本
+ alt 同组改变了允许前缀或取消当前候选
+  Combat -> World : 丢弃或按新前缀重新准备
+ else 计划仍有效
+  Combat -> World : CommitPreparedStep(预期版本)
+  World -> World : 重验全组 / 进入禁止重入的查询屏障
+  World -> Geometry : 全新组 NoCollision → QueryOnly，复核
+  alt 激活失败
+   World -> Geometry : 关新组；保留并确认旧组
+   World -> World : 关闭失败事务 / 释放查询屏障
+   World --> Combat : Rejected + 旧材料前缀
+  else 全组成功
+   World -> Geometry : 关闭旧组 / 切换活动几何
+   World -> Body : 提交材料 / 谱系 / 版本 / 一次运动计划
+   World -> Combat : 成功点内仅提交预算差量和刀姿态，不重入查询
+   World -> World : 关闭事务，释放屏障
+   World -> Nav : 实际碰撞快照 / 旧新范围，失效路径
+   World --> Combat : Committed（允许继续处理接触）
+   Combat -> Combat : 按已确认前缀处理后续有效区间接触
+   note over Combat, Nav : 全部关联提交后再稳定批次；外部委托不得观察半组
+  end
+ end
+end
+@enduml

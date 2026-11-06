@@ -1,0 +1,55 @@
+@startuml A04-spherical-world
+!pragma layout smetana
+title A04 球体世界与小地图：总体已确认
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+
+component "同源配置\n球心 / 半径 / 局部基 / 地标" as Config
+package "唯一实际 UWorld" {
+  component "仅活动区：局部球面与静态碰撞\n小镇—道路—周边森林\n空气墙 / 救援与回访位置" as World
+  component "UE 世界实体与模拟\n玩家 / AI / 物理 / 环境\nActor / Component 唯一持有实体状态" as Sim
+  component "UE 适配边界\n时间与事实 / 完成回报\n执行并校验核心效果" as Adapter
+  component "地图显示快照\n玩家变换 + 允许的地标\n轮次与配置有效性校验" as Snapshot
+}
+package "标准 C++20 / Linux GCC 可独立检查" {
+  component "球面值与无状态数学\n径向上向 / 单位约定 / 投影\n不保存实体状态" as Math
+  component "已确认 ExperimentSession / FlowRules\n实验规则与状态\n不承担球面物理或渲染" as Rules
+}
+package "同一 UWorld 内的只读表现" {
+  component "低面数示意球 + 活动区标记\n非活动部分仅示意底色\n无碰撞 / AI / 游戏事件\n不显示遇险人物或未来分支" as Globe
+  component "SceneCapture2D\n仅捕获表现组件 / 按需刷新" as Capture
+  component "RenderTarget → UMG\n旋转表现球 / 调整相机距离" as UI
+}
+
+Config --> World : 布置与边界
+Config --> Math : 只读参数
+World --> Sim : 地表 / 布局
+Sim --> Adapter : 可信事实
+Adapter --> Rules : 显式时间与事实
+Rules --> Adapter : 已提交结果与效果
+Adapter --> Sim : 合格的世界操作
+Sim --> Snapshot : 当前玩家变换
+Config --> Snapshot : 普通地标
+Snapshot --> Math : UE 类型转纯数值
+Math --> Globe : 投影后的只读显示数据
+Globe --> Capture
+Capture --> UI : 纹理
+UI --> Globe : 仅地图旋转
+UI --> Capture : 仅地图缩放 / 刷新
+
+note left of World
+已明确：空气墙限制活动范围。
+非活动区不建场景模型、地表碰撞或导航。
+end note
+
+note bottom of Math
+球面移动、倒木物理及局部寻路待 A05—A08 验证。
+接口存在不等于整套模拟已支持球面。
+end note
+@enduml

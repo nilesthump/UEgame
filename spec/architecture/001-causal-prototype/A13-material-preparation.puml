@@ -1,0 +1,48 @@
+@startuml A13-material-preparation
+title A13 素材准备 · 来源顺序与数据契约已确认
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam ArrowColor #475569
+start
+:从内容/声音配置形成 AudioMaterialRequest\nCue 或 Segment、用途、准确全文/描述、版本、循环/空间要求;
+if (对白语音？) then (是)
+  :执行素材准备任务的 agent 合成语音\n输入准确全文，记录工具/版本/实际参数;
+else (音效)
+  :先检索开放资源中的匹配素材\n核对用途/听感/质量/循环及来源使用条件;
+  if (已完成适度检索且有匹配？) then (有)
+    :选用匹配素材\n记录资源页、作者、许可/署名和选用理由;
+  else (无)
+    if (检索受阻或尚未完成？) then (是)
+      :记录未完成原因\n不能把未查到或工具不可用伪装为无匹配;
+      stop
+    else (已完成但无合适匹配)
+      :记录候选与缺口理由\n由该素材任务 agent 合成音效;
+    endif
+  endif
+endif
+if (获得实际有效声音文件？) then (是)
+  :必要裁切/电平/循环处理\n试听并核对对白全文、发音、说话者和分支;
+else (否)
+  :保留未完成状态\n不以静音占位冒充成品;
+  stop
+endif
+if (用途、音文与质量合格？) then (是)
+  :写 AudioMaterialProvenance\n源文件/成品摘要、来源或合成信息、加工记录;
+  :导入 SoundWave，更新 Config 绑定\nAudioRevision / ContentRevision / TextDigest;
+  :写 AudioImportRecord\nUE 包路径、导入参数、有限时长、音文核对版本;
+  :A12 检查独立包 Cook/加载/正常有声播放\n保留试听与素材来源交付记录;
+else (否)
+  :退回对应素材需求修正\n不标合格、不绑定为已验收成品;
+  stop
+endif
+note right
+这是后续开发素材任务，不是游戏运行时。
+运行时只读取本地导入资产，不检索、不联网合成。
+字幕降级成功不等于声音素材或有声验收通过。
+end note
+stop
+@enduml

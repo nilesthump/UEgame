@@ -1,0 +1,38 @@
+@startuml A11-results-reset-and-errors
+!pragma layout smetana
+title A11 结果日志与手动复测（总体待确认；非类图）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+rectangle "游戏规则正常结束\n失败按既定时点 / 成功等回访双条件" as Gameplay
+rectangle "已启动轮的必要技术故障\n停止新动作，在安全边界退出\n不是无路 / 合法拒绝 / 旧回调" as Fault
+rectangle "ExperimentCore · C++20 / Linux GCC13\nSession 唯一封存终态并进入 Ended\n正常结果 或 TechnicalAbort\n方式 / 已发生事实 / 三阶段实际耗时" as Core
+rectangle "UE Subsystem → 已有 LogWriter\n独立不可变结果 + 冻结元数据\n固定序列化字节 / RunId / 格式版本" as Adapter
+rectangle "每轮一份 UTF-8 JSON Lines\n<RunId>.jsonl · 仅一条终态记录\n临时写 → Flush → 无覆盖发布 → 读回核验" as Storage
+rectangle "保存失败 / 同 ID 内容冲突\n保留原结果，手动重试同一字节\n不改玩法结果，不开放下一轮" as SaveError #FFF7DD
+rectangle "Saved · 现场与日志保留\n用户手动点击开始下一轮\n保存成功本身不自动重开" as Manual
+rectangle "Director · 同一 UWorld 复位\n失效旧身份 / 停实际驱动 / 排空导航\n遮罩 → 按初始清单与唯一入口恢复" as Reset
+rectangle "完整新轮准备凭据\n实体 / 碰撞 / 导航 / 内容 / 控制\nSession 设置 WorldStarted，进入 Rescue" as Ready
+rectangle "Preparing 故障\n无本轮运行耗时 / 不造救援失败\n人工重试同一准备作业" as PrepError #FFF7DD
+Gameplay --> Core : GameplayCompleted
+Fault --> Core : TechnicalAbort（新政策待确认）
+Core --> Adapter : 一个终态 / 一个结果
+Adapter --> Storage
+Storage --> SaveError : 写入或验证失败
+SaveError --> Storage : 人工重试，不重取世界数据
+Storage --> Manual : 正式文件完整匹配
+Manual --> Reset : 明确手动意图 + Saved 门槛
+Reset --> Ready : 实际全部就绪
+Reset --> PrepError : 准备失败
+PrepError --> Reset : 同请求幂等重试
+note bottom of Storage
+当前方案无数据库 / 云 / 全过程事件库 / 存档续玩。
+日志不随世界清除；强退未发布结果不补造成正常成败。
+音效和语音最后 A13，因果体验验收留 A12。
+end note
+@enduml

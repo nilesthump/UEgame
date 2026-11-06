@@ -1,0 +1,59 @@
+@startuml A07-goblin-flow
+title A07 单只行为决策（总体已确认；读取共同目标）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+start
+if (本轮阶段 / 绑定有效且存活？) then (否)
+ :停止行为与旧请求;
+ stop
+endif
+if (击飞尚未完成落地伤害结算？) then (是)
+ :等待 UE 运动及 A06 落地结算;
+ :不新增硬直，不主动移动或攻击;
+ stop
+endif
+:读取共同目标、A06 动作阶段和原棒状态;
+if (存在未取消前摇 / 有效挥动 / 收招？) then (是)
+ :由 A06 继续原动作，暂停自主平移;
+ :不重复计时，不倒改已经发生的命中;
+ stop
+endif
+if (没有存活目标？) then (是)
+ :保留现场，停止新攻击;
+ stop
+endif
+if (持有自己的棒？) then (否)
+ if (正在尝试或可开始重试，且路线可行？) then (是)
+  if (整个尝试已无进展达到受阻条件？) then (否)
+   :接近原棒，实时检查通路;
+   if (已稳定落地且实际可拾取？) then (是)
+    :请求 A06 拾取，等实际持有结果;
+    :被拒仍未完成，不重置无进展计时;
+   else (否)
+    :继续接近，下一决策再检查;
+   endif
+   stop
+  endif
+ endif
+ :本次转为徒手 / 记录稍后重试;
+endif
+:向共同目标寻路，真实胶囊移动;
+if (近战资格成立？) then (是)
+ :请求持棒横/竖挥或短程拳击;
+ :A06 实际接纳后建立前摇 / 有效阶段 / 收招;
+else (否)
+ :继续追击或返场；无路则等待 / 重规划;
+endif
+:真实命中与整批成败由 A06 / Session 处理;
+stop
+note right
+所有 stop 表示结束本次决策，不是结束实验。
+共同目标：攻击指向 → 玩家；越界 → 存活小孩。
+重复指向同目标不重置攻击；回范围内不自动拉仇恨。
+目标切换取消旧前摇，已生效挥动和收招继续。
+end note
+@enduml

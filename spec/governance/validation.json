@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "commands": [
+    {
+      "name": "RepositoryBaseline",
+      "executable": "pwsh",
+      "args": ["-NoProfile", "-File", "Scripts/Validation/Invoke-RepositoryChecks.ps1"]
+    }
+  ]
+}

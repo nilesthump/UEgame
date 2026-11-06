@@ -1,0 +1,13 @@
+* text=auto eol=lf
+# Historical sources and WORKING hashes use original bytes, including line endings.
+spec/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.uasset binary
+*.umap binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.flac binary

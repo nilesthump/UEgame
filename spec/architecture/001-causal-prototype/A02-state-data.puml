@@ -1,0 +1,68 @@
+@startuml A02-state-data
+!pragma layout smetana
+title A02 状态与时间数据（已确认，2026-11-05）\n所有可变流程数据仅由 UExperimentSubsystem 写入
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #F0FDF4
+skinparam classBorderColor #16A34A
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+class FExperimentRunState <<USTRUCT>> {
+  RunId / Phase
+  ThreatObserved：由发现起点派生
+  AftermathObserved / AwaitingAftermath
+  SwordUsed / MagicUsed
+  RescueOutcome / LockedBranch / EndReasons
+  Timing : FExperimentTiming
+  TransitionToken / SkipReady
+  ControlRestoreRequested
+  CrowdContentDelivered / TeacherRecallDelivered
+}
+class FExperimentTiming <<USTRUCT>> {
+  WorldStartedAt / ThreatDiscoveredAt
+  FirstAttackAt / RescueClosedAt
+  RevisitStartedAt / AttemptEndedAt
+  bEnteredTimeSkip
+  + DeriveStageDurations()
+}
+class FOptionalExperimentMoment <<USTRUCT>> {
+  bIsSet : bool
+  Value : FExperimentMoment
+}
+class FExperimentMoment <<USTRUCT>> {
+  EngineWorldSeconds : double
+  RealSeconds : double
+}
+class FExperimentFactContext <<USTRUCT>> {
+  RunId / Sequence
+  OccurredAt : FExperimentMoment
+}
+enum EExperimentPhase {
+  Preparing
+  Rescue
+  TimeSkip
+  Revisit
+  Ended
+}
+class "各类型化事实" as Facts <<分开的 USTRUCT>> {
+  Context : FExperimentFactContext
+  类型专属 ActionId / BatchId / Token 等
+}
+
+FExperimentRunState *-- "1" FExperimentTiming
+FExperimentRunState --> EExperimentPhase : Phase
+FExperimentTiming *-- "6" FOptionalExperimentMoment : 可选边界点
+FOptionalExperimentMoment *-- "1" FExperimentMoment
+FExperimentFactContext *-- "1" FExperimentMoment : 发生时采样
+Facts *-- "1" FExperimentFactContext : 共用元数据
+
+legend bottom
+  bIsSet=false 表示尚未发生，不能用 0 秒代替。
+  救援成功边界共用于跳时开始；恢复控制边界共用于回访开始。
+  时间差从这些边界派生；补结算环境的逻辑时间不冒充事件发生时间。
+endlegend
+@enduml

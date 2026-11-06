@@ -1,0 +1,102 @@
+@startuml A09-class-design
+!pragma layout smetana
+title A09 环境状态、材料事务与年代交接类图（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+class "AExperimentWorldDirector" as Director <<已有>> {
+ + 签发驱动 / 汇总就绪 / 控制交接
+}
+class "UExperimentCombatWorldComponent" as Combat <<A06 扩展>> {
+ + Rescue / Revisit 唯一实时步
+ + 同刻输入 / 共同最早前缀
+}
+class "UEnvironmentConfig" as Config <<UDataAsset>> {
+ + 材料 / 火焰 / 雨湿 / 精度 / 资源
+ + ValidateConfig()
+}
+class "UEnvironmentWorldComponent" as World <<UActorComponent>> {
+ - 唯一 Runtime / 火湿分区 / 受烧历史
+ + StageIgnitionBatch() / PrepareAdvance()
+ + PrepareMaterialTransfer()
+ + ValidatePreparedPatch() / PublishPreparedPatchNoFail()
+ + CaptureOutcome() / ResetEnvironment()
+}
+class "UEnvironmentTransitionComponent" as Transition <<UActorComponent>> {
+ - Token / 作业 / 只读快照句柄
+ + BeginSettlement() / PumpSettlement()
+ + PrepareRevisit() / PollEnvironmentReady()
+}
+class "UEnvironmentPresentationComponent" as Presentation <<UActorComponent>> {
+ - Niagara / MID / 带版本显示绑定
+ + ApplyCommittedView() / RebindEpoch()
+}
+class "AGrassPatchActor" as Grass <<AActor>> {
+ - 草片几何 / 实际姿态 / 身份
+ + CaptureFuelGeometry() / ResetForRun()
+}
+class "UTreeWorldComponent" as Tree <<A08 扩展>> {
+ + PrepareMotionSpan() / PrepareMotionPrefix()
+ + PrepareCutStep() / PrepareShapeChange()
+ + CommitPreparedStep() 唯一跨材料屏障
+}
+class "FEnvironmentContactQuery" as Query <<UE 无状态>> {
+ + CaptureFireballTargets()
+ + FindEarliestFlameContacts()
+}
+class "FEnvironmentDataMapper" as Mapper <<UE 无状态>> {
+ + 单位 / 空间 / 版本纯值转换
+}
+class "experiment::EnvironmentGeometry" as Geometry <<纯 C++20>> {
+ + 火焰体积 / 接触前缀 / 覆盖裁分
+}
+class "experiment::EnvironmentRules" as Rules <<纯 C++20>> {
+ + 雨程 / 引燃 / 燃料 / 湿度 / 封存条件
+}
+class "experiment::EnvironmentOutcomeRules" as Outcome <<纯 C++20>> {
+ + BuildRevisitPlan()
+}
+class "USphericalNavigationComponent" as Nav <<A07 已有>> {
+ + BuildKey / 脏版本 / 实际就绪
+}
+Director *-- World
+Director *-- Transition
+Director *-- Presentation
+Director --> Combat : 显式交接 Lease
+World --> Config : 只读强引用
+Combat --> World : 实时调用；World 不 Tick
+Transition --> World : 旧时代授权泵送 / 同一状态
+Combat --> Tree : 准备共同前缀
+Transition --> Tree : 旧运动 / 回访材料布局
+Tree --> World : 准备 / 验证 / 屏障内发布
+World --> Presentation : 提交后的只读 ViewFrame
+World --> Grass : 弱登记 / 几何 / 唯一复位分派
+World ..> Query : 可信发生时几何
+World ..> Mapper
+Query ..> Geometry : 几何细化
+Mapper ..> Geometry
+Mapper ..> Rules
+Transition ..> Outcome : 只读快照 → 纯值计划
+Transition --> Nav : 等待匹配版本的就绪
+Config -[hidden]-> Query
+Query -[hidden]right-> Mapper
+Geometry -[hidden]right-> Rules
+Rules -[hidden]right-> Outcome
+note bottom of World
+  火湿 / 燃料 / 事件消费 / 游标只在此保存
+  已受烧空间记录不随父 Actor 退役消失
+  Prepare 不发布，Publish 不递归提交
+end note
+note bottom of Transition
+  仅在授权 TimeSkip 作业中泵送
+  不复制雨程、火湿或环境游标
+  全部环境就绪后才通知 Director
+end note
+@enduml

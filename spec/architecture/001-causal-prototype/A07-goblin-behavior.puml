@@ -1,0 +1,40 @@
+@startuml A07-goblin-behavior
+!pragma layout smetana
+title A07 哥布林行为总体（已确认；非类图）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+rectangle "本轮世界 / Session 阶段\nWorldStarted 起遇险发展\n不等发现，不因地图/失焦暂停" as Start
+rectangle "A06 玩家实际攻击指向事实\n未命中也成立；瞄准不成立\n不新增距离 / 视线门槛" as Directed
+rectangle "UE 遭遇目标所有者\n小孩 / 玩家 / 无有效目标\n事件中心球弧长脱战、目标版本" as Target
+rectangle "UE 各只行为状态与快照\n5 只独立节奏、允许同时围攻\n读取存活 / 接地 / 攻击 / 原棒" as Behavior
+rectangle "ExperimentCore / C++20 / GCC\n无状态目标与行为策略\n同源坐标数学 → 行为计划 / 数值结果" as Rules
+rectangle "UE Navigation / Recast 改造\n统一局部导航空间、几何导出与动态更新\n查询 → 世界路径 → 定制跟随 / 到达" as Nav
+rectangle "UE Movement\n切向移动意图 → 径向重力 / 扫掠\n追击、返场、捡棒接近" as Move
+rectangle "A06 CombatWorld / 实体\n实际挥棒 / 拳击 / 拾取请求\n接触、防反、伤害、落地及持有提交" as Combat
+rectangle "Subsystem → Session\n整批完整稳定快照后判成败\nAI 攻击不计玩家招式和首次攻击" as Session
+
+Start --> Target
+Directed --> Target
+Target --> Behavior : 共同目标与版本
+Behavior --> Rules : 冻结纯值快照
+Nav --> Behavior : 路径状态 / 实际受阻
+Rules --> Nav : 移动目标，由 UE 转换并校验
+Nav --> Move : 映回球面的路径 / 切向意图
+Rules --> Combat : 动作计划，由 UE 再校验
+Move --> Nav : 实际受阻 / 重规划
+Combat --> Behavior : 下一次决策读取实际结果
+Combat --> Session : 全部批次提交后
+
+note bottom of Rules
+核心不查询场景、不保存角色或武器状态。
+默认坐标假设可改造，不是能力上限。
+优先项目内扩展；必要源码修改另列构建影响。
+具体类与复用接口在总体确认后单独设计。
+end note
+@enduml

@@ -1,0 +1,73 @@
+@startuml A05-action-state
+!pragma layout smetana
+title A05 输入身份、闪避实例与最终视图（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+class FPlayerBindingKey <<identity value>> {
+ RunId / PawnGeneration
+}
+class FPlayerInputContext <<Controller 私有>> {
+ BindingKey / ControlEpoch / InputSequence
+}
+class FDodgeExecutionKey <<Movement 私有>> {
+ BindingKey / DodgeSerial
+}
+class FDodgeRuntime <<Movement 唯一可写>> {
+ ExecutionKey / Kind / Direction
+ MovementActive / Progress
+ WindowStart / StartOrder / WindowEnd
+}
+class FDodgeProtectionSample <<受击时只读结果>> {
+ Occurrence / ExecutionKey
+ ProtectedAtOccurrence
+}
+class FPlayerAimFrame <<相机最终输出>> {
+ BindingKey / ViewModeRevision
+ ViewSerial / Frame / SampleTime
+ CameraPosition / Direction / AimRay
+}
+package "experiment / 纯 C++20" {
+ class DodgeSnapshot <<value>> {
+ Grounded / Staggered
+ AllIncomingKinds / Candidates
+ }
+ class DodgeParams <<只读参数>>
+ class DodgeDecision <<value>> {
+ RejectReason or Kind / Direction / Params
+ }
+ class DodgeRules <<无状态>> {
+ {static} Evaluate(Snapshot, Params)
+ }
+ DodgeRules ..> DodgeSnapshot
+ DodgeRules ..> DodgeParams
+ DodgeRules ..> DodgeDecision : 返回
+}
+FPlayerInputContext *-- FPlayerBindingKey
+FDodgeExecutionKey *-- FPlayerBindingKey
+FDodgeRuntime *-- FDodgeExecutionKey
+FPlayerAimFrame *-- FPlayerBindingKey
+DodgeDecision ..> FDodgeRuntime : 数据流：UE 适配层读取并提交
+FDodgeRuntime ..> FDodgeProtectionSample : 在受击事件点采样
+
+note left of FPlayerInputContext
+地图/失焦：递增输入代次，清未消费意图。
+不取消已接纳的闪避。
+end note
+note right of FDodgeRuntime
+位移截停只关 MovementActive。
+窗口按时间到期；新闪避替换，非累加。
+离开运行阶段/重启/解绑强制失效。
+end note
+note bottom of FDodgeProtectionSample
+A06 不复制窗口，不用后来窗口重算旧命中。
+时间相同时保留明确事件顺序，禁止追溯免伤。
+end note
+@enduml

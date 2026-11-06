@@ -1,0 +1,89 @@
+@startuml A11-class-commit-protocol
+title A11 已确认类协作 · 一次捕获、固定字节、最多四轮
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+hide footbox
+participant "Subsystem /\nSession" as Host
+participant "Recovery\nCoordinator" as C
+participant "WorldSnapshot\nComponent" as W
+participant "SnapshotCodec" as Codec
+participant "CheckpointStore" as Store
+participant "CheckpointRules" as Rules
+participant "LogWriter" as Log
+
+Host -> C : RequestCheckpoint(Reason)
+C -> W : TryFreezeBoundary()
+W -> W : 关新意图，完成已接纳批次/事实/效果
+alt Deferred
+  W --> C : 等下个稳定点，不丢请求
+else Fault
+  W --> C : 故障 → 统一恢复或暂停
+else Frozen(BarrierProof)
+  W --> C : 同一 CaptureId / 领域版本
+  C -> Host : CaptureCheckpoint(BarrierProof, TimingSample)
+  Host --> C : 核心不可变值
+  C -> W : CaptureWorld(BarrierProof)
+  W --> C : 全部必需领域值 + 最终版本核验
+  C -> Codec : EncodeBundle / EncodeManifest
+  Codec --> C : 固定 Prepared / 字节 / 摘要 / 结果字节
+  break 任一捕获或编码失败
+    C -> C : 进入故障处理，不提交半份快照
+  end
+  note over C,Store
+  同 Run 单写者租约；前一提交和恢复来源分开。
+  任何捕获/编码失败均不进入提交循环。
+  end note
+  loop ordinal = 1..4；成功、冲突或停止决策立即退出
+    C -> C : 调用前登记次数，不随游戏回滚
+    C -> Store : PublishOnce(同一个 Prepared)
+    Store -> Store : ProbeCommit()
+    alt 已完整匹配
+      Store --> C : Committed(VerifiedReceipt)
+    else 明确未提交
+      Store -> Store : 临时载荷 写满 / Flush / 读回 / 无覆盖发布
+      Store -> Store : 清单同样核验，最后发布；整代复核
+      note right of Store
+      每步失败即停止后续。
+      不覆盖冲突文件。
+      不重做游戏领域动作。
+      end note
+      Store --> C : 四类结果之一
+    else 读取不明 / 身份冲突
+      Store --> C : Indeterminate / Conflict，不写
+    end
+    C -> Rules : DecideCommitNext(Purpose, ordinal, Result, Incident)
+    Rules --> C : 接纳 / 再试 / 恢复 / 暂停
+  end
+  alt Committed
+    C -> C : 核对当前作业/Run/Commit/Continuation/摘要
+    C -> W : 正常保存：解除冻结
+    note over C,W
+    继续点提交另走恢复激活门；
+    终态保持结束，不开放玩法。
+    end note
+  else 第4轮明确 NotCommitted，普通快照
+    C -> C : 同一 Incident 最多一次自动恢复
+  else Conflict / 最终仍不明 / 继续点失败
+    C -> C : RecoveryPaused，不猜测旧点回退
+  end
+end
+
+opt 已核验终态结果（独立导出作业）
+  C -> Store : LoadVerified(终态 CommitId)
+  Store --> C : FCommittedResultRef + 固定结果字节
+  loop 最多4轮，成功/冲突提前退出
+    C -> Log : ExportCommittedResultOnce(已提交引用)
+    Log -> Log : Probe；临时文件完整核验；无覆盖发布
+    Log --> C : Exported / NotExported / Indeterminate / Conflict
+  end
+  note over C,Log
+  Results/RunId.jsonl 单行；不重新计算结果。
+  导出耗尽只暂停导出，不恢复世界、不撤销终态。
+  end note
+end
+@enduml

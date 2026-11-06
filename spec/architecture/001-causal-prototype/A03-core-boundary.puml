@@ -1,0 +1,30 @@
+@startuml A03-core-boundary
+!pragma layout smetana
+skinparam defaultFontName Microsoft YaHei
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EAF2FA
+skinparam componentBorderColor #3B5F82
+skinparam ArrowColor #3B5F82
+left to right direction
+title A03 分层、核心类图及双平台构建总体已确认
+component "UE 输入与表现\n操作意图／UI／动画／音效" as View
+rectangle "权威执行侧：当前本地，未来允许使用 UE 服务端" {
+ component "UE 协调与适配\n时间采样／值转换／执行世界操作" as Adapter
+ component "UE 世界模拟\n移动／碰撞／物理／导航" as World
+ component "独立 C++20 核心\n统计／阶段／成败／教师分支\n不依赖 UE 类型或世界对象" as Core
+}
+View --> Adapter : 操作意图
+Adapter --> World : 执行已校验动作
+World --> Adapter : 可信事实／稳定快照
+Adapter --> Core : 值数据＋显式时间
+Core --> Adapter : 规则结果／世界操作请求
+Adapter --> View : 允许展示的只读状态
+note bottom of Adapter
+本轮仍在一个进程；网络协议及权威部署后续设计。
+客户端不能直接提交死亡或救援成功结论。
+end note
+note bottom of View
+未来可进行预测，并接受权威端校正。
+end note
+@enduml

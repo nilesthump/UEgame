@@ -1,0 +1,41 @@
+@startuml A10-revisit-and-narrative
+!pragma layout smetana
+title A10 三十年跳时与回访内容（总体已确认；类图单独确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+rectangle "ExperimentCore · C++20 / GCC\nSession 唯一阶段 / 锁定方向 / 两项完成位\n纯规则：内容资格、触发与交付计划" as Core
+rectangle "Director · UE 世界协调\nRun / Epoch / TransitionToken\n同一世界的三项就绪与实际恢复控制" as Director
+rectangle "非交互 UMG 转场\n先确认遮住视口，再改世界\n环境＋布置就绪后淡入\n自然终点才报告表现完成" as Transition
+rectangle "A09 旧时代火雨结算\n新环境 / 实际后果 / 年代交接" as Env
+rectangle "A10 回访人物与内容布置\n教师 / 群众 / 教场 / 镇上落点\n锁定方向 → DataAsset / FText 预设内容" as Layout
+rectangle "最终布局共同屏障\nA09 环境 / A10 人物与内容绑定\nA07 碰撞 / 导航实际完成凭据\n匹配版本，无更新脏区" as Nav
+rectangle "Revisit 实际控制已恢复\n近距相见 / 群众交谈区域\n可自由移动、转视角与合法施法" as Play
+rectangle "内容作业 → 非模态 UMG\n当前关键片段 / 播放身份 / 版本\nCompleted / Interrupted / Canceled" as Content
+rectangle "类型化交付事实\nCrowdLearning / TeacherRecall\n只有当前关键片段正常完成才送达" as Fact
+rectangle "A13 · 最后讨论\n音效与语音实现 / 字幕联动\n具体媒介回执与打包尚未选择" as Audio #FFF7DD
+Core --> Director : 锁定分支 / 阶段效果
+Director --> Transition : 转场请求
+Director --> Env : 遮罩确认后
+Director --> Layout : 回访计划
+Env --> Nav : 环境几何
+Layout --> Nav : 最终人物 / 场景几何
+Nav --> Director : 环境＋回访布置凭据
+Transition --> Director : 表现完成
+Director --> Play : 三项齐备 / 恢复握手
+Play --> Content : 当前真实触发 / 离开 / 中断
+Layout --> Content : 当前 ContentId / SegmentId
+Content --> Fact : 校验身份及有效交付
+Fact --> Core : 两项全齐，Session 唯一结束
+Content ..> Audio : 保留呈现 / 取消 / 回执边界
+note right of Content
+  走近、开始展示、主动 Stop 的 finished
+  均不能代替关键内容送达
+  离开可挽留，回来补未完成片段
+end note
+@enduml

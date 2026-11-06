@@ -1,0 +1,62 @@
+@startuml A04-spatial-values
+!pragma layout smetana
+title A04 球面值与地图显示帧（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+package "experiment / 标准 C++20" {
+ class Vec3d <<value>> {
+  x / y / z: double
+ }
+ class SphericalFrame <<value / 只读使用>> {
+  centerMeters: Vec3d
+  radiusMeters: double
+  east / north / up: Vec3d
+ }
+ class SurfaceProjection <<value>> {
+  unitNormal: Vec3d
+  heightMeters: double
+  tangentHeading: optional<Vec3d>
+ }
+ class SphericalMath <<无状态>> {
+  {static} ValidateFrame(Frame)
+  {static} TryProject(Frame, Position, Forward)
+  {static} TryRadialUp(Frame, Position)
+ }
+ SphericalFrame *-- Vec3d
+ SurfaceProjection *-- Vec3d
+ SphericalMath ..> SphericalFrame : 只读
+ SphericalMath ..> SurfaceProjection : 返回 optional
+}
+package "UE C++ 普通值 / 非反射接口" {
+ class FMinimapBindingKey <<value>> {
+  RunId
+  BindingGeneration
+ }
+ class FSphericalMapFrame <<显示快照>> {
+  Key: FMinimapBindingKey
+  Player: SurfaceProjection
+  PublicLandmarks: projected values
+  Town / Forest Outlines: projected points
+ }
+ FSphericalMapFrame *-- FMinimapBindingKey
+ FSphericalMapFrame *-- SurfaceProjection
+}
+note right of FMinimapBindingKey
+World / Root / Pawn / 配置变化时
+递增 Generation，并校验对应弱绑定。
+重启清空旧帧、标记及纹理。
+end note
+note bottom of FSphericalMapFrame
+只显示玩家、普通地标和小镇/森林轮廓。
+无 Actor 指针、RunState、生命值或未来分支。
+投影不含地图旋转 Q，由 Rig 根变换应用一次。
+end note
+@enduml

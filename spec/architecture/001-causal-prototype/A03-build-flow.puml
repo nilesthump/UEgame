@@ -1,0 +1,59 @@
+@startuml A03-build-flow
+!pragma layout smetana
+title A03 构建与资源数据流（总体及 Linux 补充已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+
+artifact ".uproject / Target.cs / Build.cs\n目标与依赖配置" as Rules
+artifact "UE C++ 源码\n世界模拟 / 适配 / 反射声明" as Code
+artifact "ExperimentCore 源码\n独立标准 C++20，无 UE 反射" as CoreSource
+component "Ubuntu24.04 / GCC13 / CMake3.28 / CTest\n核心独立验证；无 UE include / PCH / Unity" as Isolated
+artifact "地图 / Blueprint / Data Asset\n网格 / 材质 / UI 资产" as Content
+artifact "运行时 .ini 配置" as RuntimeConfig
+component "UBT 构建编排" as UBT
+component "UHT 反射代码生成" as UHT
+component "MSVC 14.38 + SDK 22621\n编译 / 链接" as Compiler
+artifact "Editor / Game 目标二进制" as Binary
+component "UAT BuildCookRun" as UAT
+component "Cook\n准备 Win64 运行内容" as Cook
+component "Stage / Package\n汇合代码与内容" as Package
+artifact "Windows Development 原型包" as Build
+component "游戏运行\nA01 / A02 流程" as Runtime
+artifact "本地 JSON Lines 结果" as Logs
+
+Rules --> UBT
+Code --> UBT
+CoreSource --> UBT : 同一份源码编入游戏模块
+CoreSource --> Isolated : 验证引擎独立性
+UBT --> UHT : 反射声明
+UHT --> Compiler : 生成代码
+UBT --> Compiler : C++ 源码与构建参数
+Compiler --> Binary
+UAT ..> UBT : 组织 Build
+UAT ..> Cook : 组织 Cook
+Content --> Cook
+Binary --> Cook : 加载必要代码类型
+Binary --> Package
+Cook --> Package
+RuntimeConfig --> Package : Stage 按规则收集
+UAT ..> Package : 组织 Stage / Package
+Package --> Build
+Build --> Runtime
+Runtime --> Logs
+
+note right of Compiler
+已确认版本，尚未完成构建验证。
+本机已有14.44，需补齐所选14.38。
+实际工具集路径以 UBT 输出核对。
+end note
+legend bottom
+  Windows 已确认：UE 5.6.1 / VS2022 17.14 / C++20 / 引擎自带 .NET8。
+  本图为架构设计，不表示工程、编译或打包已经完成。
+endlegend
+@enduml

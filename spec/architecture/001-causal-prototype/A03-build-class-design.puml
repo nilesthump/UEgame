@@ -1,0 +1,70 @@
+@startuml A03-build-class-design
+!pragma layout smetana
+title A03 构建规则类图（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+package "构建时：C# / UBT" {
+ class TargetRules <<UE 提供>>
+ class ModuleRules <<UE 提供>>
+ class UEgameTarget <<项目 / C#>> {
+  + UEgameTarget(TargetInfo)
+  Type = Game
+  ExtraModuleNames = UEgame
+  DefaultBuildSettings = V5
+  IncludeOrderVersion = Unreal5_6
+ }
+ class UEgameEditorTarget <<项目 / C#>> {
+  + UEgameEditorTarget(TargetInfo)
+  Type = Editor
+  ExtraModuleNames = UEgame
+  DefaultBuildSettings = V5
+  IncludeOrderVersion = Unreal5_6
+ }
+ class UEgame <<项目 / C# ModuleRules>> {
+  + UEgame(ReadOnlyTargetRules)
+  CppStandard = Cpp20
+  bEnableExceptions = false
+  bUseRTTI = false
+  PCHUsage = NoPCHs
+  bUseUnity = false
+  私有核心 include 与直接依赖
+ }
+ TargetRules <|-- UEgameTarget
+ TargetRules <|-- UEgameEditorTarget
+ ModuleRules <|-- UEgame
+ UEgameTarget ..> UEgame : 按模块名纳入构建
+ UEgameEditorTarget ..> UEgame : 按模块名纳入构建
+}
+package "运行时：复用 UE 默认 C++ 模块入口" {
+ class IModuleInterface <<UE 提供>>
+ class FDefaultModuleImpl <<UE 提供>>
+ class FDefaultGameModuleImpl <<UE 提供 / 直接复用>>
+ IModuleInterface <|-- FDefaultModuleImpl
+ FDefaultModuleImpl <|-- FDefaultGameModuleImpl
+ note bottom of FDefaultGameModuleImpl
+ UEgame.cpp 使用主模块注册宏：
+ IMPLEMENT_PRIMARY_GAME_MODULE(
+   FDefaultGameModuleImpl, UEgame, "UEgame")
+ 默认启动/关闭不创建实验 Session。
+ end note
+}
+note bottom of UEgame
+ModuleRules 只描述构建，不运行 CMake / Docker。
+核心源码编入本模块，不链接 Linux 库。
+异常 / RTTI 的 false 不覆盖 Target 全局开启；
+Linux 强检查核心无异常 / RTTI 依赖。
+end note
+legend bottom
+  Target / ModuleRules 是构建时 C# 类，不是 UObject 或游戏状态管理器。
+  Session 仍由运行时 UExperimentSubsystem 拥有；不由模块入口持有。
+  Windows 编译器和 SDK 参数由双 Target 保持一致；完整补丁号准备后核对。
+endlegend
+@enduml

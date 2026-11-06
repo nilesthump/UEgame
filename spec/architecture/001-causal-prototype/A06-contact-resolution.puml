@@ -1,0 +1,42 @@
+@startuml A06-contact-resolution
+title A06 接触与批次结算顺序（总体已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+hide footbox
+participant "A05 输入/相机" as Input
+participant "UE 战斗步" as Step
+participant "世界/实体" as World
+participant "A05 Movement" as Move
+participant "纯 C++20 规则" as Core
+participant "Subsystem / Session" as Flow
+
+Input -> Step : 横/竖斩按下，或魔法松开请求\n最终 AimFrame + 本帧执行意图
+Step -> World : 推进既有攻击，采集分段接触
+World --> Step : 同源姿态/路径、候选与有效身份
+loop 按共同子段顺序处理接触组
+ Step -> Move : 受击求值点采样保护(Occurrence)
+ Move --> Step : 不可变样本
+ Step -> Core : 当前纯值状态 + 接触组 + 保护样本
+ alt 同组剑碰有效挥棒，防反成立
+  Core --> Step : 对应棒免伤 / 玩家硬直\n终止自主位移，原短窗口不刷新\n哥布林击飞掉棒 / 取消配对直接致死
+ else 非防反命中
+  Core --> Step : 无敌免伤，或按招式/目标伤害
+ end
+ Step -> World : 唯一所有者提交，保留原始事实\n其他目标独立结算；旧动作失效
+end
+Step -> World : 再校验本帧意图，实际建立新攻击\n不补走此前 dt；初始接触在本批处理
+Step -> Flow : 实际使用 / 指向 / 伤害事实（不改发生时间）
+Step -> Flow : 本批次全部完成
+Flow -> World : 请求完整稳定遭遇快照
+World --> Flow : 玩家、小孩、全部哥布林状态
+Flow -> Flow : 按 A02 死亡优先 / 清怪成功 / 继续
+note over Step, Flow
+Sweep.Time 只作共同区间内几何排序，不伪造历史时刻。
+当前闪避窗口不能重算已发生的旧命中。
+无敌拒伤不占有效伤害额度；窗口后须重新检测接触。
+弹体同组空气墙优先吸收，其他首接触按稳定身份排序。
+本图为职责顺序，不预先定义 A06 类。
+end note
+@enduml

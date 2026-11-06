@@ -1,0 +1,63 @@
+@startuml A10-playback-receipt
+title A10 单通道片段、取消与唯一送达事实（类接口已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+participant "Narrative\n唯一作业 / 接近游标" as J
+participant "RevisitRules\n纯 C++20" as R
+participant "Presentation\nDialogueWidget" as P
+participant "Subsystem" as U
+participant "Session\n唯一完成位" as S
+J -> S : 读取当前 Revisit 进度
+S --> J : 阶段 / 锁定方向 / 两项只读完成位
+J -> J : 当前真实距离 / 视线 / UI 有效性取样
+J -> R : SelectNext(sample, progress, cursor)
+R --> J : 当前合格片段与游标计划
+J -> J : 新 PlaybackKey，Offered
+J -> P : PresentSegment(完整身份, 全文, 政策)
+P --> J : 当前显示已开始
+J -> J : Offered → Presenting（仅当前实例）
+P -> P : 完整可读文本 / 焦点 / 无覆盖\n连续有效采样，缺口不盲累积
+alt 地图 / 失焦 / 离开 / 绑定失效
+  J -> R : EvaluateInterruption / EvaluateNudge
+  R --> J : 中断计划；仅实际空间离开才可挽留
+  J -> J : 先封存 Interrupted/Canceled，失效代次
+  J -> P : CancelPresentation(旧 Key)
+  P -> P : 先失效句柄，再 Stop
+  P --> J : 旧 finished / 旧 Completed 回调
+  J -> J : 丢弃，不生成交付事实
+  note over J,P
+  返回后重新核实资格，从未送达关键片段开头播；新代次。
+  挽留共用通道、不抢断其他关键片段、不远距离排队追播。
+  end note
+else 当前请求达到正常可读终点
+  P --> J : 排队 Receipt(Key, result, samples, OccurredAt)
+  J -> J : 先处理已发生失效，再取当前有效性\n同边界无法证明有效则中断优先
+  J -> R : EvaluateDelivery(expected, receipt, current)
+  R --> J : 关键 / Optional 合法完成计划，或拒绝
+  alt 有效关键片段
+  J -> J : 先封存 Completed，关闭下段调度门
+  J -> U : 唯一类型化交付事实
+  U -> U : 首次分配 Sequence；重投保留原上下文
+  U -> S : NotifyRevisitContent(fact)
+  S -> S : 核验 / 幂等登记类别 / FlowRules
+  S --> U : 两项齐备则 Ended + 停止效果
+  U -> U : 串行执行全部效果，回调延后
+  U --> J : 当前核心批次已完成
+  J -> J : 再读最新进度；若仍 Revisit 才选下一段
+  else 有效 Optional 片段
+    J -> J : 封存 Completed，不发关键事实\n不等待核心回执；重新取样调度
+  else 拒绝 / 过期 / 已失效
+    J -> J : 丢弃回执，不改已封存终态，不发事实\n当前确有失效则按取消路径处理
+  end
+end
+note over J,S
+PlaybackKey 绑定 Run / Epoch / Speaker / Binding / 玩家与视口代次 / 内容与版本 / PlaybackGeneration。
+文本灰盒政策不代表最终语音完成；A13 最后决定媒体适配和聚合回执。
+end note
+@enduml

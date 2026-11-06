@@ -1,0 +1,84 @@
+@startuml A13-class-media-protocol
+title A13 已确认类协作 · 聚合收尾、降级与冻结
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+hide footbox
+participant "Narrative /\nRevisitRules" as N
+participant "Presentation /\nDialogueWidget" as P
+participant "VoiceComponent" as V
+participant "AudioWorld" as A
+participant "Subsystem /\nSession" as S
+participant "A11 Snapshot\nComponent" as C
+
+N -> P : PresentMedia(Key, Policy, Mode)
+P -> P : 显示完整字幕，清旧可读区间
+alt VoiceAndText
+  P -> V : PrepareVoice(绑定版本, 不可变 Key)
+  V -> V : 创建独立组件，绑定委托，抑制自带字幕
+  P -> V : StartPreparedVoice()
+  V --> P : PlayingObserved 或 Fault
+  P -> A : 有声启动后 AcquireVoiceDuck(Key)
+  A --> P : 当前世界/作业专属租约
+else TextOnlyChosen / TextFallback
+  P -> P : 仅从本次完整字幕开始取得证据
+end
+
+loop 当前作业有效，且未冻结
+  V --> P : 带创建时身份的状态/结束候选/故障
+  P -> P : 先应用失效原因，再采样全文与媒体状态
+  P --> N : MediaSample / ReceiptCandidate
+  N -> N : EvaluateDelivery(纯值)
+end
+
+alt 离开 / 地图 / 失焦 / 绑定失效
+  N -> N : 先封存 Interrupted/Canceled，撤销代次
+  N -> P : CancelPresentation(Key)
+  P -> V : 失效旧实例后 Stop
+  P -> A : ReleaseVoiceDuck(旧租约)，不影响新作业
+else 当前声音故障，需要一次字幕降级
+  N -> N : 撤销旧代次，保留原内容/关键或Optional标签
+  N -> P : 取消旧音频与字幕，释放旧租约
+  N -> P : 按原优先级启动新 Key + TextFallback
+  P -> P : 从头全文与可读区间；不得拼接半段
+else 整份媒体收尾，连续可读与当前资格合格
+  N -> N : 唯一封存 Completed
+  N -> P : 完成清理；释放对应 duck
+  alt 关键片段
+    N -> S : 单个内容事实，含模式/政策/稳定身份
+    S --> N : 先提交与执行效果，再调度下一片段
+  else Optional
+    N -> N : 不发关键事实，不等待核心回执
+  end
+end
+
+group 任意稳定点的普通保存（独立生命周期协议）
+  C -> P : FreezePresentation(CaptureId)
+  C -> A : FreezeMedia(CaptureId)
+  A --> C : 当前世界声音接纳已关闭 / Deferred / Fault
+  P -> P : 关接纳，排空本批回执，冻结证据和期限
+  P -> V : RequestPause；不能续用则撤销实例
+  V --> P : 当前实例状态/暂停请求或撤销结果
+  P -> N : 若发生取消，先同步逻辑状态
+  P --> C : FMediaFreezeProof 或 Deferred/Fault
+  break 任一必需媒体参与者未达稳定切点
+    C -> C : 本次不捕获；按 A11 延后或处理故障
+  end
+  note over P,C
+  凭据证明逻辑接纳与证据冻结，不证明声卡缓冲已静音。
+  冻结后通知隔离，不能推进本次快照或内容完成。
+  end note
+  alt 保存成功且内存实例仍可续用
+    C -> P : ResumePresentation(当前 FreezeToken)
+    P -> V : ResumeOrFault()
+    P -> P : 重建连续可读区间，保留完整字幕
+  else 无法续用 / 真正快照恢复
+    C -> P : 取消旧实例/租约；恢复时失效旧恢复代次
+    P -> N : 未送达内容按新代次从头调度
+  end
+end
+@enduml

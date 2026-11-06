@@ -1,0 +1,50 @@
+@startuml A02-event-settlement
+title A02 类型化事实与结算顺序（总体方案已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+hide footbox
+participant "感知 / 动作模块" as Action
+participant "战斗 / AI / 环境" as Domain
+participant "实验协调器" as Flow
+participant "世界 Director" as World
+participant "日志模块" as Log
+
+World -> Flow : 必需实体与模块已就绪
+Flow -> World : 启动新 RunId 与世界时间轴
+World -> Domain : 开始遇险与雨计划
+Action -> Flow : 发现活体遇险（若发生）
+Action -> Flow : 招式已使用（RunId, ActionId）
+Action -> Domain : 朝哥布林攻击 → 全体转向
+Action -> Flow : 朝哥布林攻击 → 首次开始救援计时
+Domain -> Domain : 处理本批次所有命中 / 防反 / 死亡
+Domain -> Flow : 事实通知 + 本批次结算完成
+Flow -> Domain : 读取稳定的只读遭遇快照
+Domain --> Flow : 玩家、小孩生死 / 哥布林存活情况
+Flow -> Flow : 检查 RunId / 已结束保护\n死亡条件先于清怪成功
+
+alt 达到失败结束条件
+  Flow -> World : 停止本轮玩法
+  Flow -> Log : 最终失败结果 + 已发生阶段耗时
+else 小孩已死但尚未被发现
+  Flow -> World : 保留现场，等待后果发现
+else 救援成功
+  Flow -> Flow : 锁定方式 / 结束救援计时 / 开始跳时计时
+  Flow -> World : 停止旧救援任务，保留环境状态与计划
+  World -> Domain : 结算旧时代尚未完成的环境后果
+  Domain --> World : 环境结算完成
+  World -> World : 布置 30 年后小镇、教师与森林
+  World --> Flow : 环境、布置与过渡表现均就绪
+  Flow -> World : 恢复玩家行动 / 开始回访计时
+  Action -> Flow : 群众闲聊内容已送达
+  Action -> Flow : 教师提起救援内容已送达（顺序不限）
+  Flow -> Log : 最终成功结果 + 三阶段实际耗时
+else 继续现场
+  Flow -> Flow : 保持 Rescue，继续接收本轮事实
+end
+note over Flow, Log
+救援成功不是整轮完成；最终成功记录包含回访耗时。
+日志写入结果与异常处理在 A11 细化。
+end note
+@enduml

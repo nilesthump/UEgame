@@ -1,0 +1,63 @@
+@startuml A11-result-publication
+title A11 单轮结果发布、重试与复测门槛（总体待确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+participant "Session\n经 Subsystem" as S
+participant "LogWriter\n串行单写者" as W
+participant "本地文件系统" as F
+participant "结束界面 / 用户" as U
+S -> S : 唯一封存终态与发生时刻\n提交 Ended，保留现场
+S -> W : 不可变结果 + 本轮冻结元数据
+W -> W : 首次序列化固定字节\nRunId / SchemaVersion / 内容指纹
+W -> F : 检查最终 <RunId>.jsonl
+alt 最终文件已存在
+  F --> W : 完整文件 / 损坏 / 无法读取
+  W -> W : 比对身份、格式与封存字节\n同内容可 Saved；冲突不得覆盖
+else 最终文件不存在
+  W -> F : 同目录唯一临时文件 OpenWrite
+  F --> W : 有效句柄 / 打开失败
+  alt 成功取得有效句柄
+    W -> F : Write 固定完整字节
+    F --> W : 完整写入成功 / 失败
+    alt Write 成功
+      W -> F : Flush(true)
+      F --> W : Flush 成功 / 失败
+    else Write 失败
+      W -> W : 记写入错误，不发布
+    end
+    W -> W : 释放有效句柄（无独立 Close 返回值）
+    alt 完整 Write 与 Flush 均成功
+      W -> F : IPlatformFile::MoveFile，无覆盖发布
+      F --> W : 发布返回值
+      W -> F : 读回正式目标（返回不明也检查）
+      F --> W : 最终内容或错误
+      W -> W : 身份 / 单行 JSON / 完整字节核验
+    else Write / Flush 失败
+      W -> W : 保留待写结果，不发布
+    end
+  else 打开失败
+    W -> W : 不调用 Write / Flush；保留待写结果
+  end
+end
+alt 最终文件完整匹配
+  W --> S : Saved / AlreadySaved（同一记录）
+  S -> U : 显示已保存，启用手动下一轮
+  U -> S : 用户点击开始下一轮
+  S -> S : 校验 Ended + Saved → 交给 Director 复位
+else 失败 / 冲突 / 最终内容不明
+  W --> S : PendingSave + 错误，原结果不变
+  S -> U : 结果尚未保存；允许重试保存
+  U -> W : 经 Subsystem 手动重试
+  W -> W : 沿用同 RunId / 同发生时刻 / 同字节\n重新从目标检查开始
+end
+note over S,U
+写入失败不转换正常结果为 TechnicalAbort；不重新计时或读取当前世界。
+不自动覆盖历史，不把临时文件当正式结果，不承诺硬断电事务耐久。
+end note
+@enduml

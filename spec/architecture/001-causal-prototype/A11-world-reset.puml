@@ -1,0 +1,66 @@
+@startuml A11-world-reset
+title A11 已保存后的同世界手动复位（总体待确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+actor "用户" as U
+participant "Subsystem / Session" as S
+participant "Director" as D
+participant "既有领域与表现" as M
+participant "A07 导航" as N
+U -> S : 手动开始下一轮
+S -> S : 校验旧轮终止且已保存\nResetRequestId / 新预留 RunId
+S -> D : 准备同一 UWorld 的新轮
+D -> D : 失效旧 Run / Epoch / Token / 驱动与输入代次
+D -> M : 停实际变换、攻击、环境与内容\n先失效再取消，退出临界区并释放候选
+D -> N : CancelAndDrain 旧工作
+N --> D : 实际排空，不仅是业务回调解绑
+break 实际驱动未停止 / 临界区或旧导航排空失败
+  D --> S : 保持 Preparing，报告错误并停止后续步骤
+end
+D -> M : 当前视口覆盖，显示中性准备信息
+M --> D : 遮罩覆盖凭据
+break 遮罩覆盖无效
+  D --> S : 保持 Preparing，不执行可见世界重建
+end
+D -> M : 初始清单恢复 / 新增对象退役
+note over D,M
+角色自身 ResetForRun；A09 唯一 ResetEnvironment 协调森林与草片。
+A10 清回访人物 / 教场 / 内容；已销毁初始实体由所属入口重建。
+日志不清理；不调用 OpenLevel，不复制世界，不归零引擎时钟。
+end note
+M --> D : 新轮实体、碰撞与资源绑定
+break 恢复对象或绑定失败
+  D --> S : 保持 Preparing，不开始后续准备
+end
+D -> N : 新轮最终几何 / BuildKey
+N --> D : 构建排空且无更新脏版本
+break 新导航失败或凭据过期
+  D --> S : 保持 Preparing 与遮罩，不发 WorldReady
+end
+D -> M : 验证全部初始对象 / 控制 / 内容
+M --> D : 新 Run / 版本匹配的真实凭据
+break 最终必要绑定验证失败
+  D --> S : 保持 Preparing 与遮罩，不发 WorldReady
+end
+D -> M : 仅凭据有效后解除遮罩，世界仍未推进
+M --> D : 当前视口正常完成揭示
+break 揭示失败或就绪凭据失效
+  D --> S : 保持 Preparing，不启动计时或世界推进
+end
+D -> S : WorldReady
+S -> S : 设置 WorldStarted，提交 Rescue
+S --> D : 新轮开始效果
+D -> M : 同一线程开放玩法 / 实际驱动\n新轮时间基准，旧按键按既有规则重武装
+note over S,N
+任一 break 都终止本次后续步骤，显示准备错误；不生成新的玩家失败结果。
+用户重新准备后沿同 ResetRequest 幂等重试，复核已成功步骤，不重复 Spawn。
+未排空旧任务不得复用后端；全部必要准备未通过不得解除遮罩和启动计时。
+成功保存不自动复位；世界卸载只清理，不重建下一轮。
+end note
+@enduml

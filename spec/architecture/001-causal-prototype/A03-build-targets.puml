@@ -1,0 +1,48 @@
+@startuml A03-build-targets
+!pragma layout smetana
+title A03 同源构建目标关系（已确认；目标不是业务类）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #F0FDF4
+skinparam componentBorderColor #16A34A
+skinparam ArrowColor #475569
+top to bottom direction
+
+artifact "ExperimentCore/include + src\n同一份标准 C++20 核心" as Source
+package "Linux / GCC13 / CMake3.28" {
+ artifact "根 CMakeLists.txt\n核心源清单 / 编译策略 / 测试注册" as CMake
+ component "experiment_core\nSTATIC library" as Library
+ component "experiment_core_checks\nexecutable" as Checks
+ artifact "Tests/ExperimentCore\nmain 与场景" as TestSource
+ component "CTest 场景\n运行检查并验证退出码" as CTest
+ CMake --> Library : 声明
+ CMake --> Checks : 声明
+ CMake --> CTest : 注册
+ TestSource --> Checks : 编译
+ Checks --> Library : 链接本平台库
+ CTest --> Checks : 执行
+}
+package "Windows / MSVC / UBT" {
+ component "UEgame Runtime 模块\n核心 + UE 适配 / 世界 / 表现" as Game
+ artifact "Game / Editor 二进制" as Binary
+ Game --> Binary : 分别构建
+}
+Source --> Library : GCC 编译
+Source --> Game : MSVC 重新编译
+note bottom of Checks
+验证输入 / 显式时间 → Session → 效果与结果。
+不直接写 RunState，不提供正式服务器协议。
+测试入口和生成输出均在 UE 模块目录之外。
+end note
+note bottom of Game
+不链接 Linux .a / .so。
+不由 Build.cs 启动 CMake 或 Docker。
+end note
+legend bottom
+  两条路径分别生成产物；显式源码清单须覆盖同一组核心文件。
+  独立核心头文件另外检查自包含；构建输出使用 Source 外的目录。
+  未来 Docker 的正式宿主仍待设计，本图不新增宿主类或 Server Target。
+endlegend
+@enduml

@@ -1,0 +1,98 @@
+@startuml A06-class-design
+!pragma layout smetana
+title A06 类图（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+class AExperimentPlayerController <<已有 / 扩展>> {
+ - SpellAimGestures / PendingIntents
+ + BeginSpellAim() / ReleaseSpellAim()
+ + CancelSpellAim(Reason)
+}
+class AExperimentWorldDirector <<已有>>
+class UExperimentCombatConfig <<UDataAsset>> {
+ 只读招式 / 几何 / 伤害 / 精度
+}
+class UExperimentCombatWorldComponent <<UActorComponent>> {
+ - 登记表: weak / 当前临时批次
+ + BindRun() / EnqueueIntent()
+ + TickCombat() / CaptureThreats()
+ + StopRun()
+}
+class UExperimentCombatantComponent <<UActorComponent>> {
+ - Health / Stagger / LaunchSerial
+ + CaptureState() / ApplyPlan()
+ + RecordLanding() / ResetForRun()
+}
+class AExperimentWeapon <<AActor>> {
+ - SwingRuntime / EffectiveHitSet
+ - Holder: weak / 掉落状态
+ + TryStartSwing() / SampleMotion()
+ + Drop() / TryAttach()
+}
+class AExperimentProjectile <<AActor>> {
+ - Launch / Distance / Ended
+ + SamplePath() / CommitAdvance()
+ + EndOnce()
+}
+class FCombatContactSampler <<UE / 无状态>> {
+ + CollectGroup() / RefineFirstContact()
+ + CollectExplosion()
+}
+class FCombatDataMapper <<UE / 无状态>> {
+ + ToCore() / ToUEPlan()
+}
+class "experiment::LatitudeTrajectory" as Trajectory <<C++20 / 无状态>> {
+ + ValidateLaunchDomain()
+ + SampleAtDistance() / BoundCurvature()
+}
+class "experiment::AttackDirectionRules" as Direction <<C++20 / 无状态>> {
+ + EvaluateTowardGoblin()
+}
+class "experiment::CombatRules" as Rules <<C++20 / 无状态>> {
+ + ResolveGroup() / EvaluateLanding()
+}
+class "A05 Movement" as Move <<已有>>
+class "A04 Root" as Root <<已有 / 扩展轴与版本>>
+class "角色 Actor" as Character <<已有 / NPC 待 A07>>
+class "Subsystem → Session" as Flow <<已有 / 唯一阶段结果>>
+
+AExperimentWorldDirector *-- UExperimentCombatWorldComponent
+AExperimentPlayerController --> UExperimentCombatWorldComponent : 执行请求 + 最终 AimFrame
+UExperimentCombatWorldComponent --> UExperimentCombatConfig : strong / 只读
+UExperimentCombatWorldComponent --> Root : weak / 同源空间
+Character *-- UExperimentCombatantComponent
+UExperimentCombatWorldComponent --> UExperimentCombatantComponent : weak / 采样与提交
+UExperimentCombatWorldComponent --> AExperimentWeapon : weak / 唯一战斗推进
+UExperimentCombatWorldComponent --> AExperimentProjectile : weak / 唯一战斗推进
+UExperimentCombatWorldComponent ..> FCombatContactSampler : 空间事实
+UExperimentCombatWorldComponent ..> FCombatDataMapper : 纯值转换
+FCombatDataMapper ..> Rules
+FCombatDataMapper ..> Direction
+FCombatDataMapper ..> Trajectory
+UExperimentCombatantComponent --> Move : 只读保护 / 执行移动效果
+UExperimentCombatWorldComponent --> Flow : 全部提交后，经 Director 稳定快照
+
+note top of AExperimentPlayerController
+仅火球 / 岩炮弹：按住瞄准、松开一发。
+横 / 竖斩：按下直接发动。
+瞄准不计招式使用；取消不发射。
+end note
+note bottom of UExperimentCombatantComponent
+无敌窗口仍归 Movement；不复制。
+Session 不保存生命、武器或弹体。
+end note
+legend bottom
+10 个新增职责类；其余为已有边界的扩展。
+UWorld 管理 Actor 生命周期，弱引用不代表无清理责任。
+图中省略配置引用和表现组件；完整契约见正文。
+endlegend
+@enduml

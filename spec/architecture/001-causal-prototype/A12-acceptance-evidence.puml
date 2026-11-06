@@ -1,0 +1,39 @@
+@startuml
+!pragma layout smetana
+title A12 本人体验与验收证据\n总体已确认 · 分别判断，最终汇总
+top to bottom direction
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam ArrowColor #475569
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+rectangle "同一受测版本\nBuildId / 内容摘要 / 用例版本" as build
+rectangle "技术证据\nLinux规则 + 真实UE + 独立包\n含实际有声听辨与完整恢复链" as technical
+rectangle "用户普通玩法\n剑术 / 魔法 / 混用 / 未获救\n不固定轮数、顺序或额外试玩者" as play
+rectangle "已有 A11 结果\nRunId / 实际结束原因\n终态不被反馈改写" as result
+rectangle "独立体验反馈\n用户原话，不预先解释分支\n关联 BuildId + RunId" as feedback
+rectangle "样本标记\nRecoveryUsed / 来源 / 先前剧情暴露\nDeliveryMode / 声音健康\n耗时已知或Unknown / 输入方式" as labels
+rectangle "体验判据\n① 说清救助方式→教师科目→学习风气\n② 感到自己的选择改变了世界" as rubric
+rectangle "最终验收摘要\n逐项 Passed / Failed / Blocked / NotRun\n必需技术证据 + 本人双重体验\n缺项明确保留，不自动判完成" as aggregate
+build --> technical
+build --> play
+play --> result
+play --> feedback
+result --> feedback : 只关联
+result --> labels
+feedback --> labels
+feedback --> rubric
+technical --> aggregate
+rubric --> aggregate
+labels --> aggregate
+note bottom of labels
+  恢复与字幕模式分别标记，不混入无标记正常样本。
+  字幕送达不能代替语音通过；不自动要求固定重玩次数。
+end note
+note bottom of result
+  技术终止不能充当“未获救”剧情体验。
+  玩家死亡而小孩存活如实记录，不补造小孩遇难。
+end note
+@enduml

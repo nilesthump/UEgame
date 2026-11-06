@@ -1,0 +1,31 @@
+@startuml A06-spherical-projectile-pitch
+!pragma layout smetana
+title A06 历史固定球心平面候选（已被纬度圆方案替代；未确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+rectangle "A04 同源球心 + 实际发射口\nA05 本帧最终相机方向" as Input
+rectangle "冻结发射参数\n当地径向 / 切向 / 俯仰角\n不追踪目标，不随之后镜头转向" as Launch
+rectangle "UE 弹体唯一运行状态\n累计实际路程 s / 最大射程 / 结束状态\n本步目标路程 = s + 速度 × 世界步长" as Runtime
+rectangle "ExperimentCore / 标准 C++20 / GCC\n无状态路径采样 P(s)\n保持局部俯仰与总速度" as Math
+rectangle "水平：等高圆周\n仰射：绕行并升高\n俯射：绕行并降低\n垂直：径向直上 / 直下" as Cases
+rectangle "UE 曲线分段扫掠与接触复核\n约束曲率误差、步长、半径变化\n首接触结束；没有接触则提交实际位置" as Collision
+rectangle "沿用 A06 结算\n火球范围攻击 / 岩炮弹单体\n整批稳定后再判成败" as Result
+Input --> Launch
+Launch --> Runtime
+Runtime --> Math : 发射纯值 + 路程区间
+Math --> Cases : 同一模型的四种情况
+Cases --> Collision : 路径采样与前进方向
+Collision --> Runtime : 仅提交实际到达路程 / 结束
+Collision --> Result : 有效命中事实
+note bottom of Math
+纯函数不保存弹体、不访问 UE 世界。
+水平为严格圆周，斜射为变半径曲线。
+本次仅提交弹道专题确认；其他行为和类图另行确认。
+end note
+@enduml

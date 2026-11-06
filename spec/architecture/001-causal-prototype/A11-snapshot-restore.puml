@@ -1,0 +1,78 @@
+@startuml A11-snapshot-restore
+title A11 全场一致快照恢复（同Run；总体已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+participant "统一恢复作业" as R
+participant "Session" as C
+participant "Director / 领域所有者" as W
+participant "导航 / 呈现 / 控制" as P
+R -> R : 验证目标整代 / 血缘 / 格式与配置
+break 无合法快照或已知终态历史无法确认
+  R -> R : 暂停，不装入其他轮或猜测回退
+end
+break 已验证目标为已提交终态
+  R -> C : 只读恢复唯一结果并保持 Ended
+  R -> R : 重建输出/显示结果，等待手动新轮\n不进入可玩世界或继续点流程
+end
+R -> W : 关闭执行门，失效旧恢复代次\n停实际驱动，退出临界区，释放未提交候选
+W -> P : CancelAndDrain 旧导航/回调资格
+P --> W : 实际排空
+break 停止或排空失败
+  W --> R : 暂停，不替换世界
+end
+W -> P : 当前视口遮罩，确认实际覆盖
+P --> W : 覆盖凭据
+break 覆盖失败
+  W --> R : 暂停，不暴露半恢复场景
+end
+R -> C : 受控装入核心值 / 逻辑时钟累计\n保留Run，建立新恢复分支
+C --> R : 核心装入结果
+break 核心装入失败
+  R -> R : 暂停，不开始修改世界
+end
+R -> W : 各唯一所有者装入同CaptureId的世界值\n恢复实体/攻击/材料/火雨/内容逻辑
+W --> R : 领域装入结果（逐步校验，失败即停）
+break 任一领域装入失败
+  R -> R : 保持遮罩和暂停，不执行派生重建
+end
+W -> P : 重建碰撞/导航/绑定/播放请求\n所有运行代次重新签发
+P --> W : 最新版本实际就绪
+break 装入、版本或任一必要准备失败
+  W --> R : 保持遮罩和暂停，不开放部分世界
+end
+W --> R : 核心与世界一致，未开玩法
+R -> R : 重新锚定单调时钟，记恢复血缘\nRecoveryPaused；不回滚故障计数
+R -> R : 复核存储并提交带恢复血缘的继续点
+break 存储仍故障 / 继续点提交耗尽
+  R -> R : 保持暂停，等待人工处理\n不自动再次回退或新开轮
+end
+alt 已恢复点为 TimeSkip
+  R -> W : 保持遮罩，仅恢复获准结算/装配驱动
+  W -> P : 完成原环境＋布局就绪后才自然淡入
+  P --> W : 第三Ready与实际控制恢复仍走A10握手
+  W -> C : 原阶段流程合法完成才进入 Revisit
+else 已恢复点为 Rescue / Revisit / Preparing
+  R -> P : 正常解除遮罩，复核当前凭据
+  break 揭示或最终绑定失效
+    P --> R : 保持暂停，不接纳玩法
+  end
+  alt 初始 Preparing 基线
+    R -> C : 当前实际 WorldReady 后设置 WorldStarted
+    R -> W : 同一线程进入 Rescue 并开放驱动
+  else Rescue / Revisit
+    R -> C : 激活当前恢复代次，保持原阶段边界
+    R -> W : 同一线程开放当前合法动作与驱动
+  end
+end
+note over R,P
+不复用旧Ready/Timer/导航/播放句柄；不重播已发生伤害或使用事实。
+部分台词重新呈现；雨程与动作沿逻辑游标继续，不补走离线时间。
+初始Preparing基线须完成开轮握手；正常新轮走Reset，不能用Reset代替装入快照。
+end note
+@enduml

@@ -1,0 +1,65 @@
+@startuml A08-cutting-flow
+title A08 单次切削与断开流程（总体已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam ArrowColor #475569
+start
+:A06 候选刃段 / 当前材料与姿态;
+if (身份、阶段、切削类型与几何有效?) then (否)
+ :明确拒绝 / 按实际障碍处理;
+ stop
+endif
+:实际开口认领 CutId，另处独立;
+:先穿旧缺口，再消耗本刀新材料进深;
+:求暂定允许前缀，尚不提交剑姿态或后方接触;
+if (有新增真实切除材料?) then (否)
+ :不增加面积，不触发断开;
+ stop
+endif
+:局部投影集合并，重叠只计一次;
+:分母 = 未扣剑切口的当前外轮廓截面;
+if (单口严格超过 80%?) then (是)
+ :候选一次断开身份 / 触发刀方向;
+ if (立木?) then (是)
+  :候选树桩 + 上部树干，补端面;
+ else (倒木)
+  :候选两木段，继承远处切口与火湿归属;
+ endif
+else (否)
+ :检查各口联合后的正连接；必要时截短/拒绝候选;
+ :候选加深缺口 / 更新内表面;
+endif
+if (会移走角色现有支撑?) then (是)
+ :本刀该候选不提交，剑受旧材料阻挡;
+ :角色离开后需重新实际砍击，不排队补刀;
+ stop
+endif
+:同步准备完整网格和复合碰撞;
+if (几何、碰撞状态与版本全部有效?) then (否)
+ :保留旧态，剑受旧材料阻挡，明确报告失败;
+ stop
+endif
+:受控提交区整组安装 / 增加几何版本;
+:确认剑允许前缀；A06 再推进实际姿态及后方接触;
+:A07 立即失效相交路线，随后更新导航;
+if (有倒落或分离计划?) then (是)
+ :按径向参考做受控运动与旋转包络检查;
+ if (遇角色、支撑或障碍?) then (是)
+  :真实位置停止 / 等待重查，不推挤伤人;
+ else (否)
+  :提交实际姿态与导航范围变化;
+ endif
+endif
+:保留实际木段与树桩，不按分段事件宣告清通;
+:本批关联提交完成后，A06 / Session 继续原判定;
+stop
+note right
+ 此图表示一次请求处理，不是实验阶段机。
+ 80% 本身不触发；燃烧请求不走断开判定。
+ 运动由后续世界步继续；受阻不传送或删木段。
+end note
+@enduml

@@ -1,0 +1,51 @@
+@startuml A10-content-delivery
+title A10 相见、自由离开与关键内容交付（总体已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+actor "玩家" as Player
+participant "UE 真实触发 / 内容作业" as Job
+participant "纯规则 / Session" as Core
+participant "当前呈现通道\nUMG 文本；语音适配留 A13" as View
+participant "Director" as Director
+Player -> Job : 群众接近 / 与教师近距无遮挡相见
+Job -> Core : 当前阶段 / 角色 / 内容身份 / 已送达状态
+Core --> Job : 合法当前片段；锁定方向不重算
+Job -> Job : 一条主要通道 / 完整播放身份
+Job -> View : Present(ContentId / SegmentId / Generation)
+note over Player,View
+  不锁移动、不转镜头、不拦 A06 松键、不暂停世界
+  声音资源、播放及与字幕的具体联动在 A13 最后确认
+end note
+alt 离开 / 地图遮挡 / 失焦 / 绑定失效 / 停止
+  Job -> Job : 先失效代次，标记 Interrupted / Canceled
+  Job -> View : 停止当前表现
+  View --> Job : 可能迟到的 finished；不是 Completed 证据
+  Job -> Job : 拒绝旧/取消回执；不提交关键内容事实
+  opt 因离开触发，教师已识别 / 回忆未交付 / 仍可有效呈现
+    Job -> View : 一次简短挽留；可继续离开，不追拦
+  end
+  Player -> Job : 再次合格接近
+  Job -> View : 新代次从未交付关键片段开头呈现
+else 关键片段正常完成
+  View --> Job : Completed(片段 / 版本 / 有效交付凭据)
+  Job -> Job : 核验当前身份、关键语义与有效呈现
+  Job -> Core : CrowdLearning 或 TeacherRecall 送达事实
+  Core -> Core : 幂等保存对应一位；顺序不限
+  alt 两项均已送达
+    Core -> Director : Ended / 唯一结果；日志与复测交 A11
+  else 仍缺一项
+    Core --> Job : 继续回访；已完成事实保持
+    Job -> Job : 重查仍合格候选，不要求退出再进入
+  end
+end
+note over Core,Director
+  不要求听完整场对话；森林查看不是第三门槛
+  机器完成不替代用户的因果体验验收
+end note
+@enduml

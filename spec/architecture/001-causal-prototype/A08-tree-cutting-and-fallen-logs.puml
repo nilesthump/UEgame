@@ -1,0 +1,50 @@
+@startuml A08-tree-cutting-and-fallen-logs
+!pragma layout smetana
+title A08 砍树与倒木总体（已确认；非类图）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+
+rectangle "A06 战斗接触\n候选剑刃 / 木体相对轨迹\nActionKey / 发生时序 / 几何版本" as Combat
+rectangle "UE 树木 / 木段唯一所有者\n材料坐标、各切口、剩余材料\n当前姿态、断开状态与版本" as Tree
+rectangle "ExperimentCore / 标准 C++20 / GCC\n同处归属与几何进深\n投影并集 / 单口严格 >80%\n允许前缀 / 切削及断开计划" as Rules
+rectangle "UE 候选几何与碰撞准备\nDynamicMesh 缺口 / 端面\n复合凸体 / 完整集合验证" as Prepare
+rectangle "UE 有序整组提交\n新网格 + 实际碰撞 + 状态\n树桩 / 木段身份与版本" as Commit
+rectangle "UE 受控倒落 / 分离\n径向参考 / 平移与旋转检测\n遇角色或障碍停止、重查" as Motion
+rectangle "A07 导航适配\n同源碰撞快照、旧/新范围\n路线失效 → 分批建图 → 可查询" as Nav
+rectangle "A09 / A10 环境与回访\n烧细请求 / 已提交环境后果\n火湿归属继承、回访清木段留树桩" as Environment
+rectangle "A06 整步稳定后 → Session\n唯一实验成败与阶段\n无新增玩家使用统计" as Session
+
+Combat --> Tree : 候选接触与资格
+Tree --> Rules : 冻结纯值
+Rules --> Combat : 暂定前缀，尚不穿过木材
+Rules --> Prepare : 候选计划
+Prepare --> Commit : 全部有效 / 碰撞可用
+Prepare --> Tree : 失败保留旧态并报告
+Commit --> Tree : 唯一提交
+Commit --> Combat : 成功才确认剑轨迹 / 后方接触
+Commit --> Motion : 一次倒落 / 分离计划
+Motion --> Tree : 实际姿态更新
+Commit --> Nav : 新拓扑 / 几何版本
+Motion --> Nav : 实际新旧范围
+Commit --> Environment : 材料 / 切口 / 状态
+Environment --> Tree : 版本化烧细请求
+Commit --> Session : 本批环境提交已处理
+
+note bottom of Rules
+ 同口重叠只计一次；不同切口历史不合并
+ 多口联合断桥但无单口达阈值：保留连接并截停
+ 烧细可改分母，但不能独自触发倒树
+ 纯核心不持 UE 网格或第二份世界状态
+end note
+note bottom of Motion
+ 不扣血、不推挤、不携带角色
+ 分段保留木段，分离受真实碰撞约束
+ 是否通行由实际胶囊净空决定
+end note
+@enduml

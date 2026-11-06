@@ -1,0 +1,42 @@
+@startuml
+title A12 验证与交付数据流\n总体及具体类图均已确认
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam ArrowColor #475569
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+start
+:锁定源码 / 配置 / 素材 / 用例清单\n内容身份、BuildId、ValidationRunId;
+:核对实际工具链与测试隔离目录;
+fork
+  :Linux GCC13 + CMake3.28 / CTest\n同份 C++20 核心、公开头、规则检查;
+fork again
+  :UE5.6.1 / UBT / MSVC\n同份核心 + 真实 UE 场景自动检查;
+end fork
+:核对退出状态 + 本次可解析报告\n非零执行、预期ID全覆盖、逐项成功\n缺失 / 跳过 / 超时均不得通过;
+if (前置技术检查通过？) then (是)
+  :UAT BuildCookRun\nWin64 Development 构建 / Cook / 归档;
+  :关闭编辑器后启动归档包\n操作、资源、声音、结果、恢复与手动新轮;
+  if (包内必需项通过？) then (是)
+    :形成可试玩候选包\n保留实际版本与限制;
+    :用户本人比较四类剧情结果\n中性反馈，不提前解释分支答案;
+    :汇总技术证据与两项体验标准\n区分正常 / 恢复 / 字幕模式;
+    if (必需证据及体验均满足？) then (是)
+      :形成最终验收记录\n包、源码、Linux产物、素材清单、使用说明;
+    else (否 / 未验证)
+      :明确失败 / 待验证 / 受限项目\n按缺口修正或补证，不宣称全部完成;
+    endif
+  else (否)
+    :保留包内失败 / 未测记录\n修正后以新验证身份复测;
+  endif
+else (否 / 缺条件)
+  :记录 Failed / Blocked / NotRun\n保留日志，不借另一平台成功代替;
+endif
+stop
+legend bottom
+  已确认方案，不是已执行记录；当前没有游戏工程或声音素材。
+  Linux核心产物不是完整Docker服务器；模拟手柄不是实物验证。
+endlegend
+@enduml

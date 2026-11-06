@@ -1,0 +1,127 @@
+@startuml A11-class-design
+!pragma layout smetana
+title A11 类设计 · 总体与类图均已确认
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+top to bottom direction
+
+package "UE 宿主 · 生命周期与唯一串行作业" {
+class "UExperimentSubsystem\n既有宿主" as Host {
+  唯一 Session / 当前时钟映射
+  + PumpCheckpointOperation()
+}
+class "UExperimentCheckpointConfig\n新增 · UDataAsset" as Config {
+  间隔 / 容量 / 版本要求
+  MaxRetries = 3（固定）
+  + ValidateConfig()
+}
+class "UExperimentRecoveryCoordinator\n新增 · UObject" as Coordinator {
+  FCommitJob / FRecoveryIncident
+  FPreparedCheckpoint（不可变）
+  FExportJob / RecoveryTimingLedger
+  + RequestCheckpoint()
+  + PumpOperation()
+  + RequestRecovery() / HandleFault()
+  + RequestNewRun() / CancelForWorld()
+}
+class "UExperimentRecoveryWidget\n新增 · UUserWidget" as UI {
+  + ShowStatus()
+  + SubmitUserIntent()
+}
+Host *-- Coordinator : 强持有
+Host o-- Config
+Host *-- UI
+UI ..> Coordinator : 意图，不写状态
+Coordinator --> Config : 只读
+}
+
+package "纯核心 · 标准 C++20 / Linux GCC13" {
+class "experiment::ExperimentSession\n已有 · 唯一核心状态" as Session {
+  + CaptureCheckpoint()
+  + ValidateCheckpoint()
+  + PrepareCheckpointRestore()
+  + CommitCheckpointRestore()
+  + ActivateRecoveredCheckpoint()
+  + RestoreCommittedTerminal()
+}
+class "experiment::CheckpointRules\n新增 · 无状态规则" as Rules {
+  + DecideCommitNext()
+  + ValidateRecoveryChoice()
+  + DecideActivation()
+}
+class "experiment::CheckpointClockRules\n新增 · 无状态时钟规则" as Clock {
+  + CaptureRelativeTiming()
+  + RebaseRecoveredTiming()
+  + ComposeRecoveryTiming()
+}
+Session ..> Clock : 显式时间输入
+}
+
+package "UE 存储与世界适配 · 领域仍拥有自身状态" {
+class "FExperimentSnapshotCodec\n新增 · 无状态编码" as Codec {
+  + EncodeBundle() / EncodeManifest()
+  + DecodeAndValidate()
+}
+class "FExperimentCheckpointStore\n新增 · 唯一快照 IO" as Store {
+  + AcquireRunLease()
+  + ProbeCommit() / PublishOnce()
+  + FindRecoveryPoint() / LoadVerified()
+}
+class "UExperimentLogWriter\n已有 · 只导出已提交结果" as Log {
+  + ExportCommittedResultOnce()
+  + ProbeExport()
+}
+class "AExperimentDirector\n已有 · 实体绑定与驱动资格" as Director {
+  + CancelAndDrainOldGeneration()
+  + ApplyRecoveryActivation()
+}
+class "UExperimentWorldSnapshotComponent\n新增 · 默认子组件，无独立 Tick" as World {
+  FRestorePlan / FRestoreProgress
+  + TryFreezeBoundary() / CaptureWorld()
+  + PrepareRestore() / ApplyNextRestoreStep()
+  + VerifyRestoredCut() / ReleaseFreeze()
+}
+class "既有领域所有者\n角色 / 战斗 / AI / 木体 / 环境 / 内容" as Domains {
+  + CaptureCheckpointValue()
+  + ValidateCheckpointValue()
+  + RestoreCheckpointValue()
+}
+Director *-- World
+World --> Domains : 按依赖装入，不复制实时状态
+}
+
+Host *-- Session : 唯一拥有
+Host *-- Log : 强持有
+Coordinator ..> Session : 通过宿主接口
+Coordinator ..> Rules : 纯值决策
+Coordinator ..> Clock : 恢复历史计时
+Coordinator ..> Codec
+Coordinator *-- Store
+Coordinator --> Log : 已验证结果引用
+Coordinator --> World : 当前世界弱绑定
+Coordinator --> Director : 当前世界弱绑定
+Store -[hidden]down-> Director
+World -[hidden]down-> Session
+
+note bottom of Store
+返回 Committed / NotCommitted /
+Indeterminate / Conflict。
+不自带重试或恢复循环。
+end note
+note bottom of World
+恢复切点证明 ≠ A10 最终回访 Ready。
+任一步失败：保持遮罩和玩法关闭。
+end note
+legend bottom
+八个新增职责类及 Session/LogWriter/Director/Subsystem 扩展已确认。
+核心不含 UE / IO / 反射；DTO 仅作不可变快照，不推进第二份世界。
+本图是已确认职责接口设计，未实现、未编译、未正式冻结。
+endlegend
+@enduml

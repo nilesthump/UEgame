@@ -1,0 +1,43 @@
+@startuml A09-environment-settlement
+title A09 雨程、提前成功与旧时代结算（总体已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam ArrowColor #475569
+start
+:WorldReady 后启动本轮\n环境游标 t = 0；初始燃料有限;
+repeat
+  :Rescue：A06 唯一调用环境共同子段\nA08 木体运动只推进一次;
+  note right
+    地图 / 失焦 / 未发现事件不暂停环境
+    正常运行同样消费 180 / 300 秒边界
+  end note
+repeat while (仍处于 Rescue？) is (是) not (否)
+if (本轮已 Ended？) then (是)
+  :Ended 关闭环境入口\n失败不生成成功回访;
+  stop
+endif
+:等已接纳批次与事务稳定\n撤销 A06 驱动，交接给旧时代结算入口\n保留游标、材料、火湿与消费位置;
+repeat
+  :同一演算推进到下一事件 / 有界子段\n按帧工作量预算运行，不加速 UWorld;
+  if (越过 180 / 300 秒边界？) then (是)
+    :精确切段消费雨计划\n180 开雨，300 停雨并保持湿度;
+  endif
+  :无雨且干燥：火球 / 火焰可引燃\n雨中：火球禁燃，残火可传播\n所有火共用衰减上限，最迟 300 秒灭完;
+  :雨后仍湿：禁止新增引燃\n晚成功若已干燥再起火，继续消耗剩余燃料;
+  :仍有火时推进木体运动 / 支撑重查\n连续接触 → 纯规则 → 几何 / 火湿整组提交;
+  if (出现技术错误？) then (是)
+    :保留最后成功状态及诊断\n不报告环境完成，不伪装救援死亡;
+    stop
+  endif
+repeat while (游标未达 max(成功时刻,300)\n或仍有旧火 / 未消费引燃 / 未决事务？) is (是) not (否)
+:封存旧时代驱动与后果快照\nBlocked 保留真实姿态；Unresolved 不能当完成\n无需等湿度蒸发或所有木体落地;
+:一次映射三十年后的局部环境\n火灾枯木与新芽 / 保留树桩 / 清理倒木\n新年代隔离旧雨和旧火回调;
+:先初始化新 Epoch 权威状态 / 材料绑定\n无火 / 干燥 / 新布局燃料\nA06 新驱动资格预装待命，不接纳动作;
+:新布局碰撞 / 导航真实就绪\n确认新状态、绑定、驱动均已准备\n匹配 TransitionToken 回报环境完成;
+:A02 等待其余就绪与实际恢复控制\n恢复时先启用新年代推进，再开放输入\nRevisit 合法新动作照常，旧雨不重播;
+stop
+@enduml

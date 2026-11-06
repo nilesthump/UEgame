@@ -1,0 +1,41 @@
+@startuml A13-audio-overview
+!pragma layout smetana
+title A13 音效与语音总体（总体与具体类均已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangleBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+rectangle "A05–A09 实际世界\n已提交短事件 / 当前火雨等持续状态\n不新增声音驱动的玩法判断" as World
+rectangle "A10 内容调度\nSession 只读分支与进度 + 真实近距/相见\nNarrative 唯一主要内容作业" as Narrative
+rectangle "本地声音与文本配置\nagent 合成对白；音效先找开放资源，无匹配再合成\nSoundWave / 稳定 ID；Config 的 FText 唯一" as Config
+rectangle "世界声音适配\n去重 / 限距 / 并发 / 生命周期\n3D 音效、环境循环" as SFX
+rectangle "A10 呈现扩展\n同一 PlaybackKey + RecoveryGeneration\n完整字幕 + 清晰 2D 关键语音" as Present
+rectangle "UE 原生播放与混音\nAudioComponent / Attenuation / Concurrency\n总音量、音效、环境、语音" as Audio
+rectangle "版本化媒体政策\n连续可读全文 + 整份作业收尾\n取消优先；Finished 不直接代表送达" as Policy
+rectangle "显式字幕模式（已确认）\n主动静音 TextOnlyChosen\n异常先取消，再新代次 TextFallback 从头显示" as Fallback #FFF7DD
+rectangle "A10 原有提交链\nNarrative 先封存 Completed → Subsystem\nSession 唯一登记关键事实；Optional 不登记" as Core
+rectangle "A11 保存与恢复\n共同冻结暂停媒体；旧代次先失效\n恢复只补未送达片段，持续音按实际状态重建" as Recovery
+rectangle "随后 A12 验收\n独立包声音可用 / 正常有声路径实际听辨\n降级内容成功 ≠ 语音交付验证通过" as QA
+World --> SFX
+Narrative --> Present
+Config --> SFX
+Config --> Present
+SFX --> Audio
+Present --> Audio : 绑定身份后播放
+Present --> Policy : 实际字幕与当前作业证据
+Audio --> Policy : 状态 / 结束候选 / 异常
+Policy --> Fallback : 静音或播放异常
+Fallback --> Core : 新代次完整字幕合格后
+Policy --> Core : 正常整份作业合格后
+Recovery ..> Present : 冻结 / 取消 / 重建
+Recovery ..> SFX : 不重放历史短音
+Core --> QA : 版本、模式、诊断与真实结果
+note bottom of Audio
+声音只表现已发生结果，不决定伤害/分支/Ready。
+素材阶段合成/选用；运行时离线播放，不引入运行时 TTS。
+end note
+@enduml

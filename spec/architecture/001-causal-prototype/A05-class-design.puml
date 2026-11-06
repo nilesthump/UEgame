@@ -1,0 +1,81 @@
+@startuml A05-class-design
+!pragma layout smetana
+title A05 输入、角色、移动与相机类图（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+class UExperimentPlayerConfig <<UDataAsset>> {
+ InputActions / MappingContexts
+ Gait / Camera / DodgeParams
+}
+class AExperimentPlayerController <<APlayerController>> {
+ - InputContext / ControlEpoch
+ - PendingIntents
+ + SetupInputComponent()
+ + UpdateCameraManager(dt)
+ + InvalidateInput()
+}
+class AExperimentCharacter <<ACharacter>> {
+ - BindingKey / Root: weak
+ + RequestDodge(Context)
+ + ResetForRun(Binding, Config)
+}
+class USphericalCharacterMovementComponent <<A07 已确认 / UCharacterMovementComponent>> {
+ - 唯一速度 / 接地 / CurrentGait
+ + 径向重力 / 胶囊扫掠 / 姿态
+}
+class UExperimentMovementComponent <<玩家派生类>> {
+ - DodgeRuntime / ExecutionKey
+ + TryCommitDodge(Decision, Context)
+ + PhysCustom(dt, Iterations)
+ + CaptureDodgeProtection(Occurrence)
+}
+class AExperimentPlayerCameraManager <<APlayerCameraManager>> {
+ - ViewMode / ViewModeRevision / ViewSerial
+ + ProcessViewRotation(...)
+ + UpdateCamera(dt)
+ + GetFinalAimFrame()
+}
+class FPlayerDataMapper <<UE C++ / 无状态>> {
+ {static} ToDodgeSnapshot(...)
+ {static} ToExecutionParams(Decision)
+}
+class "experiment::DodgeRules" as Rules <<标准 C++20 / 无状态>> {
+ {static} Evaluate(Snapshot, Params)
+}
+class AExperimentWorldDirector <<既有 / 世界装配>>
+class UExperimentSubsystem <<既有 / Session 宿主>>
+class USphericalMinimapComponent <<A04 已确认>>
+class "胶囊 / 双 Camera / SpringArm" as Parts <<UE 现有组件>>
+class "A06/A07 只读状态与战斗入口" as Combat <<后续类型边界>>
+
+AExperimentWorldDirector --> AExperimentCharacter : 单一绑定 / 复位入口
+UExperimentSubsystem --> AExperimentPlayerController : 受限阶段 / 运行通知
+AExperimentPlayerController --> UExperimentPlayerConfig : 强引用 / 只读
+AExperimentCharacter --> UExperimentPlayerConfig : 强引用 / 只读
+AExperimentPlayerController --> AExperimentCharacter : 控制 / 合法意图
+AExperimentPlayerController --> AExperimentPlayerCameraManager : 引擎管理 / 最终视图
+AExperimentPlayerController *-- USphericalMinimapComponent
+AExperimentCharacter *-- UExperimentMovementComponent : 唯一移动组件
+USphericalCharacterMovementComponent <|-- UExperimentMovementComponent
+AExperimentCharacter *-- Parts
+AExperimentPlayerCameraManager --> AExperimentCharacter : 驱动单一活动视角
+AExperimentCharacter ..> FPlayerDataMapper : 查询结果转纯值
+AExperimentCharacter ..> Rules : 纯值求值
+AExperimentCharacter ..> Combat : 只读硬直 / 完整来袭
+AExperimentPlayerController ..> Combat : 最终 AimFrame + 攻击意图
+Combat ..> UExperimentMovementComponent : 受击时查询保护结果
+
+note bottom of UExperimentMovementComponent
+位移结束不等于窗口到期。
+输入 ControlEpoch 不进入已接纳动作标识。
+无敌窗口唯一归属 Movement，A06 只读采样。
+end note
+@enduml

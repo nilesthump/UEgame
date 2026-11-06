@@ -1,0 +1,123 @@
+@startuml A10-class-design
+!pragma layout smetana
+title A10 回访类图（九职责类已确认；已有类标灰）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+skinparam packageStyle rectangle
+hide empty members
+top to bottom direction
+
+package "ExperimentCore · 标准 C++20 / Linux GCC13" {
+class "experiment::ExperimentSession" as Session #F1F5F9 {
+  唯一 Phase / LockedBranch / 两项送达位
+  + NotifyRevisitContent(fact)
+  + GetRevisitProgress() : readonly
+}
+class "experiment::RevisitRules" as Rules {
+  + SelectNext(sample, progress, cursor)
+  + EvaluateInterruption(job, sample)
+  + EvaluateNudge(cursor, sample)
+  + EvaluateDelivery(job, receipt, sample)
+}
+}
+
+package "UE · 世界与内容适配" {
+class "UExperimentSubsystem" as Subsystem #F1F5F9 {
+  核心调用 / 效果串行执行
+  + QueueFact(context, delivery)
+}
+class "AExperimentWorldDirector" as Director #F1F5F9 {
+  Run / Epoch / Token / 联合布局凭据
+  + VerifyWorldReady()
+  + CompleteControlRestore()
+}
+class "URevisitConfig" as Config <<UDataAsset>> {
+  三方向 / 内容 ID / FText / 版本
+  布局资源 / 范围 / 可读政策
+  + ValidateContentSet()
+}
+class "URevisitLayoutComponent" as Layout <<UActorComponent>> {
+  唯一人物与教场装配作业
+  + PrepareLayout()
+  + CapturePreparedLayout()
+  + ValidateBindings()
+  + ResetLayout()
+}
+class "ARevisitParticipantActor" as Actor <<AActor>> {
+  StoryPersonId / Entity / Role / Binding
+  网格 + 真实接触，无 Combatant
+  + BindParticipant()
+  + CaptureAnchor()
+  + Retire()
+}
+class "URevisitNarrativeComponent" as Narrative <<UActorComponent>> {
+  唯一播放作业 / 接近与挽留游标
+  不保存两项完成位
+  + BindRevisit()
+  + AdvanceNarrative()
+  + AcceptReceipt()
+  + CancelCurrent()
+}
+class "FRevisitDataMapper" as Mapper <<无状态>> {
+  + ToWorldSample()
+  + ToContentDescriptor()
+  + ToPresentationSample()
+}
+Layout --> Actor : 唯一装配 / 退役
+Director *-- Layout
+Director *-- Narrative
+Layout --> Config
+Narrative --> Mapper
+Narrative ..> Layout : 当前实体 / 内容绑定
+}
+
+package "非模态呈现 · 音效与语音实现留 A13" {
+class "URevisitPresentationComponent" as Presentation <<UActorComponent>> {
+  当前 UI 句柄 / 玩家与视口代次
+  + BeginCover() / BeginReveal(proof)
+  + PresentSegment(key, content)
+  + CapturePresentationSample()
+  + CancelPresentation()
+}
+class "UTimeSkipWidget" as Mask <<UUserWidget>> {
+  全视口遮罩 / 中性时间文字
+  实际覆盖采样 / 显式固定终态
+}
+class "URevisitDialogueWidget" as Dialogue <<UUserWidget>> {
+  当前完整片段 / 说话者
+  文本布局采样，不获取输入焦点
+}
+Presentation *-- Mask
+Presentation *-- Dialogue
+}
+
+Subsystem *-up- Session
+Director --> Subsystem : 三 Ready / 实际控制恢复
+Narrative --> Subsystem : 合法关键回执 → 唯一类型化事实
+Narrative .up.> Rules : 冻结值 → 纯计划
+Director *-- Presentation
+Narrative --> Presentation : 单通道请求 / 先失效再取消
+Presentation --> Narrative : 绑定完整身份的回执
+Presentation --> Config : 只读呈现配置
+
+note bottom of Layout
+A09 环境＋A10 布置
+共用 Director 最终 LayoutRevision / A07 BuildKey
+Ready 后变更使本地凭据失效
+end note
+note bottom of Narrative
+Completed / Interrupted / Canceled 互斥终态
+先封存 Completed → 排队事实 → Session 提交
+再读新进度选择下一段
+end note
+note bottom of Presentation
+Widget 不直接发 Ready 或完成事实
+Stop 的 finished 不等于自然完成
+文本灰盒不冒充最终语音交付
+end note
+@enduml

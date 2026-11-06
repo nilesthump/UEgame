@@ -1,0 +1,47 @@
+@startuml A01-runtime-and-state
+!pragma layout smetana
+title A01 整体运行架构与状态归属（方案与类图均已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam backgroundColor #FFFFFF
+skinparam ArrowColor #475569
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam packageBorderColor #94A3B8
+top to bottom direction
+
+actor "玩家" as Player
+package "单个 UE5 游戏进程 / Windows" {
+  component "输入与表现\nBlueprint / UMG" as Presentation
+  component "角色、战斗、AI、环境\nActor / ActorComponent\n各自拥有实体状态" as Gameplay
+  component "实验协调器\nC++ / GameInstanceSubsystem\n阶段、方式统计、因果结果" as Experiment
+  artifact "只读配置\nUDataAsset" as Config
+  component "日志模块\nC++ 文件写入" as Logger
+}
+artifact "本地结果日志\nJSON Lines\n世界重置时保留" as LogFile
+
+Player --> Presentation : 操作 / 手动重启
+Presentation --> Gameplay : 动作请求
+Gameplay --> Presentation : 状态与即时反馈
+Gameplay --> Experiment : 事实通知\n使用招式 / 朝哥布林攻击\n实际命中 / 死亡 / 发现
+Experiment --> Gameplay : 阶段切换 / 手动复位
+Experiment --> Presentation : 阶段与回访内容
+Presentation --> Experiment : 对话进度 / 手动重启请求
+Config ..> Gameplay : 初值与规则参数
+Config ..> Experiment : 初值与预设结果
+Experiment --> Logger : 方式、分支、原因、实际耗时
+Logger --> LogFile : 持久保存
+
+note bottom of Gameplay
+世界启动即推进遇险和降雨计划。
+使用招式 → 方式统计；朝哥布林攻击 → 仇恨 / 计时。
+实际接触或命中 → 防反 / 伤害 / 树木变化。
+end note
+note bottom of Experiment
+成功：结算环境后进入 30 年回访。
+失败：按规定时点结束本轮。
+下一轮由玩家手动启动。
+end note
+@enduml

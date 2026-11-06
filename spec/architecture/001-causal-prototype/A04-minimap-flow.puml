@@ -1,0 +1,33 @@
+@startuml A04-minimap-flow
+!pragma layout smetana
+title A04 球体小地图数据流（总体已确认，非类图）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam ArrowColor #475569
+start
+:读取当前轮次、有效世界/玩家绑定与共享配置;
+if (地图可显示且数据有效？) then (是)
+  :取得玩家位置/朝向与普通静态地标;
+  :过滤显示范围\n不传遇险人物、教师身份或完整 RunState;
+  :UE 单位/类型转换为纯数值\n球面投影 n = normalize(P-C)\n朝向投影到切平面;
+  :更新示意球上的允许标记\n非活动部分仅底色，无对应场景模型\n背面由球体遮挡;
+  :应用用户地图旋转与缩放\n不修改实际世界与实验时间;
+  if (显示内容或视角需刷新？) then (是)
+    :按需/限频捕获 ShowOnly 表现组件\n自动逐帧捕获关闭;
+    :TextureRenderTarget2D → UMG;
+  else (否)
+    :沿用有效纹理;
+  endif
+else (否)
+  :隐藏地图并停止捕获\n重启/旧轮/无效绑定时清除旧快照与标记;
+endif
+stop
+note right
+地图快照仅用于表现，不成为第二份世界状态。
+准备/跳时隐藏；回访就绪后从实际世界刷新。
+地图浏览与捕获不触发发现或阶段完成。
+end note
+@enduml

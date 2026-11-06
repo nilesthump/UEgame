@@ -1,0 +1,41 @@
+@startuml A05-dodge-flow
+!pragma layout smetana
+title A05 闪避决策与执行（总体已确认，非类图）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam activityBackgroundColor #EFF6FF
+skinparam activityBorderColor #2563EB
+skinparam ArrowColor #475569
+start
+:玩家产生新的闪避按下沿;
+if (当前轮次/绑定/游戏上下文合法？) then (是)
+  if (接地且未硬直？\n已确认资格规则) then (是)
+    :记录被接纳时刻\n采样完整来袭集合与候选可行路径;
+    if (只有横挥来袭？) then (是)
+      :选择翻滚;
+    else (否)
+      :选择快步\n仅竖挥 / 横竖同时 / 无来袭;
+    endif
+    :纯规则自动选方向\n无来袭按固定优先序\n全部受阻则截停，不穿墙;
+    :创建新动作标识，替换旧动作\n短窗口从本次接纳按下时刻起算\n不累加旧窗口时间;
+    note right
+    A06 在每次受击发生时独立查询当前窗口，
+    不等待闪避位移完成。
+    窗口外即使动画继续也正常受伤。
+    end note
+    :UE 胶囊逐段扫掠执行\n动画只表现；遇动态阻挡缩短/停止;
+    :结束按实际接地返回行走/下落\n旧动作回调不得结束新动作;
+  else (否)
+    :不启动、不缓存、不创建无敌窗口\n空中/硬直处理已确认;
+  endif
+else (否)
+  :丢弃无效意图，不留到下一轮;
+endif
+stop
+note right
+无体力、次数、额外冷却。
+长按不是新按下；动画中可再次接纳符合资格的新按下。
+选择方向不保证躲开伤害，碰撞与伤害由 UE/A06 结算。
+end note
+@enduml

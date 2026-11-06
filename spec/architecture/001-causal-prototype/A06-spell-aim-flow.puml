@@ -1,0 +1,46 @@
+@startuml A06-spell-aim-flow
+title A06 魔法瞄准与实际发射（类接口已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+hide footbox
+actor 玩家
+participant "A05 Controller\n输入手势 / 代次" as Input
+participant "CameraManager\n最终 AimFrame" as Camera
+participant "CombatWorld\n有序战斗步" as Step
+participant "Weapon / Projectile\n已执行攻击" as Attack
+participant "Subsystem / Session" as Flow
+玩家 -> Input : 按下火球 / 岩炮弹键
+Input -> Input : 建立该法术手势；显示瞄准
+note right of Input
+无等待门槛、无自动连发。
+不产生使用 / 指向 / 计时事实。
+短按也沿相同路径。
+end note
+alt 地图 / 失焦 / 硬直 / 死亡 / 重置等取消
+ Input -> Input : 先失效手势，再清输入 / 改上下文
+ Input -> Input : 后续释放不发射；释放后可重武装
+else 正常松开且手势有效
+ 玩家 -> Input : 松开对应施法键
+ Input -> Input : 消费手势，生成本帧一次请求
+ Input -> Camera : 正常最终相机更新完成后取帧
+ Camera --> Input : 当前绑定 / 视图版本 / ViewSerial
+ Input -> Step : 合法意图 + 本帧最终 AimFrame
+ Step -> Step : 先处理既有攻击；再校验新意图
+ alt 资格 / 发射空间 / 创建失败
+  Step --> Input : 明确拒绝；不延迟补发
+ else 成功执行
+  Step -> Attack : 创建当前攻击身份及实例
+  Step -> Flow : 一次 ActionUsed + 指向判定事实
+  Step -> Step : 当前攻击立即接触 / 规则 / 提交
+ end
+end
+Step -> Step : 本战斗步全部既有组、新意图及派生结果完成
+Step -> Flow : 经 Director 取得一次完整稳定快照\n封闭整批后按死亡优先判定
+note over Input, Attack
+横 / 竖斩只在按下时送执行请求，不经过魔法瞄准手势。
+ControlEpoch 只使输入失效；在飞弹体有独立攻击身份。
+Completed 回调不是正常松键的充分证据，取消不能误发。
+end note
+@enduml

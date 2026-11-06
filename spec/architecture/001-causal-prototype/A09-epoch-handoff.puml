@@ -1,0 +1,54 @@
+@startuml A09-epoch-handoff
+title A09 旧时代结算、新年代准备与恢复握手（已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #2563EB
+skinparam ArrowColor #475569
+autonumber
+participant "Session / Subsystem" as Session
+participant "Director" as Director
+participant "A06 CombatWorld" as Combat
+participant "EnvironmentTransition" as Job
+participant "EnvironmentWorld\n+ TreeWorld / 草片" as Env
+participant "A07 Navigation" as Nav
+Session -> Director : 已提交 TimeSkip / TransitionToken
+Director -> Combat : 关闭新接纳，等待当前批次 / 事务稳定
+Combat --> Director : 最后已提交检查点
+Director -> Director : 撤旧驱动，保持角色/障碍真实支撑\n挂起其 Movement / 物理 / 根运动
+Director -> Env : 绑定更高 DriverGeneration / 旧时代 Lease
+Director -> Job : BeginSettlement(Token, Lease)
+loop 按现实帧预算完成若干共同前缀
+  Job -> Env : 读取唯一游标；同一前缀协议准备 / 提交
+  Env --> Job : 最后成功位置 / 雨计划 / 活动火 / 未决事务
+end
+Job -> Env : CaptureOutcome(Token)
+Env --> Job : 旧雨完整 / 无火 / 无未决输入或事务\n不可变快照 / 真 Blocked 可保留，Unresolved 报错
+Job -> Director : 旧时代封存 / 撤结算驱动
+Job -> Job : OutcomeRules → 局部新布局计划
+Job -> Env : 准备 / 发布新布局与新 Epoch\n无火 / 干燥 / 明确无旧雨计划
+Env -> Nav : 几何源变更 / 布局版本 / 相关范围
+Director -> Combat : 新 Lease 预装 Standby；输入执行仍关闭
+note over Job,Nav
+  A10 的相关障碍布置纳入同一最终布局屏障
+  等实际构建排空与匹配 BuildKey，且无更新脏版本
+end note
+Nav --> Job : 实际导航就绪凭据
+Job -> Job : 复核新状态 / 绑定 / 碰撞 / 导航 / Standby
+Job -> Director : EnvironmentReady(Token / Epoch / 布局版本)
+Director -> Session : 现有 SkipReady 环境项（实际完成事实）
+Session -> Session : 等其余布置 / 表现就绪；旧通知去重
+Session -> Director : RequestControlRestore(Token)
+Director -> Combat : 启用新 Epoch 实时驱动；接纳门仍关
+Director -> Director : 实际占有 / 相机 / 控制绑定成立
+Director -> Session : ControlRestored(实际时刻 / Token)
+Session -> Session : 校验并提交 Revisit
+Session --> Director : 当前阶段已匹配，可开放执行
+Director -> Combat : 开放当前合法新动作；旧雨不重播
+note over Session,Env
+  环境补推进不修改 WorldStartedAt / RealSeconds
+  旧因果快照只读；旧 Epoch/Lease/Token 回调不能写新状态
+end note
+@enduml

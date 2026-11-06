@@ -1,0 +1,73 @@
+@startuml A02-class-design
+!pragma layout smetana
+title A02 行为类图（已确认，2026-11-05）\n规则负责判定；协调器唯一提交状态
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+skinparam ArrowColor #475569
+hide empty members
+top to bottom direction
+
+class UExperimentSubsystem <<已有 / 细化>> {
+  - RunState : FExperimentRunState
+  + NotifyActionUsed(FActionUsedFact)
+  + NotifyAttackAtGoblin(FAttackDirectedAtGoblinFact)
+  + NotifyThreatDiscovered(FThreatDiscoveredFact)
+  + NotifyAftermathObserved(FAftermathObservedFact)
+  + NotifyBatchSettled(FSettlementCompletedFact)
+  + NotifySkipReady(FSkipReadyFact)
+  + NotifyControlRestored(FPlayerControlRestoredFact)
+  + NotifyRevisitContent(FRevisitContentFact)
+  - CaptureMoment() : FExperimentMoment
+  - CommitDecision(FExperimentFlowDecision)
+}
+class FExperimentFlowRules <<新增 / 纯 C++ / 无状态>> {
+  {static} + EvaluateRescue(State, Snapshot) : Decision
+  {static} + EvaluateRevisit(State) : Decision
+  {static} + CanRestorePlayerControl(State) : bool
+}
+class FExperimentRunState <<USTRUCT / 已有细化>> {
+  RunId / Phase / 观察进度
+  剑术、魔法统计 / 锁定结果
+  Timing / 跳时就绪 / 回访进度
+}
+class FEncounterSnapshot <<瞬时只读值>> {
+  RunId / BatchId / 有效性
+  玩家、小孩生死 / 威胁全灭
+  必须完整且已稳定
+}
+class FExperimentFlowDecision <<值结果>> {
+  RunId / ExpectedPhase / 触发标识
+  继续 / 等待后果 / 跳时 / 结束
+  原因 / 分支 / 诊断
+}
+class AExperimentWorldDirector <<已有 / 世界拥有>> {
+  + RequestSettledSnapshot()
+  + RequestEnvironmentSettlement(Token)
+  + ApplyRevisit(Token)
+  + RestorePlayerControl(Token)
+  回报就绪及实际恢复时刻
+}
+class UExperimentLogWriter <<已有>> {
+  + TryAppend(FExperimentResult)
+}
+
+UExperimentSubsystem *-down- "1" FExperimentRunState : 唯一拥有
+UExperimentSubsystem ..> FExperimentFlowRules : 只读求值
+FExperimentFlowRules ..> FExperimentRunState : 读取
+FExperimentFlowRules ..> FEncounterSnapshot : 救援判定输入
+FExperimentFlowRules ..> FExperimentFlowDecision : 返回
+UExperimentSubsystem ..> FExperimentFlowDecision : 验证后提交
+UExperimentSubsystem --> AExperimentWorldDirector : 弱引用 / 编排命令
+AExperimentWorldDirector ..> FEncounterSnapshot : 提供已结算事实
+UExperimentSubsystem *-- UExperimentLogWriter : 结束时提交结果
+
+legend bottom
+  仅新增一个行为类；规则类无状态，不拥有 Actor，也不直接执行副作用。
+  Director 提供领域快照，不再保存另一套角色生命值。
+  RunState 的时间与进度字段见配套数据图；继承关系沿用 A01。
+endlegend
+@enduml

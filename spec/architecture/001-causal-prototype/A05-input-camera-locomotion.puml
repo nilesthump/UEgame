@@ -1,0 +1,47 @@
+@startuml A05-input-camera-locomotion
+!pragma layout smetana
+title A05 输入、双视角、移动与闪避（总体已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EFF6FF
+skinparam componentBorderColor #2563EB
+skinparam ArrowColor #475569
+top to bottom direction
+
+component "键鼠 / 模拟手柄 Key 与 Axis\n实际手柄设备尚无测试条件" as Device
+component "Enhanced Input\nMappingContext → InputAction\n按下/释放与连续轴" as Input
+component "控制资格与上下文\n当前 Run / World / Pawn\n游戏、地图与阶段门控" as Gate
+component "A04 只读球面参考\n径向上下 / 切平面 / 单位转换" as Sphere
+component "角色移动 / UE\n走、小跑、奔跑、跳跃\n实际地面与胶囊碰撞" as Move
+component "双视角 / UE\n同一 Pawn；仅一个活动相机\n重力相对旋转 / 镜头碰撞" as Camera
+component "按下闪避：UE 采样\n完整来袭类型集合\n方向候选 / 可行路径 / 当前时间" as Sample
+component "纯 C++20 选择规则\n快步或翻滚 / 自动方向\n无体力、次数、额外冷却" as Rules
+component "UE 执行闪避\n逐段扫掠 / 遇阻截停\n动作实例与起始短无敌窗口" as Dodge
+component "A06 战斗边界\n攻击意图 + 当前 AimRay\n实际执行后才产生使用/命中事实" as Combat
+component "A04 地图组件 / Rig / Widget\n地图操作只改表现\n不暂停世界或刷新无敌" as Map
+component "已确认核心 Session\n消费可信实验事实\n唯一提交实验状态" as Session
+
+Device --> Input
+Input --> Gate
+Gate --> Move : 移动 / 跳跃
+Gate --> Camera : 观察 / 切视角
+Gate --> Sample : 新的闪避按下
+Gate --> Combat : 攻击意图
+Gate --> Map : 地图专用输入
+Sphere --> Move
+Sphere --> Camera
+Sphere --> Sample
+Camera --> Combat : 当前手动 AimRay
+Sample --> Rules : 纯值快照
+Rules --> Dodge : 类型与方向计划
+Dodge --> Move : 同一移动组件执行
+Combat --> Dodge : 查询受击时短窗口
+Combat --> Session : 已发生事实
+
+note bottom of Rules
+类型：竖挥→快步；横挥→翻滚；混合/无来袭→快步。
+已确认：仅接地开始；硬直不缓存；接地再按可替换。
+end note
+@enduml

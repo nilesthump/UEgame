@@ -1,0 +1,45 @@
+@startuml A03-dependencies
+!pragma layout smetana
+title A03 工程与模块依赖边界（总体已确认）
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #F0FDF4
+skinparam componentBorderColor #16A34A
+top to bottom direction
+artifact "UEgame.uproject" as Project
+component "UEgame Game Target" as GameTarget
+component "UEgameEditor Editor Target" as EditorTarget
+package "一个游戏 Runtime 集成模块 UEgame" {
+ component "UE 适配 / 世界 / 表现\nExperimentAdapter / World / Combat\nEnvironment / Revisit / UI" as Game
+ component "ExperimentCore 独立源码子树\n标准 C++20；无 UE 类型 / 宏" as Pure
+}
+component "Ubuntu24.04 / GCC13 / CMake3.28 / CTest\n独立核心检查；无 UE include / PCH / Unity" as Isolated
+component "Core / CoreUObject / Engine" as Base
+component "UMG / Json\n对应界面与结果日志" as Selected
+component "其他运行模块 / 插件\n按直接使用与后续玩法确认加入" as Later
+component "自定义 Editor 模块\n出现实际需要时另设" as EditorOnly #FFF7ED
+
+Project --> GameTarget
+Project --> EditorTarget
+GameTarget --> Game : 构建游戏
+EditorTarget --> Game : 编辑器内使用游戏
+Game --> Base
+Game --> Pure : 单向调用
+Isolated ..> Pure : 同一份源码；验证独立性
+Game --> Selected : 使用时声明
+Game ..> Later : 后续项决定
+EditorTarget ..> EditorOnly : 条件性加入
+EditorOnly ..> Game : 可依赖运行类型
+
+note bottom of EditorOnly
+Runtime 不反向依赖 Editor 模块。
+Editor Target 不等于自建 Editor 模块。
+end note
+legend bottom
+  三层、Windows 源码集成、Linux 构建选型及构建规则类图均已确认。
+  UBT 编译同一份纯规则源码；不复制实现，不要求独立 DLL / 额外 Runtime 模块。
+  Build.cs 声明真实依赖，具体公开/私有边界在类图中细化。
+endlegend
+@enduml

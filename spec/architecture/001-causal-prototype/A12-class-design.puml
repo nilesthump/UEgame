@@ -1,0 +1,99 @@
+@startuml
+!pragma layout smetana
+title A12 已确认类设计 · 开发测试与离线验证\n总体、具体类及值契约均已确认
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam ArrowColor #475569
+skinparam classBackgroundColor #EFF6FF
+skinparam classBorderColor #2563EB
+package "离线验证 · 三个PowerShell函数模块" {
+  class ValidationOrchestrator <<script module>> {
+    ValidationPlan / StageProgress
+    +New-ValidationPlan()
+    +Invoke-ValidationStage()
+    +Import-LinuxStage()
+    +Complete-Validation()
+  }
+  class ValidationProcessRunner <<script module>> {
+    +Start-ValidationProcess()
+    +Wait-ValidationProcess()
+    +Stop-OwnedProcess()
+  }
+  class ValidationEvidence <<script module>> {
+    +New-ContentManifest()
+    +Read-NativeReport()
+    +Verify-StageEvidence()
+    +Import-ManualObservation()
+    +Import-ExperienceFeedback()
+    +Evaluate-Acceptance()
+    +Write-ValidationSummary()
+  }
+}
+package "开发测试 · 同一个 UEgame Runtime 模块" {
+  abstract FAutomationTestBase <<UE>>
+  interface IAutomationLatentCommand <<UE>> {
+    +Update() : bool
+  }
+  class FExperimentCoreContractTest <<macro generated>> {
+    +GetTests()
+    +RunTest(CaseId)
+  }
+  class FExperimentWorldScenarioTest <<macro generated>> {
+    +GetTests()
+    +RunTest(CaseId)
+  }
+  class FRunExperimentScenarioCommand {
+    +Update() : bool
+  }
+  class FExperimentScenarioDriver {
+    Weak World / Director / Controller
+    CaseIdentity / Deadline / Evidence
+    +Begin()
+    +Pump()
+    +BeginCleanup()
+    +PumpCleanup()
+    +CaptureOutcome()
+  }
+}
+package "核心检查工具 · UE模块外 Tests" {
+  class CoreCaseSupport <<free functions / values>> {
+    CoreCaseSpec / CoreCaseOutcome
+    +ListCoreCases()
+    +RunCoreCase(CaseId)
+  }
+  class CoreChecksMain <<Linux executable entry>>
+}
+class "既有世界唯一所有者\nSubsystem / Director / 各领域组件" as world <<existing>>
+class "已有 ExperimentSession / 规则\n无可写RunState暴露" as core <<existing>>
+class "人工观察 / 本人反馈\n包内试听、原话、两项评价\n关联BuildId与RunId" as human <<records>>
+ValidationOrchestrator --> ValidationProcessRunner : 明确阶段调用
+ValidationOrchestrator --> ValidationEvidence : 回执与证据校验
+ValidationProcessRunner ..> CoreChecksMain : Linux本地执行 / 回收证据
+ValidationProcessRunner ..> FExperimentWorldScenarioTest : 启动UE宿主及测试请求
+ValidationProcessRunner ..> FExperimentCoreContractTest
+ValidationEvidence ..> human : 校验关联，不代填体验
+FAutomationTestBase <|-- FExperimentCoreContractTest
+FAutomationTestBase <|-- FExperimentWorldScenarioTest
+IAutomationLatentCommand <|.. FRunExperimentScenarioCommand
+FExperimentWorldScenarioTest --> FRunExperimentScenarioCommand : 排入框架队列
+FRunExperimentScenarioCommand *-- FExperimentScenarioDriver : 每Case一份
+FExperimentScenarioDriver --> world : 既有入口 / 只读采样
+FExperimentCoreContractTest --> CoreCaseSupport
+CoreChecksMain --> CoreCaseSupport
+CoreCaseSupport --> core : 正常纯值接口
+note bottom of FExperimentScenarioDriver
+  普通C++类，无独立Tick，不拥有玩法状态。
+  失败也先清理；Update=true只表示命令结束。
+end note
+note bottom of ValidationEvidence
+  进程成功、用例成功、本人体验分开判断。
+  JSON与Markdown由同一组已核验证据生成。
+end note
+legend bottom
+  四个开发测试类；三个外部脚本模块不是游戏C++类。
+  Tests/Shared是值与自由函数，不新增运行时管理器。
+  所有具体接口均已确认；没有执行构建或测试。
+endlegend
+@enduml
