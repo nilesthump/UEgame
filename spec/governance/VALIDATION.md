@@ -12,7 +12,7 @@ cmake --build .build/core-linux-gcc13 --verbose
 ctest --test-dir .build/core-linux-gcc13 --no-tests=error --verbose --output-junit ctest-junit.xml
 ```
 
-当前预期 CaseId 为 `B01.Session.WorldReady`，必须有实际执行的非空报告、全部通过且无跳过。UE Editor 构建后以 `Automation RunTests UEgame.B01.Session.WorldReady`、`-TestExit="Automation Test Queue Empty"` 和独立 `-ReportExportPath` 执行同一检查。NullRHI 宿主仅验证核心，不证明真实渲染/世界交互。机器清单描述 Linux 配置/构建/执行顺序；CI 新增 Linux job，远端运行结果以实际 PR 为准。Windows UE 安装未在托管 runner 配置，UE 验证仅本机执行。
+当前预期 CaseId 为 `B01.Session.WorldReady`、`B01.Session.IndependentStarts`、`B01.Session.FactIdentityAndDelivery`，必须有实际执行的非空报告、全部通过且无跳过。UE Editor 构建后以 `Automation RunTests UEgame.B01.Session`、`-TestExit="Automation Test Queue Empty"` 和独立 `-ReportExportPath` 执行同一检查。NullRHI 宿主仅验证核心，不证明真实渲染/世界交互。机器清单描述 Linux 配置/构建/执行顺序；CI 新增 Linux job，远端运行结果以实际 PR 为准。Windows UE 安装未在托管 runner 配置，UE 验证仅本机执行。
 
 实际证据和限制见[B01实施记录](../progress/B01-BOOTSTRAP.md)。
 
