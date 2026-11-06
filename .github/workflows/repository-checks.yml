@@ -15,6 +15,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare reference CMake and CTest
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --no-remove -y cmake=3.28.3-1build7 cmake-data=3.28.3-1build7
+          /usr/bin/cmake --version
+          /usr/bin/ctest --version
       - name: Configure shared core
         run: /usr/bin/cmake -S . -B .build/core-linux-gcc13 -DCMAKE_CXX_COMPILER=/usr/bin/g++-13 -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
       - name: Build shared core and self-contained headers
