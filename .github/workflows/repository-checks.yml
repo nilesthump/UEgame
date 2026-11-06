@@ -10,6 +10,23 @@ permissions:
   contents: read
 
 jobs:
+  core-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure shared core
+        run: /usr/bin/cmake -S . -B .build/core-linux-gcc13 -DCMAKE_CXX_COMPILER=/usr/bin/g++-13 -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Build shared core and self-contained headers
+        run: /usr/bin/cmake --build .build/core-linux-gcc13 --verbose
+      - name: Execute explicit core cases
+        run: /usr/bin/ctest --test-dir .build/core-linux-gcc13 --no-tests=error --verbose --output-junit ctest-junit.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core-linux-results
+          path: .build/core-linux-gcc13/ctest-junit.xml
+          if-no-files-found: error
   repository-baseline:
     runs-on: windows-latest
     timeout-minutes: 10
