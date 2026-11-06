@@ -1,5 +1,10 @@
 # 当前进度
 
+## B01任务分支继续：效果资格
+
+核心效果资格与失效已实现，Linux/UE共享检查各6/6，Game/Editor固定工具链构建成功，独立审查无剩余具体P1/P2。详见[B01效果资格记录](B01-EFFECTS.md)。B01仍InProgress；真实Subsystem/Director回执、可见反馈与Win64独立包尚未完成，PR/CI/canonical未集成。下文为历史交付时点。
+
+
 ## B01任务分支继续：稳定批次
 
 当前任务分支task/B01-completion沿用G:/UEgame/.worktrees/B01，基线main为05c308d。用户补充已由df858bb落实为task级PR；每功能仍验证、独立审查后立即提交。稳定批次/死亡优先、死亡后果观察请求、空方式诊断及离开Rescue缓存清理已实现于任务工作树，验证与集成状态见[B01稳定批次记录](B01-SETTLEMENT.md)。Linux/UE共享用例各5/5，固定工具链Game/Editor构建成功；仅核心证据，不扩大到真实世界。B01仍InProgress，任务PR/CI/canonical集成未执行。下一步旧效果隔离、Subsystem/Director真实回执与可见反馈、Win64独立包。共享检查未移交B14；性能/完整游戏/本人体验未验收，架构未冻结。

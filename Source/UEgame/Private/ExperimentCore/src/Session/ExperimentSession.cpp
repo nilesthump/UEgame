@@ -10,6 +10,18 @@ bool ValidMoment(const ExperimentMoment& moment) noexcept {
 }
 }
 ExperimentSession::ExperimentSession(RunId runId) noexcept { state_.runId = runId; }
+ExperimentEffect ExperimentSession::IssueEffect(EffectKind kind) {
+    const ExperimentEffect effect{state_.runId, state_.phase, kind, nextRequestId_++};
+    pendingEffects_.push_back(effect);
+    return effect;
+}
+void ExperimentSession::InvalidatePendingEffects() noexcept { pendingEffects_.clear(); }
+bool ExperimentSession::TryConsumeEffect(const ExperimentEffect& effect) {
+    if (effect.runId != state_.runId || effect.phase != state_.phase ||
+        pendingEffects_.empty() || pendingEffects_.front() != effect) return false;
+    pendingEffects_.erase(pendingEffects_.begin());
+    return true;
+}
 bool ExperimentSession::NotifyWorldReady(const WorldReadyFact& fact) noexcept {
     if (state_.runId == 0 || fact.runId != state_.runId ||
         state_.phase != ExperimentPhase::Preparing || !ValidMoment(fact.occurredAt)) return false;
@@ -87,7 +99,7 @@ ExperimentStepEffects ExperimentSession::NotifyAftermathObserved(const Aftermath
     if (!AcceptContext(fact.context)) return {};
     state_.aftermathObserved = true;
     return {true, RescueDecision::Continue,
-        {{state_.runId, ExperimentPhase::Rescue, EffectKind::RequestStableSnapshot}}};
+        {IssueEffect(EffectKind::RequestStableSnapshot)}};
 }
 ExperimentStepEffects ExperimentSession::NotifyBatchSettled(const SettlementCompletedFact& fact,
     const EncounterSnapshot& snapshot) {
@@ -114,9 +126,9 @@ ExperimentStepEffects ExperimentSession::NotifyBatchSettled(const SettlementComp
     state_.rescueResult = result;
     state_.phase = result.succeeded ? ExperimentPhase::TimeSkip : ExperimentPhase::Ended;
     ClearRescueCaches();
-    effects.commands.push_back({state_.runId, state_.phase, EffectKind::StopRescue});
-    effects.commands.push_back({state_.runId, state_.phase,
-        result.succeeded ? EffectKind::BeginTimeSkip : EffectKind::StopRun});
+    InvalidatePendingEffects();
+    effects.commands.push_back(IssueEffect(EffectKind::StopRescue));
+    effects.commands.push_back(IssueEffect(result.succeeded ? EffectKind::BeginTimeSkip : EffectKind::StopRun));
     return effects;
 }
 void ExperimentSession::ClearRescueCaches() {

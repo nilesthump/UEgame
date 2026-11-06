@@ -60,6 +60,8 @@ struct ExperimentEffect {
     RunId runId{};
     ExperimentPhase phase{};
     EffectKind kind{};
+    std::uint64_t requestId{};
+    bool operator==(const ExperimentEffect&) const = default;
 };
 struct ExperimentStepEffects {
     bool accepted{};
@@ -87,6 +89,10 @@ struct ExperimentViewProjection {
 class ExperimentSession final {
 public:
     explicit ExperimentSession(RunId runId) noexcept;
+    // Host checks its world binding, then consumes immediately before execution.
+    // Consumption grants dispatch only; it is never a completion receipt.
+    bool TryConsumeEffect(const ExperimentEffect& effect);
+    void InvalidatePendingEffects() noexcept;
     bool NotifyWorldReady(const WorldReadyFact& fact) noexcept;
     bool NotifyThreatDiscovered(const ThreatDiscoveredFact& fact);
     bool NotifyActionUsed(const ActionUsedFact& fact);
@@ -118,5 +124,8 @@ private:
     std::uint64_t latestFactSequence_{};
     std::optional<ExperimentMoment> latestFactMoment_;
     void ClearRescueCaches();
+    ExperimentEffect IssueEffect(EffectKind kind);
+    std::uint64_t nextRequestId_{1};
+    std::vector<ExperimentEffect> pendingEffects_;
 };
 }
