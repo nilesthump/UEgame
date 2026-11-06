@@ -5,6 +5,21 @@
       "name": "RepositoryBaseline",
       "executable": "pwsh",
       "args": ["-NoProfile", "-File", "Scripts/Validation/Invoke-RepositoryChecks.ps1"]
+    },
+    {
+      "name": "B01CoreConfigureLinux",
+      "executable": "cmake",
+      "args": ["-S", ".", "-B", ".build/core-linux-gcc13", "-DCMAKE_CXX_COMPILER=/usr/bin/g++-13", "-DBUILD_TESTING=ON", "-DCMAKE_BUILD_TYPE=Release"]
+    },
+    {
+      "name": "B01CoreBuildLinux",
+      "executable": "cmake",
+      "args": ["--build", ".build/core-linux-gcc13", "--verbose"]
+    },
+    {
+      "name": "B01CoreTestLinux",
+      "executable": "ctest",
+      "args": ["--test-dir", ".build/core-linux-gcc13", "--no-tests=error", "--verbose", "--output-junit", "ctest-junit.xml"]
     }
   ]
 }

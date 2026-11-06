@@ -1,5 +1,9 @@
 # 当前进度
 
+## B01 当前实施（任务分支，尚未集成）
+
+本聊天已按接手指示在基线 `3a058befd82cb4424393f1de664c06195cf47472` 创建 `task/B01-bootstrap` / `G:/UEgame/.worktrees/B01`，由协调 agent 担任核心/集成 owner，B01 为 InProgress。精确范围、实际验证、未完成项见[B01实施记录](B01-BOOTSTRAP.md)。以下 B00 交付段落中的“B01尚未启动”是该次交付时点记录，以本段及任务表新状态为准。未将分支工作视为 canonical 已集成；共享检查尚未移交 B14。
+
 日期：2026-11-06。canonical：`G:/UEgame`；本地集成分支：`main`。当前提交以`git log -1`和远端记录为准，避免自引用哈希。
 
 用户已授权接手001、先公开发布仓库并采用MIT、每实现/修复一个功能点即提交，随后从B00工具链核对开始。依据见[本轮原文](../requirements/001-causal-prototype/sources/2026-11-06-public-repository-and-commits.md)。A01–A13总体及类图保持已确认；WORKING仍为discussion，未正式冻结。性能目标仍为输入→核心处理→对应画面实际呈现端到端<50ms。

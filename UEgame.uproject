@@ -1,0 +1,7 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.6",
+  "Category": "",
+  "Description": "001 causal experience prototype",
+  "Modules": [{ "Name": "UEgame", "Type": "Runtime", "LoadingPhase": "Default" }]
+}
