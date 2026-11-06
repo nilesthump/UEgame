@@ -14,3 +14,10 @@
 - 编辑器生成的两个配置移入 generated-config/ 保留，未纳入产品配置。
 
 独立 reviewer b01_review 已直接检查实际 diff、共享用例、Linux JUnit/编译参数、UE 原生报告及 Game/Editor 日志，无剩余具体 P1/P2；独立执行 RepositoryBaseline180文档/618链接/528来源通过，未重跑游戏构建或核心用例。后续离开 Rescue 必须清理阶段去重/动作缓存。机器命令入口不变，CI自动运行新增CTest；远端CI/集成尚未执行。本功能不代表整个B01完成；稳定快照/死亡优先、旧效果隔离、Subsystem/Director实际链与Win64独立包仍未完成。性能、完整游戏、本人体验未验收；架构未冻结；共享测试尚未移交B14。
+
+## 实际集成
+
+功能提交4b765c036254595bdc671e44c4e973803008fb51，经[PR #7](https://github.com/nilesthump/UEgame/pull/7)保留提交合并至9b00411ee64b535899b50a03dee6fb0f441ff191。[PR CI42240803443](https://github.com/nilesthump/UEgame/actions/runs/42240803443)两个job成功，核心执行与JUnit上传完成。GitHub连接器创建PR返回403，改用本机已授权gh登录；合并沿既有owner bypass授权，无新增批准或规则修改。
+
+canonical已从2303171快进至9b00411，RepositoryBaseline180文档/618链接/528来源通过且干净。该记录不把NullRHI核心测试扩大为真实世界或独立包验证。
+[合并后main CI42241001493](https://github.com/nilesthump/UEgame/actions/runs/42241001493)已实际成功。
