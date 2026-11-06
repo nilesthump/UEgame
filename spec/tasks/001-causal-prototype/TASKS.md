@@ -1,8 +1,8 @@
 # UEgame 模块任务与写入范围
 
-日期：2026-11-06。范围：根据已确认的 A01–A13 规范，安排仓库初始化后的实施任务；本文不构成正式架构冻结。用户本轮授权规范目录、分配任务和初始化仓库，没有据此启动游戏实现、安装工具或制作素材。
+日期：2026-11-06。范围：根据已确认的 A01–A13 规范，安排仓库初始化后的实施任务；本文不构成正式架构冻结。初次授权规范目录、分配任务和初始化仓库；后续用户已明确授权补齐B00依赖工具，实际安装记录见当前进度，尚未启动游戏实现或素材制作。
 
-**分配的是职责角色，不是承诺真实人数、工期或预算。** 下表已按[后续接手授权](../../requirements/001-causal-prototype/sources/2026-11-06-public-repository-and-commits.md)更新B00实际核对状态；B01–B15仍未启动。当前工具链核对不自动授权安装或启动全部游戏实现。
+**分配的是职责角色，不是承诺真实人数、工期或预算。** 下表已按[后续接手授权](../../requirements/001-causal-prototype/sources/2026-11-06-public-repository-and-commits.md)更新B00实际核对状态；B01–B15仍未启动。B00依赖安装依据另有明确授权，不自动启动全部游戏实现。
 
 依据：[架构汇总及详细类图入口](../../architecture/001-causal-prototype/ARCHITECTURE-SUMMARY.md)、[目录规范](../../governance/DIRECTORY.md)、[工作流程](../../governance/WORKFLOW.md)及[性能契约](../../performance/001-input-to-render.md)。A01/A02 的状态归属以后续 A03 为准；A08 事务以后续 A09 为准；A10 媒体以后续 A13 为准；A11 现行完整恢复替代历史“仅终态保存”。
 
@@ -46,7 +46,7 @@
 
 | ID | 工作包 | owner 角色 | 实施依赖 | 当前状态 |
 | --- | --- | --- | --- | --- |
-| B00 | 工具链和构建契约 | 工具链/集成 | 初始化规范可读；实际工具准备按后续实施安排 | Blocked：MSVC14.38与Linux CMake3.28/CTest缺失；核对报告已形成 |
+| B00 | 工具链和构建契约 | 工具链/集成 | 初始化规范可读；实际工具准备按后续实施安排 | Reviewed：缺项已补齐并通过隔离工具链smoke；待本次PR集成 |
 | B01 | 最小纵向骨架与核心流程 | 核心/集成 | B00 | 已分配角色；未启动 |
 | B02 | 跨域接口基线 | 接口/集成 | B01；先固定契约再开放领域并行 | 已分配角色；未启动 |
 | B03 | 球面世界与小地图 | 世界/地图 | B02 | 已分配角色；未启动 |
@@ -69,7 +69,7 @@
 
 ### B00 — 工具链和构建契约
 
-2026-11-06实际执行：`task/B00-toolchain` / `.worktrees/B00`，基线`c834714`；`b00_discovery`仅负责Validation/Toolchain报告及自身忽略输出，协调者维护进度和治理。结果与证据见[当前进度](../../progress/CURRENT.md)和[核对报告](../../../Validation/Toolchain/B00-2026-11-06.md)。B00保持Blocked，缺项补齐前不解锁B01。
+2026-11-06实际执行：`task/B00-toolchain` / `.worktrees/B00`，基线`c834714`；`b00_discovery`仅负责Validation/Toolchain报告及自身忽略输出，协调者维护进度和治理。结果与证据见[当前进度](../../progress/CURRENT.md)和[核对报告](../../../Validation/Toolchain/B00-2026-11-06.md)。后续用户授权安装后，缺项已补齐；新增执行分支`task/B00-dependencies`/工作树`.worktrees/B00-dependencies`，基线`ea06a66`。Windows协调者、Linux专属agent分别交付Validation/Toolchain安装报告，本机输出仅写各自忽略目录；结果待本次PR集成后解锁B01。
 
 - owner：工具链/集成。A03 与 A12 基线。
 - 代码/脚本范围：Scripts/Toolchain/**；集成拥有的根构建文件、Target、Build.cs 和忽略规则；本阶段只在允许实际工程准备时创建可执行构建入口。
@@ -217,6 +217,6 @@
 2. B02 接口基线先合入。B03 空间基准 → B04 共用移动接口 → B05 玩家接口 → B06 战斗后，B07/B08/B09 可按依赖展开；B04 完整导航验证继续独立完成。
 3. B10、B11、B12、B14 可在自身接口已具备时并行，不直接争抢共享类。B13 按已确定的文本和声音请求独立执行，具体素材工具先实际核对。
 4. B15 按里程碑串行装配和验证；模块通过只覆盖本模块用例，跨域、独立包和体验证据必须另取。
-5. 状态按工作流程统一为Assigned → Ready → InProgress → Validated → Reviewed → Integrated；Blocked注明实际原因。当前B00为Blocked（真实工具缺项），B01–B15为Assigned；核对记录不等于B00验收通过。每次实际启动记录agent/工作区/精确写范围/基线版本，不填写虚构实施者、完成日期或通过证据。
+5. 状态按工作流程统一为Assigned → Ready → InProgress → Validated → Reviewed → Integrated；Blocked注明实际原因。当前B00为Reviewed（安装与环境验证完成，待集成），B01–B15为Assigned；工具链smoke不等于游戏构建或验收通过。每次实际启动记录agent/工作区/精确写范围/基线版本，不填写虚构实施者、完成日期或通过证据。
 6. 构建、缓存、运行存档和本轮证据按既定规则分别进入 .build/、Saved/ 或 Deliverables/<BuildId>/ 等输出目录，不能污染 Source、复用普通用户存档或跨任务覆盖证据。
 7. 正式冻结、GitHub 远端/CI/分支保护、工程实现和本机工具安装都单独按实际授权与可用条件推进；“本地仓库已初始化”“已分配 owner”“设计已确认”均不等于这些事项已完成。
