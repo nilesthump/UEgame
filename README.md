@@ -16,7 +16,7 @@
 pwsh -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
 ```
 
-该命令检查目录、治理、文档链接和确认来源，**不编译游戏，也不证明50ms达标**。[验证契约](spec/governance/VALIDATION.md)说明后续检查。GitHub Actions使用相同入口，但远端仓库尚未配置。
+该命令检查目录、治理、文档链接和确认来源，**不编译游戏，也不证明50ms达标**。[验证契约](spec/governance/VALIDATION.md)说明后续检查。[公开仓库](https://github.com/nilesthump/UEgame)采用MIT；GitHub Actions使用相同入口，首次[远端检查](https://github.com/nilesthump/UEgame/actions/runs/42226638076)已通过。后续状态见当前进度。
 
 `Source/`、`Content/`等目前是按职责建立的目录占位；`.uproject`、CMake和UBT实际入口由B00/B01任务交付。所有源码/资产版本都应沿任务范围维护，运行数据及构建产物放入忽略目录。
 

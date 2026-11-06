@@ -1,26 +1,30 @@
 # 当前进度
 
-日期：2026-11-06。canonical：`G:/UEgame`；本地分支：`main`。
+日期：2026-11-06。canonical：`G:/UEgame`；本地集成分支：`main`。当前提交以`git log -1`和远端记录为准，避免自引用哈希。
 
-用户已授权规范目录、按模块分配任务和初始化仓库；性能明确为输入→核心处理→对应渲染反馈端到端小于50ms。依据见[本轮原文](../requirements/001-causal-prototype/sources/2026-11-06-repository-bootstrap-and-latency.md)。A01–A13总体及类图均已确认，WORKING保持discussion；本次不生成正式冻结版本。
+用户已授权接手001、先公开发布仓库并采用MIT、每实现/修复一个功能点即提交，随后从B00工具链核对开始。依据见[本轮原文](../requirements/001-causal-prototype/sources/2026-11-06-public-repository-and-commits.md)。A01–A13总体及类图保持已确认；WORKING仍为discussion，未正式冻结。性能目标仍为输入→核心处理→对应画面实际呈现端到端<50ms。
 
-## 本次交付状态
+## 已交付
 
-- Git/main已创建；本次初始化结果随首个提交归档，实际提交身份以本文件所在提交及`git log -1`为准。
-- 根规则、目录、工作流程、写范围、验证契约、性能契约与B00–B15任务分工已落地。
-- 任务表分配职责角色，所有实施任务仍为Assigned；没有活动实施worktree或已启动的游戏开发agent。首次初始化在canonical/main完成，后续任务按流程建立独立worktree。
-- 本地检查与GitHub工作流共用入口；RepositoryBaseline已实际通过，528条确认来源摘要及引文一致。完整入口在隔离副本的10项检查符合预期：两个正常/恢复结果退出0，断链、错摘要、错引文、分别缺三个字段、缺来源对象、零来源这8个负例退出1。
-- [独立审查及B06接手演练](BOOTSTRAP-001-REVIEW.md)记录真实读序、任务范围和跨域转交。发现的单条来源缺字段漏检P2已修复并独立复核关闭（见记录末节）；所查范围无剩余具体P1/P2。该演练未实测worktree合并、远端协作或游戏能力。
-- Git暂存空白检查通过，spec全部暂存文件保持工作区原始字节；本机工具、凭据目录及运行输出未纳入。原始运行日志留本机忽略目录`Validation/Runs/bootstrap-20261106/`，不作为可移植源码依赖。
-- GitHub远端、PR、托管CI运行、保护规则均UNAVAILABLE（未配置远端）；不声称已启用。
-- 未创建真实UE/CMake工程或制作素材；UE/Linux/独立包/输入到画面性能/本人试玩均NotRun。
+- 规范目录、B00–B15职责和仓库验证入口已建立；bootstrap提交`c858048`，原[独立审查与B06接手演练](BOOTSTRAP-001-REVIEW.md)保持有效，其验证范围没有扩大为游戏能力。
+- [公开仓库](https://github.com/nilesthump/UEgame)已创建，origin已配置，GitHub确认PUBLIC/MIT/main。`963cc48`添加MIT，`c834714`落实一个功能/修复一个提交；均从独立发布工作树经独立审查后集成和推送。[发布审查及证据](PUBLICATION-001-REVIEW.md)。
+- 首轮[GitHub Actions](https://github.com/nilesthump/UEgame/actions/runs/42226638076)在`c834714`实际通过RepositoryBaseline。本地和云端仍使用原有同一个脚本；它只检查文档/结构/来源，UE/Linux游戏测试数为0、状态NotRun。
+- main分支保护查询返回`protected=false`；没有强制PR、账号批准或管理员保护。接入后的任务按分支→PR→相同CI→独立agent审查→合并执行；agent审查不冒充GitHub账号批准。
+- WORKING及原始sources未改写，讨论revision118/contentRevision119不变。没有新增游戏工程、素材或冻结产物。
+
+## B00工具链核对
+
+B00状态：**Blocked（实际环境缺项）**。核对报告是本次交付，B00整体验收尚未通过；B01未解锁。
+
+- 分支`task/B00-toolchain`；独立工作树`.worktrees/B00`；基线`c834714`。执行者为本聊天`b00_discovery`工具链agent；仅写`Validation/Toolchain/B00-2026-11-06.md`及自身忽略输出，治理/进度由integration-owner维护。
+- 真实发现：UE5.6.1/CL44394996、VS2022 17.14.37、SDK10.0.22621.0、PowerShell7.6.9；WSL2内实际运行Ubuntu24.04.4 LTS/x86_64及GCC13.3.0版本查询。
+- **缺少MSVC14.38**：VS2022只有14.44.35207，不能替代已确认版本。**缺少Linux CMake3.28/CTest**：版本命令、包与文件查询均未满足。
+- 详细命令、版本证据、双路径与唯一检查入口边界见[工具链核对报告](../../Validation/Toolchain/B00-2026-11-06.md)。仅核对环境，没有安装工具、运行核心/UE游戏构建或测性能。
+- 独立审查者`publication_review`已对照A03及本机原始回执核对报告、进度和任务表，未发现剩余具体P1/P2；已修正测试main目录的歧义。本地RepositoryBaseline实际通过（175文档、604链接、528来源），游戏测试数0/NotRun。
+- 其余B01–B15保持Assigned；不存在正在实施的领域游戏任务。发布工作树保留以便追溯，不清理其他任务数据。
 
 ## 下一步
 
-下一实施入口为B00真实工具链核对，随后B01打通同源核心和最小独立启动，再由B02固定跨域契约。B01创建最小共享检查并集成后移交B14，不等待完整验证平台。各任务的路径、依赖和验收见[任务表](../tasks/001-causal-prototype/TASKS.md)。当前不虚构实施者、期限或可用工具版本。
+先补齐已确认的MSVC14.38工具集和Ubuntu CMake3.28/CTest，再复核实际完整补丁版本；安装及环境变更须按实际授权推进。B00通过后才进入B01同源核心双编译与Win64最小独立启动，随后B02跨域契约。B01最小共享检查集成后再显式移交B14。
 
-50ms不是帧时间预算；同一输入的核心结果与首个对应画面反馈必须可关联，实际呈现时间才是终点，详见[性能契约](../performance/001-input-to-render.md)。尚未确定的受测硬件/显示/画质/负载和测量方法在实施测量时记录，不能把当前目标当作已验证性能。
-
-继续任务时依根AGENTS有序阅读。协调者从[WORKING](../architecture/WORKING.json)恢复讨论状态并使用expectedRevision更新；领域agent不修改它。当前提交基线通过`git log -1`取得，避免把提交自身哈希写回导致循环提交。
-
-本次讨论记录为revision118/contentRevision119，仍为discussion；新增U-ARCH-040/041、E152/153及BOOTSTRAP-001、PERF-INPUT-RENDER-50MS，保留此前已确认设计与原始来源。
+单UEgame Runtime模块、无UE依赖的同源C++20核心保持不变。端到端性能、UE/Linux游戏构建、独立包与本人试玩均NotRun；实际呈现是延迟终点，不能以核心耗时或平均帧率替代。详细范围和验收见[任务表](../tasks/001-causal-prototype/TASKS.md)、[验证契约](../governance/VALIDATION.md)与[性能契约](../performance/001-input-to-render.md)。
