@@ -25,9 +25,10 @@
 | GitHub工作流/托管RepositoryBaseline | AVAILABLE | 与本地同入口；首次main运行42226638076已成功 |
 | GitHub公开仓库 | AVAILABLE | `nilesthump/UEgame`，origin已配置，MIT已识别 |
 | GitHub PR | AVAILABLE | B00 PR #1已实际经CI、独立agent审查并merge；保留功能提交 |
-| main分支保护 | NOT_CONFIGURED | GitHub返回protected=false；独立agent审查不是GitHub账号批准 |
+| main分支规则 | AVAILABLE | ruleset26700391要求PR、1次账号批准、严格RepositoryBaseline等；传统protection接口404不等于无规则。用户[授权owner bypass](../requirements/001-causal-prototype/sources/2026-11-06-owner-bypass.md)，PR #5已实际使用；独立agent审查和CI仍须完成 |
 | B00双平台依赖环境 | AVAILABLE | 实际MSVC14.38.33130、SDK22621、Ubuntu GCC13.3/CMake及CTest3.28.3；安装smoke通过，实际集成状态见进度 |
-| UE/Linux实际构建及性能 | UNAVAILABLE | 构建入口与环境由B00/B01及后续任务交付，不用文档检查代替 |
+| UE/Linux最小核心构建 | AVAILABLE | B01首个WorldReady场景双平台各1/1，Game/Editor构建成功；整个B01尚未完成 |
+| 独立包、真实世界及性能 | NotRun | 后续B01/B15取得对应证据，不用核心或文档检查代替 |
 
 接入GitHub时复用本地验证入口，建议main要求PR、检查和一名评审，平台支持时仅允许通过PR的管理员例外；禁止强推和删除保护单独核对。配置文件存在不能算远端保护已生效。首次bootstrap未创建远端或推送资料；2026-11-06后续用户已明确授权公开发布本仓库并采用MIT，实际状态以当前进度为准。
 
