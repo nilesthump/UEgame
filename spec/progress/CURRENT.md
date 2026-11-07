@@ -1,5 +1,9 @@
 # 当前进度
 
+## B01任务分支继续：真实世界绑定
+
+Subsystem唯一持有Session，Director实际组件装配就绪回执、单世界绑定及生命周期接线已实现；本机UE检查7/7（6核心+1真实UWorld绑定）、固定工具链Game/Editor构建成功。实际范围和失败记录见[B01世界绑定记录](B01-BINDING.md)。B01仍InProgress，效果分发/完成回执、实际可见反馈和Win64独立包尚未完成，任务PR/CI/canonical未集成；下文保持历史交付时点。
+
 ## B01任务分支继续：效果资格
 
 核心效果资格与失效已实现，Linux/UE共享检查各6/6，Game/Editor固定工具链构建成功，独立审查无剩余具体P1/P2。详见[B01效果资格记录](B01-EFFECTS.md)。B01仍InProgress；真实Subsystem/Director回执、可见反馈与Win64独立包尚未完成，PR/CI/canonical未集成。下文为历史交付时点。
