@@ -57,10 +57,7 @@ if ($To -eq 'main') {
     $scopeBase = 'origin/main'
 }
 else {
-    # The delivery commit is the tip. Upstream merge commits already carry
-    # accepted upstream changes, so checking the whole target diff would blame
-    # the receiving pipeline for files accepted from its upstream.
-    $scopeBase = 'HEAD^'
+    $scopeBase = 'refs/heads/pipeline/{0}' -f $To
 }
 if (-not $DryRun) {
     $hostExe = (Get-Process -Id $PID).Path

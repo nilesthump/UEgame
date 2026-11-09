@@ -85,46 +85,94 @@ if ($Integration -and $entry.Name -ne 'ops') {
 }
 
 $baseCommit = Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-parse', '--verify', ($Base + '^{commit}'))
-$diffText = Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('diff', '--name-status', ($baseCommit + '...HEAD'))
-$changed = @()
-foreach ($line in ($diffText -split "`n")) {
-    $item = $line.Trim()
-    if ($item -eq '') { continue }
-    $parts = $item -split "`t"
-    $status = $parts[0]
-    if ($parts.Count -lt 2) { continue }
-    $path = $parts[$parts.Count - 1]
-    $changed += [pscustomobject]@{ Status = $status; Path = $path }
-}
-
-Write-Output ('Pipeline={0}' -f $entry.Name)
-Write-Output ('Base={0}' -f $baseCommit)
-Write-Output ('ChangedFiles={0}' -f $changed.Count)
-
 if ($Integration) {
+    Write-Output ('Pipeline={0}' -f $entry.Name)
+    Write-Output ('Base={0}' -f $baseCommit)
     Write-Output 'PipelineScope=IntegrationBypass (upstream PR scopes must have passed)'
     exit 0
 }
 
-$failures = New-Object System.Collections.Generic.List[string]
-foreach ($change in $changed) {
-    $allowed = Test-PathList -Path $change.Path -Patterns @($entry.Definition.owns)
-    if (-not $allowed -and $entry.Name -eq 'maintenance' -and -not [string]::IsNullOrWhiteSpace($IncidentId)) {
-        $incidentPath = Join-Path $repositoryRoot ('spec/pipelines/maintenance/INCIDENT-{0}.md' -f $IncidentId)
-        if ([IO.File]::Exists($incidentPath) -and
-            (Test-PathList -Path $change.Path -Patterns @($entry.Definition.hotfix))) {
-            $allowed = $true
-        }
-    }
-    if (-not $allowed) {
-        $failures.Add(('{0}: {1} is outside {2} ownership.' -f $change.Status, $change.Path, $entry.Name))
-    }
-    if ($null -ne $entry.Definition.PSObject.Properties['immutable'] -and
-        $change.Status -notmatch '^A' -and
-        (Test-PathList -Path $change.Path -Patterns @($entry.Definition.immutable))) {
-        $failures.Add(('{0}: existing immutable source {1} must not be rewritten.' -f $change.Status, $change.Path))
+function Test-CommitAncestor {
+    param([string] $RepositoryRoot, [string] $Commit, [string] $BranchRef)
+    & git -C $RepositoryRoot merge-base --is-ancestor $Commit $BranchRef 2>$null
+    return ($LASTEXITCODE -eq 0)
+}
+
+$pipelineRefs = @{}
+foreach ($property in $config.pipelines.PSObject.Properties) {
+    $ref = 'refs/heads/' + [string]$property.Value.branch
+    & git -C $repositoryRoot show-ref --verify --quiet $ref 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $pipelineRefs[$property.Name] = $ref
     }
 }
+
+$commits = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--reverse', ($baseCommit + '..HEAD'))) -split "`n" |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+$changedCount = 0
+$mergeSkipped = 0
+$failures = New-Object System.Collections.Generic.List[string]
+
+foreach ($commit in $commits) {
+    $parents = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--parents', '-n', '1', $commit)) -split '\s+' |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($parents.Count -gt 2) {
+        $mergeSkipped++
+        continue
+    }
+    $diffText = Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('diff-tree', '--no-commit-id', '--name-status', '-r', $commit)
+    foreach ($line in ($diffText -split "`n")) {
+        $item = $line.Trim()
+        if ($item -eq '') { continue }
+        $parts = $item -split "`t"
+        if ($parts.Count -lt 2) { continue }
+        $status = $parts[0]
+        $path = $parts[$parts.Count - 1]
+        $changedCount++
+
+        $allowed = Test-PathList -Path $path -Patterns @($entry.Definition.owns)
+        if (-not $allowed) {
+            $upstreamOwners = New-Object System.Collections.Generic.List[string]
+            foreach ($name in $pipelineRefs.Keys) {
+                if ($name -eq $entry.Name) { continue }
+                if (Test-CommitAncestor -RepositoryRoot $repositoryRoot -Commit $commit -BranchRef $pipelineRefs[$name]) {
+                    $upstreamOwners.Add($name)
+                }
+            }
+            foreach ($owner in $upstreamOwners) {
+                if ($null -eq $config.pipelines.$owner) { continue }
+                if (Test-PathList -Path $path -Patterns @($config.pipelines.$owner.owns)) {
+                    $allowed = $true
+                    break
+                }
+            }
+        }
+        if (-not $allowed -and $entry.Name -eq 'maintenance' -and -not [string]::IsNullOrWhiteSpace($IncidentId)) {
+            $incidentPath = Join-Path $repositoryRoot ('spec/pipelines/maintenance/INCIDENT-{0}.md' -f $IncidentId)
+            if ([IO.File]::Exists($incidentPath) -and
+                (Test-PathList -Path $path -Patterns @($entry.Definition.hotfix))) {
+                $allowed = $true
+            }
+        }
+        if (-not $allowed) {
+            $failures.Add(('{0} {1}: {2} is outside {3} ownership and no upstream branch owns it.' -f $commit.Substring(0, 7), $status, $path, $entry.Name))
+        }
+
+        foreach ($property in $config.pipelines.PSObject.Properties) {
+            if ($null -ne $property.Value.PSObject.Properties['immutable'] -and
+                $status -notmatch '^A' -and
+                (Test-PathList -Path $path -Patterns @($property.Value.immutable))) {
+                $failures.Add(('{0} {1}: existing immutable source {2} must not be rewritten.' -f $commit.Substring(0, 7), $status, $path))
+            }
+        }
+    }
+}
+
+Write-Output ('Pipeline={0}' -f $entry.Name)
+Write-Output ('Base={0}' -f $baseCommit)
+Write-Output ('CommitsChecked={0}' -f $commits.Count)
+Write-Output ('MergeCommitsSkipped={0}' -f $mergeSkipped)
+Write-Output ('ChangedFiles={0}' -f $changedCount)
 
 if ($failures.Count -gt 0) {
     foreach ($failure in $failures) { Write-Output ('FAIL: ' + $failure) }

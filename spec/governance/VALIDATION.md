@@ -11,7 +11,7 @@ powershell -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
 powershell -NoProfile -File Scripts/Validation/Test-NarrativeText.ps1
 ```
 
-PowerShell 7 为 CI 默认；脚本同时兼容 Windows PowerShell 5.1，便于本机直接执行。入口不安装工具、不联网、不写产品文件。
+PowerShell 7 为 CI 默认；脚本同时兼容 Windows PowerShell 5.1，便于本机直接执行。入口不安装工具、不联网、不写产品文件。sparse 工作区中，基线检查读取 `HEAD` 的 Git 树来校验隐藏文档和链接；完整 checkout/CI 仍直接读取工作区。
 
 Linux 核心检查（Ubuntu 24.04/x86_64、GCC 13、CMake/CTest 3.28）：
 
@@ -29,7 +29,7 @@ ctest --test-dir .build/core-linux-gcc13 --no-tests=error --verbose --output-jun
 - `spec/**`、根 Markdown 的本地相对链接可解析；跳过代码块、网络链接和纯页内锚点。外部绝对路径只记为 EnvironmentReference/NotValidated。
 - `spec/architecture/WORKING.json` 可解析为 JSON；不再校验来源 SHA-256 或精确引文。
 - `spec/releases/state.json` 的目标版本符合 `x.y.z`；`onlineVersion` 为 `null` 或 `x.y.z`；未发布时不得伪造标签。
-- 七个管线目录存在；`spec/pipelines/pipelines.json` 的管线名与目录一致。
+- 七个管线目录存在；`Scripts/Collaboration/pipelines.json` 的管线名与目录一致。
 - 不存在 `evidence-latest.md`、`evidence-final.md` 等平行结论文件。
 - 缺文件、坏链接、非法 JSON、版本非法、平行证据文件均返回非零。成功只输出 `RepositoryBaseline=Passed`。
 
