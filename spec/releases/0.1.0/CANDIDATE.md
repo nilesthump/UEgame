@@ -30,7 +30,7 @@
 
 ## 集成入口
 
-- `ops → main` PR：由 ops 最终创建；授权接收者 `nilesthump`，使用既有 main owner bypass，独立审查和 CI 仍须完成。
+- `ops → main` PR：[#31](https://github.com/nilesthump/UEgame/pull/31)；授权接收者 `nilesthump`，使用既有 main owner bypass，独立审查和 CI 仍须完成。
 - 合并后：`main` 记录治理+B01 核心基线；`state.json` 仍为 `unreleased`；maintenance 再同步到新 `main`。
 
 ## 回退
