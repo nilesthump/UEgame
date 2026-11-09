@@ -1,7 +1,7 @@
 # tech — 0.1.0 集成状态
 
 - 目标版本：`0.1.0`
-- 分支：`pipeline/tech`；本记录基线提交：`593bb54`
+- 分支：`pipeline/tech`；本记录落点提交：`7c38a7e`（上游接收基线 `593bb54`）
 - 状态：治理集成完成；产品 B01 仍 InProgress
 
 ## 已接收
@@ -14,7 +14,7 @@
 
 - 共享入口与 UE 二进制资产唯一写入边界见 [WRITE_SCOPE](../../governance/WRITE_SCOPE.md)。
 - 向 art 发出 [REQUEST-0.1.0](../../contracts/art/REQUEST-0.1.0.md)，明确文本/声音接入和验收条件。
-- 现有 Linux 核心检查仍为 3 个 session 用例；完整 B01 未完成。
+- 现有 Linux 核心检查的用例清单为 3 个 session 用例（本轮未执行，Linux=NotRun）；完整 B01 未完成。
 - 文本导入、UE 显示、字幕、声音绑定均 **NotRun**；本轮没有新增运行时实现。
 
 ## 已知限制
