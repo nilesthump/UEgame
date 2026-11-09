@@ -75,10 +75,10 @@ if (-not $DryRun) {
 
 $existingRaw = (& gh pr list --head $branch --base $To --state open --json number,url 2>$null | Out-String).Trim()
 $existing = @()
-if (-not [string]::IsNullOrWhiteSpace($existingRaw)) {
+if (-not [string]::IsNullOrWhiteSpace($existingRaw) -and $existingRaw -ne '[]') {
     $existing = @($existingRaw | ConvertFrom-Json)
 }
-if ($existing.Count -gt 0) {
+if ($existing.Count -gt 0 -and $null -ne $existing[0]) {
     throw ('An open MR already exists: #{0} {1}' -f $existing[0].number, $existing[0].url)
 }
 
