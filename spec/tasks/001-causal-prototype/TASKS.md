@@ -2,7 +2,7 @@
 
 日期：2026-11-09（B 任务原始分配 2026-11-06）。范围：根据已确认的 A01–A13 规范，安排仓库初始化后的实施任务；本文不构成正式架构冻结。当前目标版本 `0.1.0`，线上未发布；固定管线见[七管线总表](../../pipelines/README.md)，日常交互见[协议](../../pipelines/PROTOCOL.md)。
 
-**分配的是职责角色，不是承诺真实人数、工期或预算。** B00 为 Integrated；B01 为 InProgress，远程仅集成部分功能，本地 `task/B01-completion` 仍有未推送提交，未合并前不得写成已集成；B02–B15 为 Assigned。B00 依赖安装依据另有明确授权，不自动启动全部游戏实现。
+**分配的是职责角色，不是承诺真实人数、工期或预算。** B00 为 Integrated；B01 为 InProgress，Linux 核心 6/6 已集成，真实 UE/独立包/体验未完成；旧 `task/B01-completion` 已退役并删除；B02–B15 为 Assigned。B00 依赖安装依据另有明确授权，不自动启动全部游戏实现。
 
 依据：[架构汇总及详细类图入口](../../architecture/001-causal-prototype/ARCHITECTURE-SUMMARY.md)、[目录规范](../../governance/DIRECTORY.md)、[工作流程](../../governance/WORKFLOW.md)及[性能契约](../../performance/001-input-to-render.md)。A01/A02 的状态归属以后续 A03 为准；A08 事务以后续 A09 为准；A10 媒体以后续 A13 为准；A11 现行完整恢复替代历史“仅终态保存”。
 
@@ -61,7 +61,7 @@
 | ID | 工作包 | owner 角色 | 实施依赖 | 当前状态 |
 | --- | --- | --- | --- | --- |
 | B00 | 工具链和构建契约 | 工具链/集成 | 初始化规范可读；实际工具准备按后续实施安排 | Integrated：安装与隔离工具链smoke证据经PR #3集成，canonical复核通过 |
-| B01 | 最小纵向骨架与核心流程 | tech（核心/集成） | B00 | InProgress：WorldReady经PR #5、独立起点/统计经PR #7集成；本地 `task/B01-completion` 有未推送提交 `55c5bdd` 等，未合并；稳定批次/真实适配/独立包未完成，详见[B01独立起点记录](../../progress/B01-STARTS.md)（历史快照） |
+| B01 | 最小纵向骨架与核心流程 | tech（核心/集成） | B00 | InProgress：WorldReady经PR #5、独立起点/统计经PR #7集成；稳定批次/效果资格/世界绑定经PR #27并入，Linux 核心 6/6；真实 UE/独立包/体验未完成。旧 task/B01-completion 已退役，详见[B01集成记录](../../pipelines/tech/B01-INTEGRATION-0.1.0.md) |
 | B02 | 跨域接口基线 | 接口/集成 | B01；先固定契约再开放领域并行 | 已分配角色；未启动 |
 | B03 | 球面世界与小地图 | 世界/地图 | B02 | 已分配角色；未启动 |
 | B04 | 球面导航与共用移动 | 导航/移动 | B02、B03 | 已分配角色；未启动 |
