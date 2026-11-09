@@ -29,7 +29,7 @@
 
 ## 集成入口
 
-- `ops → main` PR：待创建后补链接。
+- `ops → main` PR：[#17](https://github.com/nilesthump/UEgame/pull/17)。
 - 授权接收者：`nilesthump`；使用既有 main owner bypass，独立审查和 CI 仍须完成。
 - 合并后：`main` 记录治理基线；`state.json` 仍为 `unreleased`；维护分支再同步到新 `main`。
 
