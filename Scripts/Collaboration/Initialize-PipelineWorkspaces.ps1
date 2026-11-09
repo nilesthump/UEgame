@@ -101,7 +101,14 @@ foreach ($name in $Names) {
     if (-not [IO.Directory]::Exists($sparseDirectory)) {
         New-Item -ItemType Directory -Force -Path $sparseDirectory | Out-Null
     }
-    $patterns = @($definition.sparse | ForEach-Object { [string]$_ } | Select-Object -Unique)
+    $commonPatterns = @(
+        '/AGENTS.md', '/CLAUDE.md', '/README.md', '/.gitignore', '/.gitattributes',
+        '/spec/pipelines/README.md', '/spec/pipelines/PROTOCOL.md',
+        '/spec/governance/WRITE_SCOPE.md', '/spec/governance/VALIDATION.md', '/spec/governance/DIRECTORY.md',
+        '/spec/releases/', '/spec/evidence/',
+        '/Scripts/Collaboration/', '/Scripts/Validation/', '/.github/'
+    )
+    $patterns = @($commonPatterns + @($definition.sparse | ForEach-Object { [string]$_ }) | Select-Object -Unique)
     $utf8 = New-Object System.Text.UTF8Encoding($false)
     [IO.File]::WriteAllLines($sparsePath, [string[]]$patterns, $utf8)
     Invoke-Git -RepositoryRoot $worktreePath -Arguments @('sparse-checkout', 'reapply') | Out-Null
