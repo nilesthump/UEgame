@@ -2,12 +2,12 @@
 
 - 目标版本：`0.1.0`
 - 实际线上版本：未发布（`spec/releases/state.json` 的 `onlineVersion=null`，无 tag）
-- 当前阶段：七管线协作与版本发布治理改造；产品 B01 仍未完成
+- 当前阶段：0.1.0 七管线治理已集成 `main`；产品 B01 仍未完成
 - 更新：2026-11-09
 
 ## 本轮治理
 
-`GOV-0.1.0-01` 正在把仓库从单一任务分支流程切换为七条固定管线。治理范围包括：
+`GOV-0.1.0-01` 已完成并进入 `main`：
 
 - `pipeline/growth|narrative|tech|art|test|ops|maintenance` 及各自 sparse-checkout 工作区；
 - GitHub Rulesets 禁止新增/删除/强推，关闭合并后自动删支，`main` owner bypass 与生命周期保护分开；
@@ -16,7 +16,7 @@
 - 剧情文本单一真源、当前证据文件收敛、去除来源 hash/精确引文门禁；
 - 按改动执行必要 CI，保留 `repository-baseline` 为 `main` required check。
 
-实际完成状态不写在本段口头结论中；以 [evidence.md](../evidence/evidence.md)、实际 Git 提交、PR/CI 链接和规则集查询为准。本轮治理合并不改变产品发布状态。
+当前结论和实际执行链接见 [evidence.md](../evidence/evidence.md)；`Governance=Passed`、`ProductRelease=NotRun`。治理合并不改变产品发布状态。
 
 ## 产品状态
 
@@ -30,10 +30,11 @@ B01 仍为 InProgress。远程 `main` 已有 WorldReady、独立起点/统计等
 - 旧任务分支与工作树保留，不清理、不重置；旧任务分支转只读历史。
 - `spec/architecture/WORKING.json` 不重写；本轮只取消对来源 SHA-256/精确引文的验证。
 - `spec/requirements/001-causal-prototype/sources/` 既有原始来源不改写。
+- 维护分支已同步到最终治理基线的 `main`。
 
 ## 下一步
 
-1. 按 [协议](../pipelines/PROTOCOL.md) 完成七管线实际 MR 流向和独立审查；
-2. 合并 `ops → main` 后复核固定分支、规则集和 `main`；
-3. 产品侧继续 B01 剩余功能，不把治理验收扩大为游戏验收；
-4. 首次正式上线前保持 `onlineVersion=null`。
+1. 产品侧继续 B01 剩余功能，不把治理验收扩大为游戏验收；
+2. B01 完成后进入 B02 跨域契约；当前不发布产品；
+3. 首次正式上线前保持 `onlineVersion=null`，不创建 tag；
+4. 后续变更按七管线协议正向交付。
