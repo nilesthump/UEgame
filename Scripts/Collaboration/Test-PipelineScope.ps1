@@ -93,35 +93,72 @@ if ($Integration) {
 }
 
 function Test-CommitAncestor {
-    param([string] $RepositoryRoot, [string] $Commit, [string] $BranchRef)
-    & git -C $RepositoryRoot merge-base --is-ancestor $Commit $BranchRef 2>$null
-    return ($LASTEXITCODE -eq 0)
+    param([string] $RepositoryRoot, [string] $Commit, [string[]] $BranchRefs)
+    foreach ($ref in $BranchRefs) {
+        & git -C $RepositoryRoot merge-base --is-ancestor $Commit $ref 2>$null
+        if ($LASTEXITCODE -eq 0) { return $true }
+    }
+    return $false
 }
 
 $pipelineRefs = @{}
 foreach ($property in $config.pipelines.PSObject.Properties) {
-    $ref = 'refs/heads/' + [string]$property.Value.branch
-    & git -C $repositoryRoot show-ref --verify --quiet $ref 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        $pipelineRefs[$property.Name] = $ref
+    $refs = New-Object System.Collections.Generic.List[string]
+    foreach ($prefix in @('refs/heads/', 'refs/remotes/origin/')) {
+        $ref = $prefix + [string]$property.Value.branch
+        & git -C $repositoryRoot show-ref --verify --quiet $ref 2>$null
+        if ($LASTEXITCODE -eq 0) { $refs.Add($ref) }
     }
+    if ($refs.Count -gt 0) {
+        $pipelineRefs[$property.Name] = @($refs)
+    }
+}
+
+function Get-CommitOwnerNames {
+    param([string] $RepositoryRoot, [string] $Commit)
+    $owners = New-Object System.Collections.Generic.List[string]
+    foreach ($name in $pipelineRefs.Keys) {
+        if (Test-CommitAncestor -RepositoryRoot $RepositoryRoot -Commit $Commit -BranchRefs $pipelineRefs[$name]) {
+            $owners.Add($name)
+        }
+    }
+    return @($owners)
 }
 
 $commits = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--reverse', ($baseCommit + '..HEAD'))) -split "`n" |
     ForEach-Object { $_.Trim() } |
     Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $changedCount = 0
-$mergeSkipped = 0
+$mergeChecked = 0
 $failures = New-Object System.Collections.Generic.List[string]
 
 foreach ($commit in $commits) {
     $parents = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--parents', '-n', '1', $commit)) -split '\s+' |
+        ForEach-Object { $_.Trim() } |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-    if ($parents.Count -gt 2) {
-        $mergeSkipped++
-        continue
+    $isMerge = ($parents.Count -gt 2)
+    if ($isMerge) { $mergeChecked++ }
+
+    $ownerNames = New-Object System.Collections.Generic.List[string]
+    if ($isMerge) {
+        foreach ($parent in @($parents[1..($parents.Count - 1)])) {
+            foreach ($owner in @(Get-CommitOwnerNames -RepositoryRoot $repositoryRoot -Commit $parent)) {
+                if ($ownerNames -notcontains $owner) { $ownerNames.Add($owner) }
+            }
+        }
     }
-    $diffText = Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('diff-tree', '--no-commit-id', '--name-status', '-r', $commit)
+    else {
+        foreach ($owner in @(Get-CommitOwnerNames -RepositoryRoot $repositoryRoot -Commit $commit)) {
+            if ($owner -ne $entry.Name -and $ownerNames -notcontains $owner) { $ownerNames.Add($owner) }
+        }
+    }
+
+    if ($isMerge) {
+        $diffText = Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('diff', '--name-status', $parents[1], $commit)
+    }
+    else {
+        $diffText = Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('diff-tree', '--no-commit-id', '--name-status', '-r', $commit)
+    }
     foreach ($line in ($diffText -split "`n")) {
         $item = $line.Trim()
         if ($item -eq '') { continue }
@@ -133,14 +170,7 @@ foreach ($commit in $commits) {
 
         $allowed = Test-PathList -Path $path -Patterns @($entry.Definition.owns)
         if (-not $allowed) {
-            $upstreamOwners = New-Object System.Collections.Generic.List[string]
-            foreach ($name in $pipelineRefs.Keys) {
-                if ($name -eq $entry.Name) { continue }
-                if (Test-CommitAncestor -RepositoryRoot $repositoryRoot -Commit $commit -BranchRef $pipelineRefs[$name]) {
-                    $upstreamOwners.Add($name)
-                }
-            }
-            foreach ($owner in $upstreamOwners) {
+            foreach ($owner in $ownerNames) {
                 if ($null -eq $config.pipelines.$owner) { continue }
                 if (Test-PathList -Path $path -Patterns @($config.pipelines.$owner.owns)) {
                     $allowed = $true
@@ -172,7 +202,7 @@ foreach ($commit in $commits) {
 Write-Output ('Pipeline={0}' -f $entry.Name)
 Write-Output ('Base={0}' -f $baseCommit)
 Write-Output ('CommitsChecked={0}' -f $commits.Count)
-Write-Output ('MergeCommitsSkipped={0}' -f $mergeSkipped)
+Write-Output ('MergeCommitsChecked={0}' -f $mergeChecked)
 Write-Output ('ChangedFiles={0}' -f $changedCount)
 
 if ($failures.Count -gt 0) {
