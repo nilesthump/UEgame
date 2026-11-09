@@ -52,6 +52,7 @@ if (-not [string]::IsNullOrWhiteSpace($status)) {
     throw 'Working tree must be clean before creating a pipeline MR.'
 }
 
+$baseBranch = if ($To -eq 'main') { 'main' } else { 'pipeline/{0}' -f $To }
 if ($To -eq 'main') {
     $scopeBase = 'origin/main'
 }
@@ -73,7 +74,7 @@ if (-not $DryRun) {
     }
 }
 
-$existingRaw = (& gh pr list --head $branch --base $To --state open --json number,url 2>$null | Out-String).Trim()
+$existingRaw = (& gh pr list --head $branch --base $baseBranch --state open --json number,url 2>$null | Out-String).Trim()
 $existing = @()
 if (-not [string]::IsNullOrWhiteSpace($existingRaw) -and $existingRaw -ne '[]') {
     $existing = @($existingRaw | ConvertFrom-Json)
@@ -83,11 +84,11 @@ if ($existing.Count -gt 0 -and $null -ne $existing[0]) {
 }
 
 if ($DryRun) {
-    Write-Output ('DryRun: gh pr create --head {0} --base {1} --title "{2}" --body-file {3}' -f $branch, $To, $Title, $BodyFile)
+    Write-Output ('DryRun: gh pr create --head {0} --base {1} --title "{2}" --body-file {3}' -f $branch, $baseBranch, $Title, $BodyFile)
     exit 0
 }
 
-$url = (& gh pr create --head $branch --base $To --title $Title --body-file $BodyFile 2>&1 | Out-String).Trim()
+$url = (& gh pr create --head $branch --base $baseBranch --title $Title --body-file $BodyFile 2>&1 | Out-String).Trim()
 if ($LASTEXITCODE -ne 0) {
     throw ('gh pr create failed: {0}' -f $url)
 }
