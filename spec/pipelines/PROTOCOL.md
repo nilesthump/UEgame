@@ -61,7 +61,7 @@ PR 正文使用 [模板](../../.github/pull_request_template.md)，只允许以�
 
 ### 旧 task 分支迁移例外
 
-已批准的一次性迁移可以把旧 `task/*` 历史并入 `pipeline/tech`，但迁移 merge commit 的净 diff 必须落在接收管线所有权内；旧 task 提交不在迁移前逐提交重新归责。迁移完成后删除旧 task 分支和工作区，该例外不再适用于新交付。非法改写、未审查的旧提交或净 diff 越界仍不得接收。
+已批准的一次性迁移可以把旧 `task/*` 历史并入 `pipeline/tech`，但迁移 merge commit 的净 diff 必须落在接收管线所有权内；只对 `Scripts/Collaboration/pipelines.json` 中 `legacyTaskCommits` 明确列出的提交免除逐提交重新归责，不按现存 task ref 动态放行。迁移完成后删除旧 task 分支和工作区，该列表不再适用于新交付。非法改写、未审查的旧提交或净 diff 越界仍不得接收。
 
 ## 5. 管线交付说明
 

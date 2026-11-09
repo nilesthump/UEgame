@@ -61,7 +61,11 @@ function Test-PathList {
 }
 
 $repositoryRoot = Get-RepositoryRoot -RequestedRoot $Root
-$config = [IO.File]::ReadAllText((Join-Path $repositoryRoot 'Scripts/Collaboration/pipelines.json')) | ConvertFrom-Json
+# Use the config that ships with this checker, not the target worktree's older
+# copy. This keeps cross-worktree checks (for example -Root tech from ops)
+# deterministic while a migration is in progress.
+$configRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+$config = [IO.File]::ReadAllText((Join-Path $configRoot 'Scripts/Collaboration/pipelines.json')) | ConvertFrom-Json
 $branch = Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-parse', '--abbrev-ref', 'HEAD')
 
 $entry = $null
@@ -125,12 +129,7 @@ function Get-CommitOwnerNames {
     return @($owners)
 }
 
-$legacyTaskRefs = New-Object System.Collections.Generic.List[string]
-foreach ($prefix in @('refs/heads/task/', 'refs/remotes/origin/task/')) {
-    foreach ($ref in @((& git -C $repositoryRoot for-each-ref --format='%(refname)' $prefix 2>$null))) {
-        if (-not [string]::IsNullOrWhiteSpace($ref)) { $legacyTaskRefs.Add([string]$ref) }
-    }
-}
+$legacyCommits = @($config.legacyTaskCommits | ForEach-Object { [string]$_ })
 
 $commits = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--reverse', ($baseCommit + '..HEAD'))) -split "`n" |
     ForEach-Object { $_.Trim() } |
@@ -141,18 +140,11 @@ $legacySkipped = 0
 $failures = New-Object System.Collections.Generic.List[string]
 
 foreach ($commit in $commits) {
-    # One-off migration: commits imported from a legacy task/* branch are not
+    # One-off migration: only the explicitly approved legacy commits are not
     # re-charged per historical commit. The merge commit's net diff below still
     # has to belong to the receiving pipeline. Task refs are removed after the
-    # migration, so this allowance has no effect on normal delivery.
-    $isLegacyTaskCommit = $false
-    foreach ($legacyRef in $legacyTaskRefs) {
-        if (Test-CommitAncestor -RepositoryRoot $repositoryRoot -Commit $commit -BranchRefs @($legacyRef)) {
-            $isLegacyTaskCommit = $true
-            break
-        }
-    }
-    if ($isLegacyTaskCommit) {
+    # migration; no dynamic task-ref exemption exists.
+    if ($legacyCommits -contains $commit) {
         $legacySkipped++
         continue
     }
