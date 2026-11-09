@@ -19,7 +19,7 @@
 | --- | --- | --- |
 | 七管线文档/协议/所有权 | 基线、链接、版本、证据唯一性 | 本轮可执行 |
 | `repository-baseline` | GitHub Actions 实际运行 | 以各 PR 运行链接为准 |
-| `narrative-text` | 7 条结构检查 | 实际成功，仍需 UE 显示验证 |
+| `narrative-text` | 7 条结构检查 | 本次 CI 已实际运行并通过；执行链接由 test 登记，验收结论归 test；UE 显示仍 NotRun |
 | 受影响 `core-linux` | 现有核心用例清单 3 个 session 用例 | 本轮无源码改动，CI 按路径跳过；不能据此记执行通过 |
 | B01/UE 世界/独立包/50ms | 产品验收 | NotRun |
 
