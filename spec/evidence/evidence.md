@@ -18,8 +18,8 @@
 | GOV-06 | 0.1.0 | 证据收敛与无平行结论文件 | Passed | 本文件为唯一当前结论；`RepositoryBaseline` 检查无 `evidence-latest/final` | 历史文件仍在 Git，不另建当前副本 |
 | GOV-07 | 0.1.0 | 精简 CI 与 required checks | Passed | [PR #14 检查](https://github.com/nilesthump/UEgame/actions/runs/42632616056) baseline+narrative-text 成功；core-linux 按路径跳过 | 未执行源码构建 |
 | GOV-08 | 0.1.0 | 发布状态/流程与未发布记录 | Passed | [state.json](../releases/state.json)：`onlineVersion=null`、`onlineTag=null`、`unreleased` | 无正式产品发布 |
-| FLOW-01 | 0.1.0 | 九个规定 MR 流向 | InProgress（8/9，待合并） | growth→tech [#9](https://github.com/nilesthump/UEgame/pull/9)；growth→narrative [#10](https://github.com/nilesthump/UEgame/pull/10)；narrative→tech [#11](https://github.com/nilesthump/UEgame/pull/11)；tech→art [#12](https://github.com/nilesthump/UEgame/pull/12)；art→tech [#13](https://github.com/nilesthump/UEgame/pull/13)；tech→test [#14](https://github.com/nilesthump/UEgame/pull/14)；maintenance→ops [#15](https://github.com/nilesthump/UEgame/pull/15)；test→ops [#16](https://github.com/nilesthump/UEgame/pull/16) 待合并 | `ops→main` 待执行 |
-| MAIN-01 | 0.1.0 | `ops → main` 治理集成 | 待执行 | 待创建 | 尚未合并；`main` 仍为 `05c308d` |
+| FLOW-01 | 0.1.0 | 九个规定 MR 流向 | InProgress（8/9） | growth→tech [#9](https://github.com/nilesthump/UEgame/pull/9)；growth→narrative [#10](https://github.com/nilesthump/UEgame/pull/10)；narrative→tech [#11](https://github.com/nilesthump/UEgame/pull/11)；tech→art [#12](https://github.com/nilesthump/UEgame/pull/12)；art→tech [#13](https://github.com/nilesthump/UEgame/pull/13)；tech→test [#14](https://github.com/nilesthump/UEgame/pull/14)；maintenance→ops [#15](https://github.com/nilesthump/UEgame/pull/15)；test→ops [#16](https://github.com/nilesthump/UEgame/pull/16) 已合并 `3516fc7` | `ops→main` #17 待合并 |
+| MAIN-01 | 0.1.0 | `ops → main` 治理集成 | 待执行 | [#17](https://github.com/nilesthump/UEgame/pull/17) 已创建 | 尚未合并；`main` 仍为 `05c308d` |
 | PROD-B01 | 0.1.0 | B01 完整功能 | NotRun | 远程仅部分功能；本地未推送任务提交不纳入 | 稳定批次、真实世界回执、独立包未完成 |
 | DISPLAY-01 | 0.1.0 | 少量文本 UE 显示/字幕接入 | NotRun | 无 | 需要真实 UE 场景执行 |
 | PERF-01 | 0.1.0 | 输入→渲染 <50ms | NotRun | 无 | 测量链未建立 |
