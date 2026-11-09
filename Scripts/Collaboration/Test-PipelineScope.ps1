@@ -108,6 +108,7 @@ foreach ($property in $config.pipelines.PSObject.Properties) {
 }
 
 $commits = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--reverse', ($baseCommit + '..HEAD'))) -split "`n" |
+    ForEach-Object { $_.Trim() } |
     Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $changedCount = 0
 $mergeSkipped = 0
