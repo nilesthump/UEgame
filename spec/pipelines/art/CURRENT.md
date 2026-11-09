@@ -8,6 +8,7 @@
 
 `ART-0.1.0-01` 接收 B13 素材制作要求，确认源素材、声音和演出资产的交付边界。
 
+- 资产入场检查项、当前阻塞事实和写入边界见 [ASSET-GATE-0.1.0](ASSET-GATE-0.1.0.md)。
 - 唯一写入：`Assets/**`、`Scripts/Materials/**`、`spec/pipelines/art/**`、`spec/contracts/art/RESPONSE-*.md`。
 - 不写 `Content/**` 的 UE 二进制资产；由 tech 导入。
 - 不写剧情真源；按 `NAR-xxxx` 和 `status=final` 制作。
