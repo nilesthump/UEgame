@@ -1,10 +1,15 @@
 {
-  "version": 1,
+  "version": 2,
   "commands": [
     {
       "name": "RepositoryBaseline",
       "executable": "pwsh",
       "args": ["-NoProfile", "-File", "Scripts/Validation/Invoke-RepositoryChecks.ps1"]
+    },
+    {
+      "name": "NarrativeText",
+      "executable": "pwsh",
+      "args": ["-NoProfile", "-File", "Scripts/Validation/Test-NarrativeText.ps1"]
     },
     {
       "name": "B01CoreConfigureLinux",

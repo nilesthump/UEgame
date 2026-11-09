@@ -9,8 +9,71 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      core: ${{ steps.filter.outputs.core }}
+      narrative: ${{ steps.filter.outputs.narrative }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Classify changed paths
+        id: filter
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          core=false
+          narrative=false
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            core=true
+            narrative=true
+          else
+            git fetch --no-tags origin "$BASE_REF"
+            files="$(git diff --name-only "origin/$BASE_REF"...HEAD)"
+            if printf '%s\n' "$files" | grep -Eq '^(Source/|Tests/|CMakeLists\.txt$|UEgame\.uproject$|Config/|Content/|Scripts/Validation/|spec/governance/validation\.json$|\.github/workflows/)'; then
+              core=true
+            fi
+            if printf '%s\n' "$files" | grep -Eq '^(spec/contracts/narrative/|Scripts/Narrative/)'; then
+              narrative=true
+            fi
+          fi
+          echo "core=$core" >> "$GITHUB_OUTPUT"
+          echo "narrative=$narrative" >> "$GITHUB_OUTPUT"
+
+  repository-baseline:
+    needs: changes
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check repository baseline
+        shell: pwsh
+        run: pwsh -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
+
+  narrative-text:
+    needs: changes
+    if: needs.changes.outputs.narrative == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check narrative text contract
+        shell: pwsh
+        run: pwsh -NoProfile -File Scripts/Validation/Test-NarrativeText.ps1
+
   core-linux:
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -33,11 +96,3 @@ jobs:
           name: core-linux-results
           path: .build/core-linux-gcc13/ctest-junit.xml
           if-no-files-found: error
-  repository-baseline:
-    runs-on: windows-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check repository baseline
-        shell: pwsh
-        run: pwsh -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
