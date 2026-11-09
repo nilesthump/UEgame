@@ -50,7 +50,6 @@
         "Config/**",
         "Content/**",
         ".github/**",
-        "Scripts/Collaboration/**",
         "spec/contracts/art/REQUEST-*.md"
       ],
       "mrTargets": ["art", "test"],
@@ -117,6 +116,7 @@
         "spec/tasks/**",
         "spec/performance/**",
         "spec/architecture/**",
+        "Scripts/Collaboration/**",
         "Scripts/Release/**"
       ],
       "mrTargets": ["main"],

@@ -8,10 +8,10 @@
 | --- | --- | --- |
 | growth | `spec/requirements/**`（`sources/**` 只可新增来源，不改写既有来源）；`spec/pipelines/growth/**` | 架构、代码、资产、证据结论、发布状态 |
 | narrative | `spec/contracts/narrative/**`；`spec/pipelines/narrative/**`；`Scripts/Narrative/**` | 运行时逻辑、UE 资产、美术源文件、test 证据 |
-| tech | `Source/**`；`Tests/**`；`CMakeLists.txt`；`UEgame.uproject`；`Config/**`；`Content/**`；`.github/**`；`Scripts/Collaboration/**`；`spec/pipelines/tech/**`；`spec/contracts/art/REQUEST-*.md` | 剧情真源、美术源素材、验收结论、发布状态 |
+| tech | `Source/**`；`Tests/**`；`CMakeLists.txt`；`UEgame.uproject`；`Config/**`；`Content/**`；`.github/**`；`spec/pipelines/tech/**`；`spec/contracts/art/REQUEST-*.md` | 剧情真源、美术源素材、验收结论、发布状态、协作脚本 |
 | art | `Assets/**`；`Scripts/Materials/**`；`spec/pipelines/art/**`；`spec/contracts/art/RESPONSE-*.md` | `Content/**` 的 UE 二进制资产、运行时逻辑、剧情真源、发布状态 |
 | test | `Validation/**`；`Scripts/Validation/**`；`Tests/Acceptance/**`；`spec/evidence/**`；`spec/pipelines/test/**` | 业务代码、美术源素材、剧情真源、发布状态 |
-| ops | `AGENTS.md`；`README.md`；`spec/governance/**`；`spec/pipelines/README.md`；`spec/pipelines/PROTOCOL.md`；`spec/pipelines/ops/**`；`spec/releases/**`；`spec/evidence/**`（只与 test 串行，见下）；`spec/progress/**`；`spec/tasks/**`；`spec/performance/**`；`spec/architecture/**`；`Scripts/Release/**` | 代码、资产、剧情真源、测试执行结果 |
+| ops | `AGENTS.md`；`README.md`；`spec/governance/**`；`spec/pipelines/README.md`；`spec/pipelines/PROTOCOL.md`；`spec/pipelines/ops/**`；`spec/releases/**`；`spec/evidence/**`（只与 test 串行，见下）；`spec/progress/**`；`spec/tasks/**`；`spec/performance/**`；`spec/architecture/**`；`Scripts/Collaboration/**`；`Scripts/Release/**` | 代码、资产、剧情真源、测试执行结果 |
 | maintenance | `spec/pipelines/maintenance/**`；已登记事故的临时热修文件（见第 3 节） | 正常版本功能、共享入口、UE 二进制资产 |
 
 `spec/pipelines/<name>/CURRENT.md` 由对应管线唯一维护。`spec/architecture/**` 由 `ops` 作为记录编辑者，涉及技术、剧情或美术的变更须由对应管线在 MR 中评审；不得把讨论状态或未确认设计写成已冻结。
@@ -23,7 +23,8 @@
 | `UEgame.uproject`、根 `CMakeLists.txt`、`Source/*.Target.cs`、`Source/UEgame/UEgame.Build.cs`、模块入口 | tech | 构建/源清单变更请求，附受影响验证 |
 | `Config/**`、主地图/联合场景/总装配资产 | tech | 配置片段、场景布局和接入需求 |
 | `Content/**` 下的 `.uasset`、`.umap` 等 UE 二进制资产 | tech | art 交付源素材、来源/加工记录和导入清单；narrative 交付稳定文本 ID |
-| `.github/**`、`Scripts/Collaboration/**` | tech | 其他管线的 CI/工具变更建议 |
+| `.github/**` | tech | 其他管线的 CI 变更建议 |
+| `Scripts/Collaboration/**`、`Scripts/Release/**` | ops | 管线工具/发布入口变更经 ops 审查后交付 |
 | `spec/contracts/narrative/TEXT.csv` 与叙事文本真源 | narrative | tech 只读导入；art 只按定稿条目制作 |
 | `spec/evidence/evidence.md` | test | 各管线提供执行结果和未满足项；test 形成当前结论 |
 | `spec/releases/state.json` 与发布记录 | ops | test 交付验收结论；tech 交付构建身份 |

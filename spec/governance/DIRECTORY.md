@@ -26,7 +26,7 @@ Content/UEgame/                    # UE 二进制资产；tech 唯一写
 Config/                            # 工程配置；tech 唯一写
 Assets/                            # 美术/声音源素材与制作记录；art 写
 Scripts/
-  Collaboration/                   # 固定管线/工作区/MR 工具；tech 写
+  Collaboration/                   # 固定管线/工作区/MR 工具；ops 写
   Narrative/                       # 文本导入辅助；narrative 写
   Materials/                       # 素材处理；art 写
   Release/                         # 发布状态查询；ops 写
