@@ -125,7 +125,7 @@
         "/spec/pipelines/README.md", "/spec/pipelines/PROTOCOL.md", "/spec/pipelines/ops/",
         "/spec/governance/", "/spec/releases/", "/spec/evidence/", "/spec/progress/",
         "/spec/tasks/", "/spec/architecture/", "/spec/requirements/", "/spec/contracts/",
-        "/spec/performance/", "/Scripts/Release/"
+        "/spec/performance/", "/Scripts/Release/", "/Scripts/Validation/", "/Scripts/Collaboration/", "/.github/"
       ]
     },
     "maintenance": {

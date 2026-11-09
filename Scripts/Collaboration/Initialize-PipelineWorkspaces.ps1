@@ -29,15 +29,42 @@ function Get-RepositoryRoot {
 
 function Invoke-Git {
     param([string] $RepositoryRoot, [string[]] $Arguments)
-    $output = & git -C $RepositoryRoot @Arguments 2>&1
-    if ($LASTEXITCODE -ne 0) {
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $output = & git -C $RepositoryRoot @Arguments 2>&1
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($exitCode -ne 0) {
         throw ('git {0} failed: {1}' -f ($Arguments -join ' '), (($output | Out-String).Trim()))
     }
     return $output
 }
 
-$repositoryRoot = Get-RepositoryRoot -RequestedRoot $Root
-$config = [IO.File]::ReadAllText((Join-Path $repositoryRoot 'Scripts/Collaboration/pipelines.json')) | ConvertFrom-Json
+function Get-CanonicalRoot {
+    param([string] $StartRoot)
+    $lines = & git -C $StartRoot worktree list --porcelain 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Unable to read the Git worktree list.'
+    }
+    foreach ($line in @($lines)) {
+        if ($line -like 'worktree *') {
+            return [IO.Path]::GetFullPath($line.Substring(9))
+        }
+    }
+    throw 'The canonical worktree could not be identified.'
+}
+
+$startRoot = Get-RepositoryRoot -RequestedRoot $Root
+$repositoryRoot = Get-CanonicalRoot -StartRoot $startRoot
+$configPath = Join-Path $startRoot 'Scripts/Collaboration/pipelines.json'
+if (-not [IO.File]::Exists($configPath)) {
+    $configPath = Join-Path $repositoryRoot 'Scripts/Collaboration/pipelines.json'
+}
+$config = [IO.File]::ReadAllText($configPath) | ConvertFrom-Json
 $allNames = @($config.pipelines.PSObject.Properties | ForEach-Object { $_.Name })
 if ($Names.Count -eq 0) {
     $Names = $allNames
