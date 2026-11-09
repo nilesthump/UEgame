@@ -58,9 +58,9 @@ ctest --test-dir .build/core-linux-gcc13 --no-tests=error --verbose --output-jun
 
 | 检查 | 当前状态 | 说明 |
 | --- | --- | --- |
-| RepositoryBaseline | 本治理分支实际执行后记录 | 见 evidence |
-| NarrativeText | 待执行 | 文本结构，不等于运行时显示 |
-| Linux GCC13 shared core | GitHub Actions 实际运行 | 3 个 session 用例；完整 B01 未完成 |
+| RepositoryBaseline | 已执行 | 本轮 sparse 本地检查与 GitHub PR CI 实际通过；执行链接见 evidence |
+| NarrativeText | 已执行 | 7 条结构检查通过；不等于 UE 显示/字幕接入 |
+| Linux GCC13 shared core | 按改动执行 | 本轮无源码/构建改动，相关 PR 的 `core-linux` 按路径跳过，不记执行；完整 B01 未完成 |
 | UE 真实世界场景 | NotRun | 现有 NullRHI 核心宿主不等于真实世界 |
 | Win64 独立包 | NotRun | 未 Cook/Stage/启动 |
 | 输入→渲染 <50ms | NotRun | 测量链和场景未建立 |
