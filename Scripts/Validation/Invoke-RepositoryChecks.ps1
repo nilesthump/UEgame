@@ -20,6 +20,9 @@ if ([string]::IsNullOrWhiteSpace($Root)) {
 }
 
 $script:CaseInsensitivePaths = ([IO.Path]::DirectorySeparatorChar -eq '\')
+$script:UseGitTree = $false
+$script:GitRoot = ''
+$script:GitPathSet = $null
 
 function Get-RepoRelativePath {
     param([string] $RootPath, [string] $FullPath)
@@ -51,6 +54,54 @@ function Resolve-RepositoryPath {
         throw 'Relative path leaves the repository.'
     }
     return $fullPath
+}
+
+function Initialize-GitTree {
+    param([string] $RootPath)
+    $sparse = (& git -C $RootPath config --get core.sparseCheckout 2>$null | Out-String).Trim()
+    if ($sparse -ne 'true') {
+        return
+    }
+    $paths = @(& git -C $RootPath ls-tree -r --name-only HEAD 2>$null)
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Unable to read the committed tree for sparse checkout validation.'
+    }
+    $set = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    foreach ($path in $paths) {
+        if ([string]::IsNullOrWhiteSpace($path)) { continue }
+        $normalized = ([string]$path).Replace('\', '/')
+        [void] $set.Add($normalized)
+        $directory = [IO.Path]::GetDirectoryName($normalized)
+        while (-not [string]::IsNullOrWhiteSpace($directory) -and $directory -ne '.') {
+            [void] $set.Add($directory.Replace('\', '/'))
+            $directory = [IO.Path]::GetDirectoryName($directory)
+        }
+    }
+    $script:UseGitTree = $true
+    $script:GitRoot = $RootPath
+    $script:GitPathSet = $set
+}
+
+function Read-RepoText {
+    param([string] $RootPath, [string] $RelativePath)
+    if ($script:UseGitTree) {
+        $output = & git -C $RootPath show ('HEAD:{0}' -f $RelativePath) 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            throw ('Missing committed document: {0}' -f $RelativePath)
+        }
+        return (($output | Out-String) -replace "`r`n", "`n")
+    }
+    return [IO.File]::ReadAllText((Resolve-RepositoryPath -RootPath $RootPath -RelativePath $RelativePath))
+}
+
+function Test-RepoPathExists {
+    param([string] $RootPath, [string] $RelativePath)
+    $fullPath = Resolve-RepositoryPath -RootPath $RootPath -RelativePath $RelativePath
+    $normalized = Get-RepoRelativePath -RootPath $RootPath -FullPath $fullPath
+    if ($script:UseGitTree) {
+        return $script:GitPathSet.Contains($normalized)
+    }
+    return ([IO.File]::Exists($fullPath) -or [IO.Directory]::Exists($fullPath))
 }
 
 function Remove-MarkdownCode {
@@ -144,7 +195,7 @@ function Test-MarkdownTarget {
             $combined = Join-Path $documentDirectory $destination
         }
         $resolved = Resolve-RepositoryPath -RootPath $RootPath -RelativePath $combined
-        $exists = [IO.File]::Exists($resolved) -or [IO.Directory]::Exists($resolved)
+        $exists = Test-RepoPathExists -RootPath $RootPath -RelativePath $combined
         return [pscustomobject]@{
             Kind = 'Local'; Passed = $exists
             Detail = $(if ($exists) { '' } else { 'Missing local link target: ' + $Target })
@@ -193,14 +244,13 @@ function Get-MarkdownLinks {
 
 function Read-JsonDocument {
     param([string] $RootPath, [string] $RelativePath)
-    $path = Resolve-RepositoryPath -RootPath $RootPath -RelativePath $RelativePath
-    if (-not [IO.File]::Exists($path)) {
-        throw ('Missing JSON document: {0}' -f $RelativePath)
-    }
     try {
-        return ([IO.File]::ReadAllText($path) | ConvertFrom-Json)
+        return ((Read-RepoText -RootPath $RootPath -RelativePath $RelativePath) | ConvertFrom-Json)
     }
     catch {
+        if ($_.Exception.Message -like 'Missing committed document*') {
+            throw ('Missing JSON document: {0}' -f $RelativePath)
+        }
         throw ('Invalid JSON: {0}' -f $RelativePath)
     }
 }
@@ -246,37 +296,47 @@ try {
     if (-not [IO.Directory]::Exists($repositoryRoot)) {
         throw 'Repository root directory is missing.'
     }
+    Initialize-GitTree -RootPath $repositoryRoot
     foreach ($required in $requiredDocuments) {
         $requiredChecked++
-        $requiredPath = Resolve-RepositoryPath -RootPath $repositoryRoot -RelativePath $required
-        if (-not [IO.File]::Exists($requiredPath)) {
+        if (-not (Test-RepoPathExists -RootPath $repositoryRoot -RelativePath $required)) {
             $failures.Add('Missing required document: ' + $required)
         }
-        elseif ([string]::IsNullOrWhiteSpace([IO.File]::ReadAllText($requiredPath))) {
+        elseif ([string]::IsNullOrWhiteSpace((Read-RepoText -RootPath $repositoryRoot -RelativePath $required))) {
             $failures.Add('Empty required document: ' + $required)
         }
     }
 
     $documents = New-Object System.Collections.Generic.List[string]
     foreach ($rootDocument in @('AGENTS.md', 'CLAUDE.md', 'README.md')) {
-        $candidate = Join-Path $repositoryRoot $rootDocument
-        if ([IO.File]::Exists($candidate)) { $documents.Add($candidate) }
-    }
-    $specRoot = Join-Path $repositoryRoot 'spec'
-    if ([IO.Directory]::Exists($specRoot)) {
-        foreach ($file in Get-ChildItem -LiteralPath $specRoot -Filter '*.md' -File -Recurse) {
-            $documents.Add($file.FullName)
+        if (Test-RepoPathExists -RootPath $repositoryRoot -RelativePath $rootDocument) {
+            $documents.Add($rootDocument)
         }
     }
-    foreach ($document in $documents) {
+    if ($script:UseGitTree) {
+        foreach ($path in $script:GitPathSet) {
+            if ($path -match '^spec/.+\.md$') {
+                $documents.Add($path)
+            }
+        }
+    }
+    else {
+        $specRoot = Join-Path $repositoryRoot 'spec'
+        if ([IO.Directory]::Exists($specRoot)) {
+            foreach ($file in Get-ChildItem -LiteralPath $specRoot -Filter '*.md' -File -Recurse) {
+                $documents.Add((Get-RepoRelativePath -RootPath $repositoryRoot -FullPath $file.FullName))
+            }
+        }
+    }
+    foreach ($relativeDocument in @($documents | Sort-Object -Unique)) {
         $documentsChecked++
-        $relativeDocument = Get-RepoRelativePath -RootPath $repositoryRoot -FullPath $document
-        foreach ($link in @(Get-MarkdownLinks -Text ([IO.File]::ReadAllText($document)))) {
+        $documentPath = Join-Path $repositoryRoot $relativeDocument
+        foreach ($link in @(Get-MarkdownLinks -Text (Read-RepoText -RootPath $repositoryRoot -RelativePath $relativeDocument))) {
             if ($link.Error -ne '') {
                 $failures.Add(('{0}:{1}: {2}' -f $relativeDocument, $link.Line, $link.Error))
                 continue
             }
-            $result = Test-MarkdownTarget -RootPath $repositoryRoot -DocumentPath $document -Target $link.Target
+            $result = Test-MarkdownTarget -RootPath $repositoryRoot -DocumentPath $documentPath -Target $link.Target
             if ($result.Kind -eq 'Local') { $localLinksChecked++ }
             if ($result.Kind -eq 'EnvironmentReference') { $environmentReferences++ }
             if (-not $result.Passed) {
@@ -340,17 +400,22 @@ try {
             if (-not $seenBranches.Add([string]$entry.branch)) {
                 $failures.Add(('duplicate pipeline branch {0}.' -f $entry.branch))
             }
-            $pipelineDoc = Join-Path $repositoryRoot ('spec/pipelines/{0}/CURRENT.md' -f $name)
-            if (-not [IO.File]::Exists($pipelineDoc)) {
+            $pipelineDoc = 'spec/pipelines/{0}/CURRENT.md' -f $name
+            if (-not (Test-RepoPathExists -RootPath $repositoryRoot -RelativePath $pipelineDoc)) {
                 $failures.Add(('missing pipeline document for {0}.' -f $name))
             }
         }
     }
 
-    $parallelEvidence = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'spec') -Recurse -File |
-        Where-Object { $_.Name -match '^evidence-(latest|final)\.md$' })
-    foreach ($file in $parallelEvidence) {
-        $relative = Get-RepoRelativePath -RootPath $repositoryRoot -FullPath $file.FullName
+    if ($script:UseGitTree) {
+        $parallelEvidence = @($script:GitPathSet | Where-Object { $_ -match '(^|/)evidence-(latest|final)\.md$' })
+    }
+    else {
+        $parallelEvidence = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'spec') -Recurse -File |
+            Where-Object { $_.Name -match '^evidence-(latest|final)\.md$' } |
+            ForEach-Object { Get-RepoRelativePath -RootPath $repositoryRoot -FullPath $_.FullName })
+    }
+    foreach ($relative in $parallelEvidence) {
         $failures.Add(('parallel evidence file is not allowed: {0}' -f $relative))
     }
 }
@@ -359,6 +424,7 @@ catch {
 }
 
 Write-Output 'Scope=RepositoryBaseline only'
+Write-Output ('ValidationSource={0}' -f $(if ($script:UseGitTree) { 'GitTree(sparse)' } else { 'Worktree' }))
 Write-Output ('RequiredDocuments.Checked={0}' -f $requiredChecked)
 Write-Output ('Markdown.DocumentsChecked={0}' -f $documentsChecked)
 Write-Output ('Markdown.LocalLinksChecked={0}' -f $localLinksChecked)
