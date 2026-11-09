@@ -63,7 +63,7 @@ function Test-PathList {
 $repositoryRoot = Get-RepositoryRoot -RequestedRoot $Root
 # Use the config that ships with this checker, not the target worktree's older
 # copy. This keeps cross-worktree checks (for example -Root tech from ops)
-# deterministic while a migration is in progress.
+# deterministic.
 $configRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $config = [IO.File]::ReadAllText((Join-Path $configRoot 'Scripts/Collaboration/pipelines.json')) | ConvertFrom-Json
 $branch = Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-parse', '--abbrev-ref', 'HEAD')
@@ -129,26 +129,14 @@ function Get-CommitOwnerNames {
     return @($owners)
 }
 
-$legacyCommits = @($config.legacyTaskCommits | ForEach-Object { [string]$_ })
-
 $commits = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--reverse', ($baseCommit + '..HEAD'))) -split "`n" |
     ForEach-Object { $_.Trim() } |
     Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $changedCount = 0
 $mergeChecked = 0
-$legacySkipped = 0
 $failures = New-Object System.Collections.Generic.List[string]
 
 foreach ($commit in $commits) {
-    # One-off migration: only the explicitly approved legacy commits are not
-    # re-charged per historical commit. The merge commit's net diff below still
-    # has to belong to the receiving pipeline. Task refs are removed after the
-    # migration; no dynamic task-ref exemption exists.
-    if ($legacyCommits -contains $commit) {
-        $legacySkipped++
-        continue
-    }
-
     $parents = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--parents', '-n', '1', $commit)) -split '\s+' |
         ForEach-Object { $_.Trim() } |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
@@ -226,7 +214,6 @@ Write-Output ('Pipeline={0}' -f $entry.Name)
 Write-Output ('Base={0}' -f $baseCommit)
 Write-Output ('CommitsChecked={0}' -f $commits.Count)
 Write-Output ('MergeCommitsChecked={0}' -f $mergeChecked)
-Write-Output ('LegacyTaskCommitsSkipped={0}' -f $legacySkipped)
 Write-Output ('ChangedFiles={0}' -f $changedCount)
 
 if ($failures.Count -gt 0) {

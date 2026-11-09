@@ -1,12 +1,6 @@
 {
   "version": 1,
   "targetVersion": "0.1.0",
-  "legacyTaskCommits": [
-    "df858bb69541255b0e68d343901776235157254c",
-    "3755ff445c8424ca0658cc4ad9343278f1beb5d9",
-    "da1af65d3f50348ef4a978a95fc678925c456f7b",
-    "55c5bdd7cf51541f0a230b94dd60ec26229a60b9"
-  ],
   "mainReceiver": "ops",
   "mainReceiverLogin": "nilesthump",
   "pipelines": {

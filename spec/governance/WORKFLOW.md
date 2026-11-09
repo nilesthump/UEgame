@@ -14,7 +14,7 @@
 | `pipeline/ops` | `.worktrees/pipelines/ops` | 发布、反馈、`main` 集成 |
 | `pipeline/maintenance` | `.worktrees/pipelines/maintenance` | 线上故障与机动维护 |
 
-`main` 是线上运营记录。固定分支建立后禁止新增分支、删除分支和强推，合并后不自动删除源分支；旧 `task/*` 分支只读。分支生命周期保护与 `main` 的 owner bypass 使用不同 ruleset，详见 [BRANCH_RULES](BRANCH_RULES.md)。
+`main` 是线上运营记录。固定分支建立后禁止新增分支、删除分支和强推，合并后不自动删除源分支；旧 `task/*` 已在 B01 迁移后全部删除。分支生命周期保护与 `main` 的 owner bypass 使用不同 ruleset，详见 [BRANCH_RULES](BRANCH_RULES.md)。
 
 ## 2. 工作项与版本
 

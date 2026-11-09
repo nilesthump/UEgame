@@ -5,7 +5,7 @@
 ## 1. 分支与工作区
 
 1. 只在 `pipeline/<name>` 所属固定分支提交；分支与工作区对应见 [总表](README.md)。
-2. 固定分支建立后禁止新增分支、删除分支和强推。旧 `task/*` 分支只读，不再接收新提交。
+2. 固定分支建立后禁止新增分支、删除分支和强推。旧 `task/*` 已在 B01 迁移后全部删除。
 3. 每个管线使用独立工作区并启用 sparse-checkout，只显示本管线文档、共享协议和必要契约。
 4. 管线内提交可由本管线直接完成；跨管线必须通过 MR。`main` 只接收 `ops → main`。
 
@@ -59,9 +59,9 @@ PR 正文使用 [模板](../../.github/pull_request_template.md)，只允许以�
 - 合并使用 merge commit，保留功能提交；禁止 squash 和 rebase 改写公开历史。
 - 合并后不自动删除源分支。分支删除由规则集禁止。
 
-### 旧 task 分支迁移例外
+### 旧 task 分支迁移已完成
 
-已批准的一次性迁移可以把旧 `task/*` 历史并入 `pipeline/tech`，但迁移 merge commit 的净 diff 必须落在接收管线所有权内；只对 `Scripts/Collaboration/pipelines.json` 中 `legacyTaskCommits` 明确列出的提交免除逐提交重新归责，不按现存 task ref 动态放行。迁移完成后删除旧 task 分支和工作区，该列表不再适用于新交付。非法改写、未审查的旧提交或净 diff 越界仍不得接收。
+B01 的三个功能提交已通过 #27 并入 `pipeline/tech`、`pipeline/test` 和 `pipeline/ops`；旧 `task/*` 分支与工作区已删除，临时 allowlist 也已移除。后续不再有 task 分支或迁移例外，所有新交付只走固定管线。
 
 ## 5. 管线交付说明
 

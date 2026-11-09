@@ -14,7 +14,7 @@
 | ops | `pipeline/ops` | `.worktrees/pipelines/ops` | 发布、上线、反馈、`main` 集成 | `test`, `maintenance` | `main` |
 | maintenance | `pipeline/maintenance` | `.worktrees/pipelines/maintenance` | 线上故障诊断与机动维护，保持当前线上基线 | `main` 基线同步 | `ops` |
 
-`main` 只记录实际线上运营版本；首次正式上线前明确无线上版本。固定分支建立后由 GitHub Rulesets 禁止新增分支、删除分支和强推；合并后不自动删除源分支。旧 `task/*` 分支只读保留。
+`main` 只记录实际线上运营版本；首次正式上线前明确无线上版本。固定分支建立后由 GitHub Rulesets 禁止新增分支、删除分支和强推；合并后不自动删除源分支。旧 `task/*` 已在 B01 迁移后全部删除。
 
 ## 常规 MR 流向
 
