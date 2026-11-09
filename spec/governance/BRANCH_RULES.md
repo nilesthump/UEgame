@@ -22,7 +22,7 @@
 
 ## 任务分支退役（2026-11-09）
 
-- 旧 7 个远端 `task/*`、9 个本地 `task/*` 和 5 个 task 工作区已删除；B01 三个功能提交已通过 #27 并入 `pipeline/tech`/`pipeline/test`/`pipeline/ops` 并进入 `main`。
+- 旧 7 个远端 `task/*`、9 个本地 `task/*` 和 5 个 task 工作区已删除；B01 三个功能提交已通过 #27 并入 `pipeline/tech`/`pipeline/test`/`pipeline/ops`，待最终 `ops → main` 合并后进入 `main`。
 - 旧 `archived-task-branches`（26855800）已删除；`fixed-branch-lifecycle` 在删除后重新启用为 `active`。
 - 当前只保留 `main` 和七条 `pipeline/*`；不再存在 task ref，也不再有 task 动态豁免。
 
