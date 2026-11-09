@@ -1,22 +1,49 @@
 # 写入范围与唯一所有者
 
-权威目录：`G:/UEgame`。协调角色：`integration-owner`（当前初始化由本聊天协调agent执行）。任务角色和B00–B15精确范围见[任务表](../tasks/001-causal-prototype/TASKS.md)。角色名是责任分工，不是已雇用人数或已启动agent。
+权威目录：仓库根。固定管线及分支见[管线总表](../pipelines/README.md)；角色名是责任分工，不是已雇用人数。除本表列出的路径外默认只读。跨范围修改必须先由上游 MR 说明影响，由受影响管线评审，不能以“方便”直接写入。
 
-| 范围 | 所有者与写入规则 |
-| --- | --- |
-| 根AGENTS/CLAUDE/README、治理/进度/任务、`.github/`、Git配置 | integration-owner；本次bootstrap授权内维护 |
-| `spec/architecture/WORKING.json` | canonical协调者经本机版本绑定运行器/expectedRevision唯一更新；其他agent及worktree副本只读 |
-| `spec/requirements/**/sources/`既有文件 | 不改写；新用户指示新增来源文件，由协调者登记引用 |
-| 需求正文、架构总体与类图 | 协调者基于明确用户变更维护；模块agent提出补丁建议，不能自行改变已确认玩法 |
-| `.uproject`、根CMake、`Source/*.Target.cs`、`UEgame.Build.cs`、模块入口、总Config、共享注册 | B00/B01/B02与integration-owner串行交付，不接受多个领域并行改动 |
-| Session/RunState/共享事实、Director/Subsystem及共同生命周期入口 | B01/B02/B15集成责任；领域规则与适配按任务专属子目录维护 |
-| 领域代码/测试/资产 | 对应任务owner唯一写入，具体子目录见任务表；跨域修改先协调依赖 |
-| 主地图、联合场景、总输入映射/总配置 | integration-owner；领域owner交付独立资产/场景及导入清单后集成 |
-| 共享测试入口、框架和注册清单 | B01先建最小可执行检查，集成后在进度记录移交B14；同一时间唯一writer |
-| `Assets/Provenance/`与音频准备 | B13素材owner；素材来源/加工/合成记录必须与实际执行一致 |
-| `Scripts/Validation/`与公共检查模板 | B14 validation-owner；bootstrap仅交付RepositoryBaseline入口，后续游戏验证由B14实现 |
-| `Validation/Toolchain/`、`Validation/Materials/`、`Validation/Performance/` | 分别B00、B13、B15；B14不拥有这些子目录，具体范围见任务表 |
-| `.build/`、`Saved/`等输出 | 仅操作自己任务创建并验证归属的子目录，保留故障证据；不得清理用户试玩数据 |
-| `.agents/`、`.codex/`、`.aws/`、本机UE/工具安装 | 当前不修改、不纳入Git；需要环境准备时由B00另按实际授权执行 |
+## 1. 管线所有权
 
-根目录已经授权的初始化文件不再逐项索要确认。超出任务范围的功能或跨任务修改，不以方便为由直接写入；由协调者调整范围并记录依据。工作树、分支或文件已被他人改动时保留内容并核对，不强制重置/清理。
+| 管线 | 独占写入范围 | 明确不写 |
+| --- | --- | --- |
+| growth | `spec/requirements/**`（`sources/**` 只可新增来源，不改写既有来源）；`spec/pipelines/growth/**` | 架构、代码、资产、证据结论、发布状态 |
+| narrative | `spec/contracts/narrative/**`；`spec/pipelines/narrative/**`；`Scripts/Narrative/**` | 运行时逻辑、UE 资产、美术源文件、test 证据 |
+| tech | `Source/**`；`Tests/**`；`CMakeLists.txt`；`UEgame.uproject`；`Config/**`；`Content/**`；`.github/**`；`spec/pipelines/tech/**`；`spec/contracts/art/REQUEST-*.md` | 剧情真源、美术源素材、验收结论、发布状态、协作脚本 |
+| art | `Assets/**`；`Scripts/Materials/**`；`spec/pipelines/art/**`；`spec/contracts/art/RESPONSE-*.md` | `Content/**` 的 UE 二进制资产、运行时逻辑、剧情真源、发布状态 |
+| test | `Validation/**`；`Scripts/Validation/**`；`Tests/Acceptance/**`；`spec/evidence/**`；`spec/pipelines/test/**` | 业务代码、美术源素材、剧情真源、发布状态 |
+| ops | `AGENTS.md`；`README.md`；`spec/governance/**`；`spec/pipelines/README.md`；`spec/pipelines/PROTOCOL.md`；`spec/pipelines/ops/**`；`spec/releases/**`；`spec/evidence/**`（只与 test 串行，见下）；`spec/progress/**`；`spec/tasks/**`；`spec/performance/**`；`spec/architecture/**`；`Scripts/Collaboration/**`；`Scripts/Release/**` | 代码、资产、剧情真源、测试执行结果 |
+| maintenance | `spec/pipelines/maintenance/**`；已登记事故的临时热修文件（见第 3 节） | 正常版本功能、共享入口、UE 二进制资产 |
+
+`spec/pipelines/<name>/CURRENT.md` 由对应管线唯一维护。`spec/architecture/**` 由 `ops` 作为记录编辑者，涉及技术、剧情或美术的变更须由对应管线在 MR 中评审；不得把讨论状态或未确认设计写成已冻结。
+
+## 2. 共享入口与二进制资产的唯一写入者
+
+| 共享对象 | 唯一写入者 | 其他管线交付方式 |
+| --- | --- | --- |
+| `UEgame.uproject`、根 `CMakeLists.txt`、`Source/*.Target.cs`、`Source/UEgame/UEgame.Build.cs`、模块入口 | tech | 构建/源清单变更请求，附受影响验证 |
+| `Config/**`、主地图/联合场景/总装配资产 | tech | 配置片段、场景布局和接入需求 |
+| `Content/**` 下的 `.uasset`、`.umap` 等 UE 二进制资产 | tech | art 交付源素材、来源/加工记录和导入清单；narrative 交付稳定文本 ID |
+| `.github/**` | tech | 其他管线的 CI 变更建议 |
+| `Scripts/Collaboration/**`、`Scripts/Release/**` | ops | 管线工具/发布入口变更经 ops 审查后交付 |
+| `spec/contracts/narrative/TEXT.csv` 与叙事文本真源 | narrative | tech 只读导入；art 只按定稿条目制作 |
+| `spec/evidence/evidence.md` | test | 各管线提供执行结果和未满足项；test 形成当前结论 |
+| `spec/releases/state.json` 与发布记录 | ops | test 交付验收结论；tech 交付构建身份 |
+
+同一文件同一时间只能有一个管线写入。`ops` 与 `test` 对 `spec/evidence/**` 的交叉仅限：test 维护结论，ops 在发布/回滚记录中引用，不另写第二份结论。
+
+## 3. 维护管线的临时热修例外
+
+`maintenance` 平时只写自己的 `spec/pipelines/maintenance/**`。线上故障需要改代码时：
+
+1. 在 `spec/pipelines/maintenance/` 登记事故、候选基线、受影响文件清单和回退方式；
+2. 仅对清单内文件取得临时唯一写权，`tech` 不得并行编辑同一文件；
+3. `tech` 作为独立审查者检查修复和回归；修复经 `maintenance → ops` 交付，不直接进 `tech` 或 `main`；
+4. 修复合并后临时写权结束，后续功能开发回到 `tech`。共享入口和 `Content/**` 二进制资产仍只由 `tech` 写入。
+
+## 4. 分支与历史
+
+- `main` 只记录实际线上运营版本，只接收 `ops → main` 的 merge commit。
+- 固定分支建立后不再新增分支；旧 `task/*` 分支只读保留，不接收新提交、不删除。
+- 每个工作项使用 `x.y.z` 目标版本；同版本内按功能点提交，一次提交只包含一个可独立验收的功能或修复。
+- 历史的执行事实由 Git 保存；当前结论只写 `spec/evidence/evidence.md`，不新增 `evidence-latest.md`、`evidence-final.md` 等平行文件。
+- 文档身份使用 Git 提交和稳定业务 ID，不再以 SHA-256、精确引文或文本交接特征串作为写入/合并门禁。

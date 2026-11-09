@@ -1,0 +1,150 @@
+{
+  "version": 1,
+  "targetVersion": "0.1.0",
+  "mainReceiver": "ops",
+  "mainReceiverLogin": "nilesthump",
+  "pipelines": {
+    "growth": {
+      "branch": "pipeline/growth",
+      "worktree": ".worktrees/pipelines/growth",
+      "owns": [
+        "spec/pipelines/growth/**",
+        "spec/requirements/**"
+      ],
+      "immutable": [
+        "spec/requirements/**/sources/**"
+      ],
+      "mrTargets": ["tech", "narrative"],
+      "sparse": [
+        "/AGENTS.md", "/CLAUDE.md", "/README.md", "/.gitignore", "/.gitattributes",
+        "/spec/pipelines/README.md", "/spec/pipelines/PROTOCOL.md", "/spec/pipelines/growth/",
+        "/spec/governance/WRITE_SCOPE.md", "/spec/governance/VALIDATION.md", "/spec/governance/DIRECTORY.md",
+        "/spec/requirements/", "/spec/releases/", "/spec/contracts/", "/spec/evidence/"
+      ]
+    },
+    "narrative": {
+      "branch": "pipeline/narrative",
+      "worktree": ".worktrees/pipelines/narrative",
+      "owns": [
+        "spec/pipelines/narrative/**",
+        "spec/contracts/narrative/**",
+        "Scripts/Narrative/**"
+      ],
+      "mrTargets": ["tech"],
+      "sparse": [
+        "/AGENTS.md", "/CLAUDE.md", "/README.md", "/.gitignore", "/.gitattributes",
+        "/spec/pipelines/README.md", "/spec/pipelines/PROTOCOL.md", "/spec/pipelines/narrative/",
+        "/spec/governance/WRITE_SCOPE.md", "/spec/governance/VALIDATION.md", "/spec/governance/DIRECTORY.md",
+        "/spec/contracts/narrative/", "/Scripts/Narrative/", "/spec/releases/", "/spec/evidence/"
+      ]
+    },
+    "tech": {
+      "branch": "pipeline/tech",
+      "worktree": ".worktrees/pipelines/tech",
+      "owns": [
+        "spec/pipelines/tech/**",
+        "Source/**",
+        "Tests/**",
+        "CMakeLists.txt",
+        "UEgame.uproject",
+        "Config/**",
+        "Content/**",
+        ".github/**",
+        "spec/contracts/art/REQUEST-*.md"
+      ],
+      "mrTargets": ["art", "test"],
+      "sparse": [
+        "/AGENTS.md", "/CLAUDE.md", "/README.md", "/.gitignore", "/.gitattributes",
+        "/spec/pipelines/README.md", "/spec/pipelines/PROTOCOL.md", "/spec/pipelines/tech/",
+        "/spec/governance/WRITE_SCOPE.md", "/spec/governance/VALIDATION.md", "/spec/governance/DIRECTORY.md",
+        "/spec/contracts/narrative/", "/spec/contracts/art/", "/spec/releases/", "/spec/evidence/",
+        "/Source/", "/Tests/", "/CMakeLists.txt", "/UEgame.uproject", "/Config/", "/Content/",
+        "/.github/", "/Scripts/Collaboration/", "/Scripts/Narrative/"
+      ]
+    },
+    "art": {
+      "branch": "pipeline/art",
+      "worktree": ".worktrees/pipelines/art",
+      "owns": [
+        "spec/pipelines/art/**",
+        "Assets/**",
+        "Scripts/Materials/**",
+        "spec/contracts/art/RESPONSE-*.md"
+      ],
+      "mrTargets": ["tech"],
+      "sparse": [
+        "/AGENTS.md", "/CLAUDE.md", "/README.md", "/.gitignore", "/.gitattributes",
+        "/spec/pipelines/README.md", "/spec/pipelines/PROTOCOL.md", "/spec/pipelines/art/",
+        "/spec/governance/WRITE_SCOPE.md", "/spec/governance/VALIDATION.md", "/spec/governance/DIRECTORY.md",
+        "/spec/contracts/narrative/", "/spec/contracts/art/", "/spec/releases/", "/spec/evidence/",
+        "/Assets/", "/Scripts/Materials/"
+      ]
+    },
+    "test": {
+      "branch": "pipeline/test",
+      "worktree": ".worktrees/pipelines/test",
+      "owns": [
+        "spec/pipelines/test/**",
+        "spec/evidence/**",
+        "Validation/**",
+        "Scripts/Validation/**",
+        "Tests/Acceptance/**"
+      ],
+      "mrTargets": ["ops"],
+      "sparse": [
+        "/AGENTS.md", "/CLAUDE.md", "/README.md", "/.gitignore", "/.gitattributes",
+        "/spec/pipelines/README.md", "/spec/pipelines/PROTOCOL.md", "/spec/pipelines/test/",
+        "/spec/governance/WRITE_SCOPE.md", "/spec/governance/VALIDATION.md", "/spec/governance/DIRECTORY.md",
+        "/spec/contracts/", "/spec/releases/", "/spec/evidence/",
+        "/Source/", "/Tests/", "/CMakeLists.txt", "/UEgame.uproject", "/Config/", "/Content/",
+        "/Validation/", "/Scripts/Validation/"
+      ]
+    },
+    "ops": {
+      "branch": "pipeline/ops",
+      "worktree": ".worktrees/pipelines/ops",
+      "owns": [
+        "AGENTS.md",
+        "CLAUDE.md",
+        "README.md",
+        "spec/governance/**",
+        "spec/pipelines/README.md",
+        "spec/pipelines/PROTOCOL.md",
+        "spec/pipelines/ops/**",
+        "spec/releases/**",
+        "spec/progress/**",
+        "spec/tasks/**",
+        "spec/performance/**",
+        "spec/architecture/**",
+        "Scripts/Collaboration/**",
+        "Scripts/Release/**"
+      ],
+      "mrTargets": ["main"],
+      "sparse": [
+        "/AGENTS.md", "/CLAUDE.md", "/README.md", "/.gitignore", "/.gitattributes",
+        "/spec/pipelines/README.md", "/spec/pipelines/PROTOCOL.md", "/spec/pipelines/ops/",
+        "/spec/governance/", "/spec/releases/", "/spec/evidence/", "/spec/progress/",
+        "/spec/tasks/", "/spec/architecture/", "/spec/requirements/", "/spec/contracts/",
+        "/spec/performance/", "/Scripts/Release/", "/Scripts/Validation/", "/Scripts/Collaboration/", "/.github/"
+      ]
+    },
+    "maintenance": {
+      "branch": "pipeline/maintenance",
+      "worktree": ".worktrees/pipelines/maintenance",
+      "owns": [
+        "spec/pipelines/maintenance/**"
+      ],
+      "hotfix": [
+        "Source/**"
+      ],
+      "mrTargets": ["ops"],
+      "sparse": [
+        "/AGENTS.md", "/CLAUDE.md", "/README.md", "/.gitignore", "/.gitattributes",
+        "/spec/pipelines/README.md", "/spec/pipelines/PROTOCOL.md", "/spec/pipelines/maintenance/",
+        "/spec/governance/WRITE_SCOPE.md", "/spec/governance/VALIDATION.md", "/spec/governance/DIRECTORY.md",
+        "/spec/contracts/", "/spec/releases/", "/spec/evidence/",
+        "/Source/", "/Tests/", "/CMakeLists.txt", "/UEgame.uproject", "/Config/", "/Content/", "/Validation/"
+      ]
+    }
+  }
+}

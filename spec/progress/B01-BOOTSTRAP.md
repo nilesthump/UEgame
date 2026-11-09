@@ -1,5 +1,7 @@
 # B01 最小骨架实施记录
 
+> 历史快照（2026-11-06）。当前状态见 [CURRENT.md](CURRENT.md) 与 [evidence.md](../evidence/evidence.md)；本文件只保留当时执行事实，不构成当前门禁或最新结论。
+
 执行者：本聊天协调 agent（核心/集成）。基线：`3a058befd82cb4424393f1de664c06195cf47472`。
 分支：`task/B01-bootstrap`；工作树：`G:/UEgame/.worktrees/B01`。既有工作树保留。
 

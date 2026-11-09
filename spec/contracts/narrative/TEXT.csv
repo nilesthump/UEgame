@@ -1,0 +1,8 @@
+id,speaker,scene_or_result,text,production_notes,status
+NAR-0001,镇民甲,revisit.crowd.sword,"那年救下孩子的人用的是剑。如今镇上的孩子都抢着学剑。","剑术方向群众闲聊；循环句，不绑定单次触发；CueId=CUE-NAR-0001。",draft
+NAR-0002,镇民乙,revisit.crowd.magic,"听说那位老师当年是被魔法救下的，现在连雨里都有人在练法术。","魔法方向群众闲聊；与剑术/混用条目互斥；CueId=CUE-NAR-0002。",draft
+NAR-0003,教师,revisit.teacher.mixed,"你当年既用剑，也用魔法。我后来才明白，两样都能救人。","混用方向教师关键片段；实际相见后触发；CueId=CUE-NAR-0003。",draft
+NAR-0004,旁白,rescue.failure.child-dead,"哭声停了。哥布林还在原地，孩子没有再动。","未获救结果；不提前提示未来人物；CueId=CUE-NAR-0004。",draft
+NAR-0005,教师,revisit.teacher.sword,"你当年那一剑救了我。后来我一直在想，怎样把这份判断教给别人。","剑术方向教师关键片段；与群众闲聊共同构成完成条件；CueId=CUE-NAR-0005。",draft
+NAR-0006,教师,revisit.teacher.magic,"你当年用魔法救了我。我后来才学会，力量也可以用来保护人。","魔法方向教师关键片段；与群众闲聊共同构成完成条件；CueId=CUE-NAR-0006。",draft
+NAR-0007,镇民丙,revisit.crowd.mixed,"听说那位老师既会剑也会魔法，镇上的孩子都吵着要两样一起学。","混用方向群众闲聊；与剑术/魔法条目互斥；CueId=CUE-NAR-0007。",draft

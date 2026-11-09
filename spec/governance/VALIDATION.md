@@ -1,10 +1,19 @@
 # 仓库验证契约
 
-RepositoryBaseline 验证仓库文档、链接和架构确认来源，不证明游戏功能、构建或性能通过。B01 任务分支新增下述最小核心入口，尚未代表整个 B01 完成。
+版本：`0.1.0`。验证分三层：仓库结构/文档、受影响行为、发布候选主路径。未执行、零用例、跳过、缺报告或只发现测试不记通过。验证不证明游戏、性能或本人体验通过。
 
-## B01 最小核心入口
+## 1. 入口
 
-在 Ubuntu24.04/x86_64、GCC13、CMake/CTest3.28 环境从仓库根执行：
+从仓库根执行：
+
+```powershell
+powershell -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
+powershell -NoProfile -File Scripts/Validation/Test-NarrativeText.ps1
+```
+
+PowerShell 7 为 CI 默认；脚本同时兼容 Windows PowerShell 5.1，便于本机直接执行。入口不安装工具、不联网、不写产品文件。sparse 工作区中，基线检查读取 `HEAD` 的 Git 树来校验隐藏文档和链接；完整 checkout/CI 仍直接读取工作区。
+
+Linux 核心检查（Ubuntu 24.04/x86_64、GCC 13、CMake/CTest 3.28）：
 
 ```sh
 cmake -S . -B .build/core-linux-gcc13 -DCMAKE_CXX_COMPILER=/usr/bin/g++-13 -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
@@ -12,40 +21,53 @@ cmake --build .build/core-linux-gcc13 --verbose
 ctest --test-dir .build/core-linux-gcc13 --no-tests=error --verbose --output-junit ctest-junit.xml
 ```
 
-当前预期 CaseId 为 `B01.Session.WorldReady`、`B01.Session.IndependentStarts`、`B01.Session.FactIdentityAndDelivery`，必须有实际执行的非空报告、全部通过且无跳过。UE Editor 构建后以 `Automation RunTests UEgame.B01.Session`、`-TestExit="Automation Test Queue Empty"` 和独立 `-ReportExportPath` 执行同一检查。NullRHI 宿主仅验证核心，不证明真实渲染/世界交互。机器清单描述 Linux 配置/构建/执行顺序；CI 新增 Linux job，远端运行结果以实际 PR 为准。Windows UE 安装未在托管 runner 配置，UE 验证仅本机执行。
+当前显式用例为 `B01.Session.WorldReady`、`B01.Session.IndependentStarts`、`B01.Session.FactIdentityAndDelivery`。期待非空报告、全部通过且无跳过；NullRHI/核心宿主只证明核心，不证明真实渲染或世界交互。
 
-实际证据和限制见[B01实施记录](../progress/B01-BOOTSTRAP.md)。
+## 2. 仓库基线检查内容
 
-从仓库根执行：
+- 必需文件存在且非空：根规则、七管线文档、协议、写入范围、验证、任务、进度、证据、发布状态和文本真源。
+- `spec/**`、根 Markdown 的本地相对链接可解析；跳过代码块、网络链接和纯页内锚点。外部绝对路径只记为 EnvironmentReference/NotValidated。
+- `spec/architecture/WORKING.json` 可解析为 JSON；不再校验来源 SHA-256 或精确引文。
+- `spec/releases/state.json` 的目标版本符合 `x.y.z`；`onlineVersion` 为 `null` 或 `x.y.z`；未发布时不得伪造标签。
+- 七个管线目录存在；`Scripts/Collaboration/pipelines.json` 的管线名与目录一致。
+- 不存在 `evidence-latest.md`、`evidence-final.md` 等平行结论文件。
+- 缺文件、坏链接、非法 JSON、版本非法、平行证据文件均返回非零。成功只输出 `RepositoryBaseline=Passed`。
 
-```powershell
-pwsh -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
-```
+## 3. 文本契约检查
 
-入口使用PowerShell 7及.NET，无第三方包、不联网、不写项目文件；可用`-Root`检查隔离副本。[机器配置](validation.json)与[GitHub工作流](../../.github/workflows/repository-checks.yml)调用同一命令。工作流配置已落地；没有远端运行或分支保护的证据时，不记CI已通过。
+`Test-NarrativeText.ps1` 读取 `spec/contracts/narrative/TEXT.csv`，检查：
 
-## 当前检查内容与失败条件
+- 表头为 `id,speaker,scene_or_result,text,production_notes,status`；
+- 至少一条；ID 唯一且匹配 `NAR-[0-9]{4}`；
+- 说话者、场景/结果类型、正文、制作说明非空；
+- `status` 只能是 `draft`、`final`、`retired`。
 
-- 必需的根规则、流程、写范围、当前进度、任务和验证文件存在。
-- 根说明及spec Markdown本地链接可解析到实际文件；跳过代码示例、网络链接和纯页内锚点。外部机器路径单列EnvironmentReference/NotValidated；本入口不验证锚点标题或外部网页。
-- WORKING中每条确认来源都在仓库内，原始字节SHA-256和精确引文同时匹配；来源不能指向WORKING或本机工具目录。零来源也失败。
-- 缺文件、坏链接、非法JSON、来源对象/字段缺失、来源越界、摘要/引文不匹配均返回非零。成功只输出RepositoryBaseline=Passed。
+文本检查只证明条目结构可导入，不等于 UE 内显示/音频接入通过。少量文本的显示与接入验证在 0.1.0 中仍为 NotRun，详见 [evidence](../evidence/evidence.md)。
 
-历史spec文件在Git中禁用换行转换，确保Windows工作区与CI原始字节一致。不要通过改写原始用户来源“修复”证据；正文合法变更由协调者同步证据和讨论版本。
+## 4. CI 与 required checks
 
-## 后续能力与证据
+`.github/workflows/repository-checks.yml`：
 
-| 检查 | 当前状态 | 负责任务及通过依据 |
+- `repository-baseline`：始终运行，是 `main` 唯一 required check；
+- `core-linux`：只有在 `Source/**`、`Tests/**`、构建入口、验证脚本或相关 CI 变更时运行；
+- `narrative-text`：只有在 `spec/contracts/narrative/**` 或 `Scripts/Narrative/**` 变更时运行。
+
+`main` 还要求 PR、1 次 GitHub 账号批准、讨论解决、仅 merge commit。`core-linux`/`narrative-text` 的跳过不等于通过；涉及对应改动时必须取得实际成功。候选内容或构建身份变化后重新执行受影响检查。
+
+## 5. 状态
+
+| 检查 | 当前状态 | 说明 |
 | --- | --- | --- |
-| RepositoryBaseline | AVAILABLE | 当前脚本真实运行，结果见[进度](../progress/CURRENT.md) |
-| Linux GCC13同源核心 | B01分支最小WorldReady场景1/1通过，完整核心尚未实现 | B14后续扩充；实际编译、非零用例和逐项报告 |
-| UE5.6.1真实世界 | Game/Editor编译及UE宿主核心1/1通过；真实世界场景NotRun | B01最小启动，各领域及B14实际场景、清理和原生证据 |
-| Win64 Development独立包 | NotRun | B01最小启动，B15完整范围、包身份和人工检查 |
-| 输入→核心→渲染 <50ms | NotRun | B02关联、B05/B06响应、B14测量、B15完整链；遵守[性能契约](../performance/001-input-to-render.md) |
-| 本人因果体验 | NotRun | B15取得用户四类结果和两项评价原话 |
+| RepositoryBaseline | 已执行 | 本轮 sparse 本地检查与 GitHub PR CI 实际通过；执行链接见 evidence |
+| NarrativeText | 已执行 | 7 条结构检查通过；不等于 UE 显示/字幕接入 |
+| Linux GCC13 shared core | 按改动执行 | 本轮无源码/构建改动，相关 PR 的 `core-linux` 按路径跳过，不记执行；完整 B01 未完成 |
+| UE 真实世界场景 | NotRun | 现有 NullRHI 核心宿主不等于真实世界 |
+| Win64 独立包 | NotRun | 未 Cook/Stage/启动 |
+| 输入→渲染 <50ms | NotRun | 测量链和场景未建立 |
+| 本人因果体验 | NotRun | 未试玩 |
 
-后续新增命令必须先有真实工程、实现及所需工具，并同时更新本契约、机器配置和CI可执行范围。没有能力就记录NotRun/Blocked及原因；未发现或执行零用例、Skipped、未知、缺报告、超时、仅进程退出0都不能代替验收。
+## 6. 证据维护
 
-首轮基线应验证隔离副本中的断链与错误摘要能返回非零，且修复后回到成功。原始输出存入本机忽略的Validation/Runs/，摘要、限制及独立审查记录进入spec/progress。检查入口不得碰普通游戏存档或终止非本任务进程。
-
-B00依赖安装后已取得[Windows安装smoke](../../Validation/Toolchain/B00-WINDOWS-INSTALL-2026-11-06.md)与[Linux安装smoke](../../Validation/Toolchain/B00-LINUX-INSTALL-2026-11-06.md)证据。它们只验证隔离的小程序和工具安装，不计入上表游戏验收。B01新增的真实核心构建及一项共享用例见上文；端到端性能仍NotRun。
+- 当前结论只在 `spec/evidence/evidence.md` 按版本和验收项维护；修复通过后原地更新失败条目，结果失效时原地改为待复测。
+- 当前文件只保留最新结论和执行链接；历史由 Git 保存，不再新增 `evidence-latest.md`、`evidence-final.md` 等文件。
+- 测试不得用未集成分支、零用例、模拟手柄或字幕降级路径替代真实验收；UE 二进制资产和共享入口的写入权仍按 [WRITE_SCOPE](WRITE_SCOPE.md)。

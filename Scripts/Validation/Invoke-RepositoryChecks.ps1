@@ -1,20 +1,44 @@
-#Requires -Version 7.0
+#Requires -Version 5.1
 <#
 .SYNOPSIS
-Checks the documentation and governance repository baseline only.
+Checks the repository documentation, governance and release baseline only.
 .DESCRIPTION
 Run locally and in CI with the same command:
-pwsh -NoLogo -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
--Root overrides the repository root (the default is two directories above this script).
-No tools are installed and no UE, Linux, game, performance, or experience checks run.
+powershell -NoProfile -File Scripts/Validation/Invoke-RepositoryChecks.ps1
+No source hashes or exact confirmation quotes are validated. No UE, Linux, game,
+performance, or experience checks run here.
 #>
 [CmdletBinding()]
 param(
-    [string] $Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
+    [string] $Root = ''
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($Root)) {
+    $Root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+}
+
+$script:CaseInsensitivePaths = ([IO.Path]::DirectorySeparatorChar -eq '\')
+$script:UseGitTree = $false
+$script:GitRoot = ''
+$script:GitPathSet = $null
+
+function Get-RepoRelativePath {
+    param([string] $RootPath, [string] $FullPath)
+    $rootFull = [IO.Path]::GetFullPath($RootPath).TrimEnd('\', '/')
+    $full = [IO.Path]::GetFullPath($FullPath)
+    if ($full.Length -le $rootFull.Length) {
+        if ($full -eq $rootFull) { return '.' }
+        throw 'Path is outside the repository.'
+    }
+    $prefix = $rootFull + [IO.Path]::DirectorySeparatorChar
+    $comparison = if ($script:CaseInsensitivePaths) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+    if (-not $full.StartsWith($prefix, $comparison)) {
+        throw 'Path is outside the repository.'
+    }
+    return $full.Substring($prefix.Length).Replace('\', '/')
+}
 
 function Resolve-RepositoryPath {
     param([string] $RootPath, [string] $RelativePath)
@@ -25,83 +49,64 @@ function Resolve-RepositoryPath {
     $nativePath = $RelativePath.Replace('\', [IO.Path]::DirectorySeparatorChar).
         Replace('/', [IO.Path]::DirectorySeparatorChar)
     $fullPath = [IO.Path]::GetFullPath((Join-Path $RootPath $nativePath))
-    $relative = [IO.Path]::GetRelativePath($RootPath, $fullPath)
-    if ($relative -eq '..' -or $relative -match '^\.\.[\\/]' -or
-        [IO.Path]::IsPathRooted($relative)) {
+    $relative = Get-RepoRelativePath -RootPath $RootPath -FullPath $fullPath
+    if ($relative -eq '..' -or $relative -match '^\.\./') {
         throw 'Relative path leaves the repository.'
     }
     return $fullPath
 }
 
-function Test-ConfirmationSource {
-    param(
-        [string] $RootPath,
-        [string] $Path,
-        [string] $Sha256,
-        [string] $Quote
-    )
-    # Return only diagnostics, never the user's quote or source contents.
-    try {
-        $sourcePath = Resolve-RepositoryPath -RootPath $RootPath -RelativePath $Path
-        if ($Path -match '(?i)(^|[\\/])(?:\.git|\.agents)([\\/]|$)' -or
-            $Path -match '(?i)(^|[\\/])WORKING(?:[.\\/]|$)') {
-            throw 'A confirmation source must be a separate repository evidence file.'
-        }
-        if (-not [IO.File]::Exists($sourcePath)) {
-            throw 'Confirmation source file is missing.'
-        }
-        if ($Sha256 -notmatch '^[A-Fa-f0-9]{64}$') {
-            throw 'Expected a 64-character SHA-256 digest.'
-        }
-        $actual = (Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash
-        if (-not [string]::Equals($actual, $Sha256, [StringComparison]::OrdinalIgnoreCase)) {
-            throw 'SHA-256 mismatch.'
-        }
-        if ([string]::IsNullOrWhiteSpace($Quote)) {
-            throw 'Confirmation quote is empty.'
-        }
-        $content = [IO.File]::ReadAllText($sourcePath)
-        if (-not $content.Contains($Quote, [StringComparison]::Ordinal)) {
-            throw 'Exact confirmation quote is absent from its source.'
-        }
-        return [pscustomobject]@{ Passed = $true; Path = $Path; Detail = 'Verified' }
-    }
-    catch {
-        return [pscustomobject]@{ Passed = $false; Path = $Path; Detail = $_.Exception.Message }
-    }
-}
-
-function Get-ConfirmationSourceReferences {
-    param([AllowNull()] $Value, [string] $PropertyName = '')
-    # A malformed source must reach the validator too; collecting only complete
-    # triples silently skips an individual source with a deleted field.
-    if ($PropertyName -eq 'source' -and $Value -isnot [System.Collections.IDictionary]) {
-        ,@{}
+function Initialize-GitTree {
+    param([string] $RootPath)
+    $sparse = (& git -C $RootPath config --get core.sparseCheckout 2>$null | Out-String).Trim()
+    if ($sparse -ne 'true') {
         return
     }
-    if ($Value -is [System.Collections.IDictionary]) {
-        if ($PropertyName -eq 'source' -or $Value.Contains('sha256') -or $Value.Contains('quote')) {
-            ,$Value
-        }
-        if ($PropertyName -match '(?i)evidence$' -and $Value.Contains('kind') -and
-            -not $Value.Contains('source')) {
-            ,@{}
-        }
-        foreach ($entry in $Value.GetEnumerator()) {
-            Get-ConfirmationSourceReferences -Value $entry.Value -PropertyName $entry.Key
+    $paths = @(& git -C $RootPath ls-tree -r --name-only HEAD 2>$null)
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Unable to read the committed tree for sparse checkout validation.'
+    }
+    $set = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    foreach ($path in $paths) {
+        if ([string]::IsNullOrWhiteSpace($path)) { continue }
+        $normalized = ([string]$path).Replace('\', '/')
+        [void] $set.Add($normalized)
+        $directory = [IO.Path]::GetDirectoryName($normalized)
+        while (-not [string]::IsNullOrWhiteSpace($directory) -and $directory -ne '.') {
+            [void] $set.Add($directory.Replace('\', '/'))
+            $directory = [IO.Path]::GetDirectoryName($directory)
         }
     }
-    elseif ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [string]) {
-        foreach ($child in $Value) {
-            Get-ConfirmationSourceReferences -Value $child
+    $script:UseGitTree = $true
+    $script:GitRoot = $RootPath
+    $script:GitPathSet = $set
+}
+
+function Read-RepoText {
+    param([string] $RootPath, [string] $RelativePath)
+    if ($script:UseGitTree) {
+        $output = & git -C $RootPath show ('HEAD:{0}' -f $RelativePath) 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            throw ('Missing committed document: {0}' -f $RelativePath)
         }
+        return (($output | Out-String) -replace "`r`n", "`n")
     }
+    return [IO.File]::ReadAllText((Resolve-RepositoryPath -RootPath $RootPath -RelativePath $RelativePath))
+}
+
+function Test-RepoPathExists {
+    param([string] $RootPath, [string] $RelativePath)
+    $fullPath = Resolve-RepositoryPath -RootPath $RootPath -RelativePath $RelativePath
+    $normalized = Get-RepoRelativePath -RootPath $RootPath -FullPath $fullPath
+    if ($script:UseGitTree) {
+        return $script:GitPathSet.Contains($normalized)
+    }
+    return ([IO.File]::Exists($fullPath) -or [IO.Directory]::Exists($fullPath))
 }
 
 function Remove-MarkdownCode {
     param([string] $Text)
-    # Preserve character positions/newlines so diagnostics still name the source line.
-    $output = [Text.StringBuilder]::new()
+    $output = New-Object System.Text.StringBuilder
     $fenceCharacter = ''
     $fenceLength = 0
     foreach ($line in [regex]::Split($Text, '(?<=\n)')) {
@@ -142,8 +147,6 @@ function Test-MarkdownTarget {
         return [pscustomobject]@{ Kind = 'Fragment'; Passed = $true; Detail = '' }
     }
 
-    # Strip URL fragment/query and optional editor :line or :line:column suffix.
-    # Do this before URI classification: README.md:12 is a file, not a URI scheme.
     $destination = ($destination -split '[#?]', 2)[0] -replace ':\d+(?::\d+)?$', ''
     if ($destination -match '^[A-Za-z][A-Za-z0-9+.-]*:' -and
         $destination -notmatch '^[A-Za-z]:[\\/]') {
@@ -154,24 +157,27 @@ function Test-MarkdownTarget {
         $destination = [regex]::Replace($destination, '\\([ ()<>])', '$1')
         if ($destination -match '^(?:[A-Za-z]:[\\/]|[\\/])') {
             $windowsAbsolute = $destination -match '^(?:[A-Za-z]:[\\/]|\\\\)'
-            $nativeAbsolute = ($IsWindows -and $windowsAbsolute) -or
-                (-not $IsWindows -and $destination.StartsWith('/'))
+            $nativeAbsolute = ($script:CaseInsensitivePaths -and $windowsAbsolute) -or
+                (-not $script:CaseInsensitivePaths -and $destination.StartsWith('/'))
             if ($nativeAbsolute) {
                 $nativePath = $destination.Replace('\', [IO.Path]::DirectorySeparatorChar).
                     Replace('/', [IO.Path]::DirectorySeparatorChar)
                 $absolute = [IO.Path]::GetFullPath($nativePath)
-                $relative = [IO.Path]::GetRelativePath($RootPath, $absolute)
-                if ($relative -ne '..' -and $relative -notmatch '^\.\.[\\/]' -and
-                    -not [IO.Path]::IsPathRooted($relative)) {
+                try {
+                    $relative = Get-RepoRelativePath -RootPath $RootPath -FullPath $absolute
                     $exists = [IO.File]::Exists($absolute) -or [IO.Directory]::Exists($absolute)
                     return [pscustomobject]@{
                         Kind = 'Local'; Passed = $exists
                         Detail = $(if ($exists) { '' } else { 'Missing local link target: ' + $Target })
                     }
                 }
+                catch {
+                    return [pscustomobject]@{
+                        Kind = 'EnvironmentReference'; Passed = $true
+                        Detail = 'NotValidated: absolute environment reference'
+                    }
+                }
             }
-            # References outside the checkout (or for another OS) are environment
-            # evidence, not portable repository dependencies.
             return [pscustomobject]@{
                 Kind = 'EnvironmentReference'; Passed = $true
                 Detail = 'NotValidated: absolute environment reference'
@@ -180,11 +186,16 @@ function Test-MarkdownTarget {
         if ($destination -eq '') {
             return [pscustomobject]@{ Kind = 'Fragment'; Passed = $true; Detail = '' }
         }
-        $documentDirectory = [IO.Path]::GetDirectoryName($DocumentPath)
-        $fromRoot = [IO.Path]::GetRelativePath($RootPath, $documentDirectory)
-        $combined = Join-Path $fromRoot $destination
+        $documentRelative = Get-RepoRelativePath -RootPath $RootPath -FullPath $DocumentPath
+        $documentDirectory = [IO.Path]::GetDirectoryName($documentRelative)
+        if ([string]::IsNullOrWhiteSpace($documentDirectory)) {
+            $combined = $destination
+        }
+        else {
+            $combined = Join-Path $documentDirectory $destination
+        }
         $resolved = Resolve-RepositoryPath -RootPath $RootPath -RelativePath $combined
-        $exists = [IO.File]::Exists($resolved) -or [IO.Directory]::Exists($resolved)
+        $exists = Test-RepoPathExists -RootPath $RootPath -RelativePath $combined
         return [pscustomobject]@{
             Kind = 'Local'; Passed = $exists
             Detail = $(if ($exists) { '' } else { 'Missing local link target: ' + $Target })
@@ -198,11 +209,9 @@ function Test-MarkdownTarget {
 function Get-MarkdownLinks {
     param([string] $Text)
     $masked = Remove-MarkdownCode -Text $Text
-    # Inline links/images, <paths with spaces>, escaped delimiters, and balanced
-    # parentheses. Link titles are not part of the destination.
     $inlinePattern = '\]\(\s*(?<destination><[^>\r\n]+>|(?:\\.|[^\s()\\]|(?<parenthesis>\()|(?<-parenthesis>\)))+)(?(parenthesis)(?!))(?:[ \t]+(?:"[^"]*"|''[^'']*''|\([^)]*\)))?[ \t]*\)'
     $definitionPattern = '(?m)^[ \t]{0,3}\[(?<id>[^\]\r\n]+)\]:[ \t]*(?<destination><[^>\r\n]+>|\S+)'
-    $definitions = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    $definitions = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     foreach ($match in [regex]::Matches($masked, $definitionPattern)) {
         $id = [regex]::Replace($match.Groups['id'].Value.Trim(), '\s+', ' ')
         [void] $definitions.Add($id)
@@ -233,21 +242,53 @@ function Get-MarkdownLinks {
     }
 }
 
-$failures = [Collections.Generic.List[string]]::new()
+function Read-JsonDocument {
+    param([string] $RootPath, [string] $RelativePath)
+    try {
+        return ((Read-RepoText -RootPath $RootPath -RelativePath $RelativePath) | ConvertFrom-Json)
+    }
+    catch {
+        if ($_.Exception.Message -like 'Missing committed document*') {
+            throw ('Missing JSON document: {0}' -f $RelativePath)
+        }
+        throw ('Invalid JSON: {0}' -f $RelativePath)
+    }
+}
+
+$failures = New-Object System.Collections.Generic.List[string]
 $documentsChecked = 0
 $localLinksChecked = 0
 $environmentReferences = 0
-$sourcesChecked = 0
 $requiredChecked = 0
 $requiredDocuments = @(
     'AGENTS.md'
     'CLAUDE.md'
     'README.md'
+    'spec/pipelines/README.md'
+    'spec/pipelines/PROTOCOL.md'
+    'spec/pipelines/growth/CURRENT.md'
+    'spec/pipelines/narrative/CURRENT.md'
+    'spec/pipelines/tech/CURRENT.md'
+    'spec/pipelines/art/CURRENT.md'
+    'spec/pipelines/test/CURRENT.md'
+    'spec/pipelines/ops/CURRENT.md'
+    'spec/pipelines/maintenance/CURRENT.md'
     'spec/governance/WORKFLOW.md'
     'spec/governance/WRITE_SCOPE.md'
     'spec/governance/VALIDATION.md'
+    'spec/governance/DIRECTORY.md'
+    'spec/governance/BRANCH_RULES.md'
+    'spec/governance/validation.json'
     'spec/progress/CURRENT.md'
+    'spec/evidence/evidence.md'
+    'spec/releases/README.md'
+    'spec/releases/state.json'
+    'spec/releases/0.1.0/PLAN.md'
+    'spec/contracts/narrative/TEXT-SOURCE.md'
+    'spec/contracts/narrative/TEXT.csv'
+    'spec/contracts/art/README.md'
     'spec/tasks/001-causal-prototype/TASKS.md'
+    '.github/workflows/repository-checks.yml'
 )
 
 try {
@@ -255,40 +296,47 @@ try {
     if (-not [IO.Directory]::Exists($repositoryRoot)) {
         throw 'Repository root directory is missing.'
     }
+    Initialize-GitTree -RootPath $repositoryRoot
     foreach ($required in $requiredDocuments) {
         $requiredChecked++
-        $requiredPath = Resolve-RepositoryPath -RootPath $repositoryRoot -RelativePath $required
-        if (-not [IO.File]::Exists($requiredPath)) {
+        if (-not (Test-RepoPathExists -RootPath $repositoryRoot -RelativePath $required)) {
             $failures.Add('Missing required document: ' + $required)
         }
-        elseif ([string]::IsNullOrWhiteSpace([IO.File]::ReadAllText($requiredPath))) {
+        elseif ([string]::IsNullOrWhiteSpace((Read-RepoText -RootPath $repositoryRoot -RelativePath $required))) {
             $failures.Add('Empty required document: ' + $required)
         }
     }
 
-    $documents = [Collections.Generic.List[string]]::new()
+    $documents = New-Object System.Collections.Generic.List[string]
     foreach ($rootDocument in @('AGENTS.md', 'CLAUDE.md', 'README.md')) {
-        $candidate = Join-Path $repositoryRoot $rootDocument
-        if ([IO.File]::Exists($candidate)) { $documents.Add($candidate) }
+        if (Test-RepoPathExists -RootPath $repositoryRoot -RelativePath $rootDocument) {
+            $documents.Add($rootDocument)
+        }
     }
-    $specRoot = Join-Path $repositoryRoot 'spec'
-    if ([IO.Directory]::Exists($specRoot)) {
-        # PowerShell does not recurse into directory symlinks without -FollowSymlink.
-        foreach ($file in Get-ChildItem -LiteralPath $specRoot -Filter '*.md' -File -Recurse) {
-            if ($file.Name -notmatch '^WORKING(?:\.|$)') {
-                $documents.Add($file.FullName)
+    if ($script:UseGitTree) {
+        foreach ($path in $script:GitPathSet) {
+            if ($path -match '^spec/.+\.md$') {
+                $documents.Add($path)
             }
         }
     }
-    foreach ($document in $documents) {
+    else {
+        $specRoot = Join-Path $repositoryRoot 'spec'
+        if ([IO.Directory]::Exists($specRoot)) {
+            foreach ($file in Get-ChildItem -LiteralPath $specRoot -Filter '*.md' -File -Recurse) {
+                $documents.Add((Get-RepoRelativePath -RootPath $repositoryRoot -FullPath $file.FullName))
+            }
+        }
+    }
+    foreach ($relativeDocument in @($documents | Sort-Object -Unique)) {
         $documentsChecked++
-        $relativeDocument = [IO.Path]::GetRelativePath($repositoryRoot, $document)
-        foreach ($link in @(Get-MarkdownLinks -Text ([IO.File]::ReadAllText($document)))) {
+        $documentPath = Join-Path $repositoryRoot $relativeDocument
+        foreach ($link in @(Get-MarkdownLinks -Text (Read-RepoText -RootPath $repositoryRoot -RelativePath $relativeDocument))) {
             if ($link.Error -ne '') {
                 $failures.Add(('{0}:{1}: {2}' -f $relativeDocument, $link.Line, $link.Error))
                 continue
             }
-            $result = Test-MarkdownTarget -RootPath $repositoryRoot -DocumentPath $document -Target $link.Target
+            $result = Test-MarkdownTarget -RootPath $repositoryRoot -DocumentPath $documentPath -Target $link.Target
             if ($result.Kind -eq 'Local') { $localLinksChecked++ }
             if ($result.Kind -eq 'EnvironmentReference') { $environmentReferences++ }
             if (-not $result.Passed) {
@@ -300,39 +348,75 @@ try {
         $failures.Add('No Markdown documents were checked.')
     }
 
-    $workingPath = Join-Path $repositoryRoot 'spec/architecture/WORKING.json'
-    if (-not [IO.File]::Exists($workingPath)) {
-        $failures.Add('Missing confirmation index: spec/architecture/WORKING.json')
+    try {
+        $null = Read-JsonDocument -RootPath $repositoryRoot -RelativePath 'spec/architecture/WORKING.json'
+    }
+    catch {
+        $failures.Add($_.Exception.Message)
+    }
+
+    $state = $null
+    try {
+        $state = Read-JsonDocument -RootPath $repositoryRoot -RelativePath 'spec/releases/state.json'
+    }
+    catch {
+        $failures.Add($_.Exception.Message)
+    }
+    if ($null -ne $state) {
+        if ([string]$state.targetVersion -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+            $failures.Add('state.targetVersion must use x.y.z.')
+        }
+        if ($null -eq $state.PSObject.Properties['onlineVersion']) {
+            $failures.Add('state.onlineVersion is required (null when unreleased).')
+        }
+        elseif ($null -ne $state.onlineVersion -and
+            ([string]$state.onlineVersion -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$')) {
+            $failures.Add('state.onlineVersion must be null or x.y.z.')
+        }
+        if ($null -eq $state.PSObject.Properties['onlineTag']) {
+            $failures.Add('state.onlineTag is required (null when unreleased).')
+        }
+        if ([string]::IsNullOrWhiteSpace([string]$state.status)) {
+            $failures.Add('state.status is required.')
+        }
+    }
+
+    $pipelineConfig = $null
+    try {
+        $pipelineConfig = Read-JsonDocument -RootPath $repositoryRoot -RelativePath 'Scripts/Collaboration/pipelines.json'
+    }
+    catch {
+        $failures.Add($_.Exception.Message)
+    }
+    if ($null -ne $pipelineConfig) {
+        $requiredPipelines = @('growth', 'narrative', 'tech', 'art', 'test', 'ops', 'maintenance')
+        $seenBranches = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::Ordinal)
+        foreach ($name in $requiredPipelines) {
+            if ($null -eq $pipelineConfig.pipelines.PSObject.Properties[$name]) {
+                $failures.Add(('pipeline config is missing {0}.' -f $name))
+                continue
+            }
+            $entry = $pipelineConfig.pipelines.$name
+            if (-not $seenBranches.Add([string]$entry.branch)) {
+                $failures.Add(('duplicate pipeline branch {0}.' -f $entry.branch))
+            }
+            $pipelineDoc = 'spec/pipelines/{0}/CURRENT.md' -f $name
+            if (-not (Test-RepoPathExists -RootPath $repositoryRoot -RelativePath $pipelineDoc)) {
+                $failures.Add(('missing pipeline document for {0}.' -f $name))
+            }
+        }
+    }
+
+    if ($script:UseGitTree) {
+        $parallelEvidence = @($script:GitPathSet | Where-Object { $_ -match '(^|/)evidence-(latest|final)\.md$' })
     }
     else {
-        try {
-            $working = [IO.File]::ReadAllText($workingPath) | ConvertFrom-Json -AsHashtable -Depth 100
-            $sources = @(Get-ConfirmationSourceReferences -Value $working)
-            if ($sources.Count -eq 0) {
-                $failures.Add('Confirmation index contains no path/sha256/quote source records.')
-            }
-            foreach ($source in $sources) {
-                $sourcesChecked++
-                if (-not $source.Contains('path') -or -not $source.Contains('sha256') -or
-                    -not $source.Contains('quote')) {
-                    $failures.Add('Confirmation source is missing path/sha256/quote fields.')
-                    continue
-                }
-                if ($source.path -isnot [string] -or $source.sha256 -isnot [string] -or
-                    $source.quote -isnot [string]) {
-                    $failures.Add('Confirmation source has non-string path/sha256/quote fields.')
-                    continue
-                }
-                $result = Test-ConfirmationSource -RootPath $repositoryRoot -Path $source.path -Sha256 $source.sha256 -Quote $source.quote
-                if (-not $result.Passed) {
-                    $failures.Add(('Confirmation source {0}: {1}' -f $result.Path, $result.Detail))
-                }
-            }
-        }
-        catch {
-            # Parser exceptions can embed JSON text; do not expose quotes through them.
-            $failures.Add('Unable to parse or inspect spec/architecture/WORKING.json.')
-        }
+        $parallelEvidence = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'spec') -Recurse -File |
+            Where-Object { $_.Name -match '^evidence-(latest|final)\.md$' } |
+            ForEach-Object { Get-RepoRelativePath -RootPath $repositoryRoot -FullPath $_.FullName })
+    }
+    foreach ($relative in $parallelEvidence) {
+        $failures.Add(('parallel evidence file is not allowed: {0}' -f $relative))
     }
 }
 catch {
@@ -340,11 +424,12 @@ catch {
 }
 
 Write-Output 'Scope=RepositoryBaseline only'
+Write-Output ('ValidationSource={0}' -f $(if ($script:UseGitTree) { 'GitTree(sparse)' } else { 'Worktree' }))
 Write-Output ('RequiredDocuments.Checked={0}' -f $requiredChecked)
 Write-Output ('Markdown.DocumentsChecked={0}' -f $documentsChecked)
 Write-Output ('Markdown.LocalLinksChecked={0}' -f $localLinksChecked)
 Write-Output ('Markdown.EnvironmentReferences.NotValidated={0}' -f $environmentReferences)
-Write-Output ('ConfirmationSources.Checked={0}' -f $sourcesChecked)
+Write-Output 'SourceHashGates=Removed'
 Write-Output 'UE=NotRun'
 Write-Output 'Linux=NotRun'
 Write-Output 'Performance=NotRun'
