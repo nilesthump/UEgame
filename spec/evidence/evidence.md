@@ -4,7 +4,7 @@
 - 实际线上版本：未发布（`onlineVersion=null`，无 tag）
 - 更新：2026-11-09
 - 维护者：test
-- 结论：治理基线接近完成，产品功能未验收
+- 结论：治理基线已集成到 `main`；产品功能未验收
 
 本文件只保留按版本和验收项的当前结论及执行链接。修复通过就近更新原条目；变更导致结果失效时原地改为“待复测”。历史由 Git 保存，禁止新增 `evidence-latest.md`、`evidence-final.md` 等平行结论文件。
 
@@ -19,7 +19,7 @@
 | GOV-07 | 0.1.0 | 精简 CI 与 required checks | Passed | [PR #14 检查](https://github.com/nilesthump/UEgame/actions/runs/42632616056) baseline+narrative-text 成功；最终 [PR #17 检查](https://github.com/nilesthump/UEgame/actions/runs/42634934355) baseline+narrative-text+core-linux 全部成功 | 未执行产品构建 |
 | GOV-08 | 0.1.0 | 发布状态/流程与未发布记录 | Passed | [state.json](../releases/state.json)：`onlineVersion=null`、`onlineTag=null`、`unreleased` | 无正式产品发布 |
 | FLOW-01 | 0.1.0 | 九个规定 MR 流向 | Passed（9/9） | growth→tech [#9](https://github.com/nilesthump/UEgame/pull/9)；growth→narrative [#10](https://github.com/nilesthump/UEgame/pull/10)；narrative→tech [#11](https://github.com/nilesthump/UEgame/pull/11)；tech→art [#12](https://github.com/nilesthump/UEgame/pull/12)；art→tech [#13](https://github.com/nilesthump/UEgame/pull/13)；tech→test [#14](https://github.com/nilesthump/UEgame/pull/14)；maintenance→ops [#15](https://github.com/nilesthump/UEgame/pull/15)；test→ops [#16](https://github.com/nilesthump/UEgame/pull/16)；ops→main [#17](https://github.com/nilesthump/UEgame/pull/17) | 无（证据修正 PR #18 不改变九条流向） |
-| MAIN-01 | 0.1.0 | `ops → main` 治理集成 | Passed | [#17](https://github.com/nilesthump/UEgame/pull/17) 合并为 `3bd0c84`；`main` 已更新，线上仍未发布 | 无产品发布 |
+| MAIN-01 | 0.1.0 | `ops → main` 治理集成 | Passed | [#17](https://github.com/nilesthump/UEgame/pull/17) 合并为 `3bd0c84`；证据同步 [#20](https://github.com/nilesthump/UEgame/pull/20)；`main` 已更新，线上仍未发布 | 无产品发布 |
 | PROD-B01 | 0.1.0 | B01 完整功能 | NotRun | 远程仅部分功能；本地未推送任务提交不纳入 | 稳定批次、真实世界回执、独立包未完成 |
 | DISPLAY-01 | 0.1.0 | 少量文本 UE 显示/字幕接入 | NotRun | 无 | 需要真实 UE 场景执行 |
 | PERF-01 | 0.1.0 | 输入→渲染 <50ms | NotRun | 无 | 测量链未建立 |
@@ -28,7 +28,7 @@
 ```text
 Governance=Passed
 ProductRelease=NotRun
-CurrentMain=3bd0c84
+MainIntegration=#17 / #20 (exact SHA in Git)
 ```
 
 ## 当前说明
@@ -36,4 +36,5 @@ CurrentMain=3bd0c84
 - 治理验收只覆盖分支/规则/协议/版本/文本结构/CI/证据，不覆盖产品、素材、性能或本人体验。
 - `ops → main` #17 是治理基线集成，不创建发布 tag，也不改变 `onlineVersion=null`。
 - 本次证据更新是合并后的状态同步（test→ops→main），不改变产品/候选内容。
+- `main` 的精确 SHA 由 Git 记录，不在证据正文自引用，避免后续每次合并产生新的过期状态。
 - 最新 PR 检查失败或跳过时，本表对应条目改为“待复测”，不能以本地脚本或旧候选结果替代。
