@@ -10,8 +10,8 @@
 
 | ID | 版本 | 验收项 | 当前结论 | 最新验证/执行链接 | 未满足项 |
 | --- | --- | --- | --- | --- | --- |
-| GOV-01 | 0.1.0 | 七条固定管线分支与独立工作区 | Passed | 分支与工作区见 [总表](../pipelines/README.md)；实际 `git worktree list` 含 7 个 `.worktrees/pipelines/*` | 旧任务分支保留只读，未删除 |
-| GOV-02 | 0.1.0 | 分支生命周期规则集与自动删支 | Passed | [main](https://github.com/nilesthump/UEgame/rules/26700391)、[lifecycle](https://github.com/nilesthump/UEgame/rules/26855799)、[archive](https://github.com/nilesthump/UEgame/rules/26855800)；create/delete/force 拒绝见 [BRANCH_RULES](../governance/BRANCH_RULES.md) | 无 |
+| GOV-01 | 0.1.0 | 七条固定管线分支与独立工作区 | Passed | 七条固定分支及 `.worktrees/pipelines/*` 保留；旧 7 个远端 task、9 个本地 task 分支和 5 个 task 工作区已删除 | 无 |
+| GOV-02 | 0.1.0 | 分支生命周期规则集与自动删支 | Passed | [main](https://github.com/nilesthump/UEgame/rules/26700391)、[lifecycle](https://github.com/nilesthump/UEgame/rules/26855799)；archive ruleset 26855800 已随 task 退役删除；create/delete/force 拒绝见 [BRANCH_RULES](../governance/BRANCH_RULES.md) | 无 |
 | GOV-03 | 0.1.0 | 文件所有权与 MR 协议 | Passed | [WRITE_SCOPE](../governance/WRITE_SCOPE.md)、[PROTOCOL](../pipelines/PROTOCOL.md)；独立审查/接收记录：[#9](https://github.com/nilesthump/UEgame/pull/9)、[#10](https://github.com/nilesthump/UEgame/pull/10)、[#11](https://github.com/nilesthump/UEgame/pull/11)、[#12](https://github.com/nilesthump/UEgame/pull/12)、[#13](https://github.com/nilesthump/UEgame/pull/13)、[#14](https://github.com/nilesthump/UEgame/pull/14)、[#15](https://github.com/nilesthump/UEgame/pull/15) | 产品功能不在本项 |
 | GOV-04 | 0.1.0 | sparse-checkout 工作区 | Passed | 七个工作区由 `Initialize-PipelineWorkspaces.ps1` 建立；ops/tech/narrative 检查使用 GitTree(sparse) 通过 | 无 |
 | GOV-05 | 0.1.0 | 剧情文本唯一真源与结构检查 | Passed（结构） / NotRun（显示） | [TEXT.csv](../contracts/narrative/TEXT.csv) 7 条；[CI 42630315326](https://github.com/nilesthump/UEgame/actions/runs/42630315326) `narrative-text` 成功 | UE 显示/字幕/声音接入未验证 |
@@ -28,6 +28,7 @@
 ```text
 Governance=Passed
 B01.Core=Linux 6/6 (6a89844 / PR #27)
+TaskBranches=Removed (7 remote / 9 local / 5 worktrees)
 ProductRelease=NotRun
 MainIntegration=#17 / #20 (exact SHA in Git)
 ```
