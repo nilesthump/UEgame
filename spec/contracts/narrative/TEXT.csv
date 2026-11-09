@@ -5,3 +5,4 @@ NAR-0003,教师,revisit.teacher.mixed,"你当年既用剑，也用魔法。我�
 NAR-0004,旁白,rescue.failure.child-dead,"哭声停了。哥布林还在原地，孩子没有再动。","未获救结果；不提前提示未来人物；CueId=CUE-NAR-0004。",draft
 NAR-0005,教师,revisit.teacher.sword,"你当年那一剑救了我。后来我一直在想，怎样把这份判断教给别人。","剑术方向教师关键片段；与群众闲聊共同构成完成条件；CueId=CUE-NAR-0005。",draft
 NAR-0006,教师,revisit.teacher.magic,"你当年用魔法救了我。我后来才学会，力量也可以用来保护人。","魔法方向教师关键片段；与群众闲聊共同构成完成条件；CueId=CUE-NAR-0006。",draft
+NAR-0007,镇民丙,revisit.crowd.mixed,"听说那位老师既会剑也会魔法，镇上的孩子都吵着要两样一起学。","混用方向群众闲聊；与剑术/魔法条目互斥；CueId=CUE-NAR-0007。",draft
