@@ -1,5 +1,7 @@
 # Bootstrap 独立只读审查与 B06 承接演练
 
+> 历史快照（2026-11-06）。当前写入范围/协议见 [WRITE_SCOPE](../governance/WRITE_SCOPE.md) 与 [PROTOCOL](../pipelines/PROTOCOL.md)；本文件中的 hash 与旧检查描述仅作历史记录。
+
 审查日期：2026-11-06。独立代理：/root/bootstrap_independent_review。范围：G:/UEgame 的目录规划、B00–B15 任务职责/依赖/写范围、验证契约与实际检查入口；只读模拟承接 B06。此记录不是正式冻结审查，也不是全链治理行为验收。
 
 ## 结论

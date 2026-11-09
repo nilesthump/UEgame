@@ -1,5 +1,7 @@
 # B01 独立起点与使用统计
 
+> 历史快照（2026-11-06）。当前状态见 [CURRENT.md](CURRENT.md) 与 [evidence.md](../evidence/evidence.md)；本文件只保留当时执行事实。
+
 基线 main：2303171edd3c25bc575097d1e7d0a1c968e4ab1c。执行者：当前聊天核心/集成协调者。
 工作树 G:/UEgame/.worktrees/B01，分支 task/B01-starts；保留 task/B01-progress 及既有证据。
 

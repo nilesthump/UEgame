@@ -1,27 +1,26 @@
 # UEgame agent 工作约定
 
-每次任务先依序读取：
+本仓库使用七条固定管线协作。**不要新建分支，不要直接写 `main`，不要删除或强推固定分支。** 先运行 `git branch --show-current` 确认当前管线，再按以下最小读序恢复上下文：
 
-1. [当前进度](spec/progress/CURRENT.md)。
-2. [架构入口](spec/architecture/README.md)与[001汇总](spec/architecture/001-causal-prototype/ARCHITECTURE-SUMMARY.md)。
-3. [写入范围](spec/governance/WRITE_SCOPE.md)与[工作流程](spec/governance/WORKFLOW.md)。
-4. [模块任务](spec/tasks/001-causal-prototype/TASKS.md)中本任务的依赖、范围、验收及关联详细架构。
-5. [需求正文](spec/requirements/001-causal-prototype/REQUIREMENTS.md)、[验证契约](spec/governance/VALIDATION.md)与[性能契约](spec/performance/001-input-to-render.md)。
+1. [管线总表](spec/pipelines/README.md)与[交互协议](spec/pipelines/PROTOCOL.md)。
+2. 当前管线文档：`spec/pipelines/<pipeline>/CURRENT.md`。分支名与管线名的对应关系见总表。
+3. [写入范围](spec/governance/WRITE_SCOPE.md)、[验证契约](spec/governance/VALIDATION.md)与[发布状态](spec/releases/state.json)。
+4. 当前工作项直接引用的共享契约：`spec/contracts/narrative/` 或 `spec/contracts/art/`。
+5. 仅当任务明确涉及产品玩法时，再读[任务表](spec/tasks/001-causal-prototype/TASKS.md)中对应条目及其链接的架构/需求正文。
 
-只实现已授权任务的最小可靠方案。业务目录不等于新增UE模块：当前只有一个UEgame Runtime模块；纯ExperimentCore不依赖UE，Windows/Linux编译同份源码。不要复制Session/世界领域状态，不用测试假回执代替真实集成。
+当前只有一条正式需求轮次（001）。架构 A01–A13 为已确认设计，尚未正式冻结；B01 仍在实施中。目标版本与线上版本分开记录：目标版本见 `spec/releases/state.json`，未发布时 `onlineVersion` 必须为 `null`，不能填写猜测的线上版本。
 
-任务仅能写任务表允许的路径；其他模块和共享入口只读。发现跨模块接口修改先记录依赖，由集成角色协调；既有用户授权范围内的例行修正直接推进，不重复索要许可。范围外的新功能、不可逆变更或正式架构选择需明确依据。
+## 硬约束
 
-默认使用独立任务分支与worktree；根canonical为`G:/UEgame`，机器迁移后由协调者更新本机进度记录，不把该绝对路径写进产品构建。首次仓库初始化在canonical/main完成；B00–B15后续实现通过任务worktree进行。任务agent不创建新根规则，不修改其他agent的工作树或清除其数据。
+- 只在所属固定管线分支提交。跨管线变更通过上游发起的 MR 交付，`main` 只通过 `ops → main` 集成；合并保留 merge commit，不 squash、不改写已公开历史。
+- 写入范围以 [WRITE_SCOPE](spec/governance/WRITE_SCOPE.md) 为准。共享构建入口、`Content/` 下的 UE 二进制资产由 `tech` 唯一写入；`art` 只交付源素材和导入清单；剧情文本唯一真源由 `narrative` 维护；验收结论由 `test` 维护；发布状态由 `ops` 维护。
+- 一个可独立验收的功能点或修复形成一个提交，代码、用例、必要说明和验证同提交。提交前运行与改动相符的检查，并取得独立 agent 审查；修复另起提交。
+- 待合并 MR 的源分支只接收本批交付的修正。审查意见回到原 PR 的讨论/验收条目，由所属管线修复后正向交付，不另开平行结论文件。
+- 验收证据只维护 `spec/evidence/evidence.md` 中按版本和验收项的当前状态；修复通过原地更新，结果失效原地改为待复测。禁止 `evidence-latest.md`、`evidence-final.md` 等平行文件。
+- 不保留文档来源的 SHA-256、精确引文或文本交接特征串门禁；需要身份时使用 Git 提交、稳定业务 ID 和实际执行链接。
+- 50 ms 约束仍是**输入→核心处理→对应画面实际呈现**的端到端延迟。未执行、零用例、缺报告或只发现测试不得记通过；模拟手柄不得记为实物测试。
+- 不自动发送消息、发布仓库、创建远端服务或发布游戏包。GitHub 操作只沿用本仓库既有授权和已登录账号。
 
-提交前运行与改动相符的验证，取得独立审查，集成后在canonical复核并更新进度。当前只有RepositoryBaseline检查已经落地；UE/Linux/性能等执行能力以验证契约状态为准，未执行、零用例、缺报告或只发现测试不得记通过。
+## 完成与交接
 
-`spec/architecture/WORKING.json`是唯一可写讨论状态，仅协调者使用本机架构运行器和expectedRevision更新。其他agent只提交变更建议；worktree里的状态副本不可独立演化。`sources/`已有原始来源不改写。正式冻结另行处理，不能把Git初始化或已确认讨论伪装成冻结版本。
-
-50 ms约束是**输入→核心处理→渲染反馈的端到端延迟**，不等于帧预算或核心单步。素材agent须合成对白；音效先匹配开放资源，无匹配再合成。所有测量、检索、合成和验收只报告实际执行结果。
-
-不自动发送消息、发布仓库或创建远端服务。GitHub PR/CI是远端接入后的协作路线，当前远端能力状态以进度文件为准。
-
-Git提交粒度为一个功能点：每实现或修复一个可独立验收的功能点，完成对应验证和独立审查后立即提交，不积攒多个功能点。功能所需的代码、用例和说明同提交；后续修复另提交，不改写已发布历史。依据见[本轮授权](spec/requirements/001-causal-prototype/sources/2026-11-06-public-repository-and-commits.md)。本轮明确授权将本仓库公开发布并采用MIT；后续任务分支推送、PR与集成沿本仓库流程执行，不扩大为发布其他仓库或服务。
-
-agent任务完成后，必须在当前对话的最终回复中给出可直接复制的handoff prompt，不能只说“可继续”或仅留下文件链接。提示须包含仓库/分支/实际提交与工作区状态、已完成工作、真实验证与独立审查结果、未完成项/阻塞、下一步入口及写入边界，并要求接手agent先读AGENTS.md、按规定顺序恢复上下文。未知值明确标记，不把未测、未集成或未冻结写成已完成。子agent向协调者交付时同样适用；不得自动新建对话或发送给其他人。依据见[用户原文](spec/requirements/001-causal-prototype/sources/2026-11-06-agent-completion-handoff.md)。
+任务完成后，在当前对话最终回复中给出可直接复制的 handoff prompt，包含仓库/分支/提交/工作区状态、已完成工作、真实验证与独立审查结果、未完成项、下一步入口和写入边界。要求接手者先读本文件并按上述顺序恢复上下文。不得只回复“可继续”或仅留链接。

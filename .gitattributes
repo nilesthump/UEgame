@@ -1,5 +1,5 @@
 * text=auto eol=lf
-# Historical sources and WORKING hashes use original bytes, including line endings.
+# Keep spec text byte-stable across platforms; no source-hash gate depends on it.
 spec/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 *.png binary
 *.jpg binary

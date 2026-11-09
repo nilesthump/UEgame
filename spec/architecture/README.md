@@ -1,9 +1,9 @@
 # 讨论状态
 
-第 001 轮需求及 A01–A13 总体与类图均已逐项确认，含核心分层、任意航向弹道及素材准备修订。本轮按“技术栈、数据流、原因与 PUML 确认 → 类图确认”完成讨论，A13 按用户要求提前于 A12。当前已完成 A12 类图确认并汇总核对；尚未正式冻结、创建游戏工程或执行素材准备及测试。
+第 001 轮需求及 A01–A13 总体与类图均已逐项确认，含核心分层、任意航向弹道及素材准备修订。本轮按“技术栈、数据流、原因与 PUML 确认 → 类图确认”完成讨论，A13 按用户要求提前于 A12。当前已完成 A12 类图确认并汇总核对；已有 B01 最小工程/核心和部分实现，但尚未正式冻结，也未完成完整游戏、素材准备及验收。
 
 - [001 架构讨论汇总](001-causal-prototype/ARCHITECTURE-SUMMARY.md)：13项确认清单、当前技术边界与数据流、历史替代关系、未执行/未固定事项及后续工作边界。
-- [当前仓库进度](../progress/CURRENT.md)、[目录规范](../governance/DIRECTORY.md)与[模块任务](../tasks/001-causal-prototype/TASKS.md)：后续已授权本地初始化，仍未正式冻结。
+- [当前仓库进度](../progress/CURRENT.md)、[七管线总表](../pipelines/README.md)、[目录规范](../governance/DIRECTORY.md)与[模块任务](../tasks/001-causal-prototype/TASKS.md)：日常交付进入固定管线，仍未正式冻结。
 - [端到端性能契约](../performance/001-input-to-render.md)：输入→核心处理→渲染反馈小于50ms，实际性能尚未验证。
 
 - [A01：整体运行架构与状态归属](001-causal-prototype/A01-runtime-and-state.md)：总体方案已确认，含后续确认顺序。

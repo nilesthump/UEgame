@@ -1,5 +1,7 @@
 # 公开仓库与提交规范：审查和执行记录
 
+> 历史快照（2026-11-06）。当前状态见 [CURRENT.md](CURRENT.md) 与 [evidence.md](../evidence/evidence.md)；本文件中的 hash 仅作历史记录。
+
 日期：2026-11-06。授权：[用户原文](../requirements/001-causal-prototype/sources/2026-11-06-public-repository-and-commits.md)。
 
 - 发布工作树：`.worktrees/repository-publication`，分支`task/repository-publication`，基线`c858048`；协调者负责LICENSE/README、AGENTS/WORKFLOW及新增来源。

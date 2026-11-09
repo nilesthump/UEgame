@@ -1,49 +1,70 @@
 # 仓库工作流程
 
-状态：2026-11-06建立本地仓库基线并按后续明确授权公开发布；当前能力以下表及进度为准。用户已授权目录规范、模块任务分配、仓库初始化及输入→核心→渲染反馈<50ms目标；A01–A13已确认讨论作为设计依据，尚未正式冻结。本轮仓库初始化不等待另一次相同授权，也不等于启动全部玩法实现。
+状态：2026-11-09 起使用七条固定管线；目标版本 `0.1.0`，线上未发布。固定分支、规则集和工作区以实际 Git/GitHub 状态为准；本文描述日常入口，不把“文件已写入”当作远端保护或产品发布已完成。
 
-## 任务生命周期
+## 1. 固定分支
 
-`Assigned → Ready → InProgress → Validated → Reviewed → Integrated`。依赖未交付用Assigned，缺少具体外部前置用Blocked并说明证据。角色已分配不等于agent已启动；只有实际派工后才写执行者及工作树。
-
-1. 按根AGENTS顺序读取当前进度和任务；核对依赖及写范围。
-2. 从已集成main创建`task/<任务ID>-<短名>`分支和独立worktree，建议放忽略的`.worktrees/<任务ID>/`。协调者记录任务、分支、路径及基线commit；创建前检查重名，不覆盖已有工作树。
-3. 仅在允许路径实现。共享Session/Director/Subsystem、构建清单和主地图由integration-owner串行集成；领域owner以接口变更提案协作，不并行改共享文件。
-4. 运行[统一验证契约](VALIDATION.md)。先做与改动对应的检查，失败后修正并针对性复测，保留原结果；不无故重跑无关全量测试。
-5. 独立reviewer以任务要求、实际diff和验证证据审查，不能只重复作者结论。未实现项、真实设备未测及性能未知如实列出。
-6. 远端接入后走PR→相同CI→评审→合并；当前无远端时使用本地review记录，由integration-owner整合至canonical/main，再运行必要复核。
-7. 更新[进度](../progress/CURRENT.md)及任务状态。分支中完成不等于canonical已完成；已集成结果是下一任务的唯一基线。
-
-## 初始化例外与当前能力
-
-首次初始化需要建立第一个提交，因此当前bootstrap由协调者直接在canonical/main完成。后续B00–B15实现使用独立worktree，不把本次例外推广为日常多人直接改main。
-
-| 能力 | 状态 | 说明 |
+| 分支 | 工作区 | 日常职责 |
 | --- | --- | --- |
-| 本地Git/main | AVAILABLE | 本次创建；提交和分支以实际Git记录为准 |
-| 本地RepositoryBaseline | AVAILABLE | 统一脚本只检验仓库资料与结构 |
-| GitHub工作流/托管RepositoryBaseline | AVAILABLE | 与本地同入口；首次main运行42226638076已成功 |
-| GitHub公开仓库 | AVAILABLE | `nilesthump/UEgame`，origin已配置，MIT已识别 |
-| GitHub PR | AVAILABLE | B00 PR #1已实际经CI、独立agent审查并merge；保留功能提交 |
-| main分支规则 | AVAILABLE | ruleset26700391要求PR、1次账号批准、严格RepositoryBaseline等；传统protection接口404不等于无规则。用户[授权owner bypass](../requirements/001-causal-prototype/sources/2026-11-06-owner-bypass.md)，PR #5已实际使用；独立agent审查和CI仍须完成 |
-| B00双平台依赖环境 | AVAILABLE | 实际MSVC14.38.33130、SDK22621、Ubuntu GCC13.3/CMake及CTest3.28.3；安装smoke通过，实际集成状态见进度 |
-| UE/Linux最小核心构建 | AVAILABLE | B01首个WorldReady场景双平台各1/1，Game/Editor构建成功；整个B01尚未完成 |
-| 独立包、真实世界及性能 | NotRun | 后续B01/B15取得对应证据，不用核心或文档检查代替 |
+| `pipeline/growth` | `.worktrees/pipelines/growth` | 需求范围、工作项、验收条件 |
+| `pipeline/narrative` | `.worktrees/pipelines/narrative` | 剧情/对白/旁白/字幕真源 |
+| `pipeline/tech` | `.worktrees/pipelines/tech` | B10/B11、代码与资产集成、共享入口 |
+| `pipeline/art` | `.worktrees/pipelines/art` | B13 等素材、声音与演出源资产 |
+| `pipeline/test` | `.worktrees/pipelines/test` | 测试、验收结论、证据 |
+| `pipeline/ops` | `.worktrees/pipelines/ops` | 发布、反馈、`main` 集成 |
+| `pipeline/maintenance` | `.worktrees/pipelines/maintenance` | 线上故障与机动维护 |
 
-接入GitHub时复用本地验证入口，建议main要求PR、检查和一名评审，平台支持时仅允许通过PR的管理员例外；禁止强推和删除保护单独核对。配置文件存在不能算远端保护已生效。首次bootstrap未创建远端或推送资料；2026-11-06后续用户已明确授权公开发布本仓库并采用MIT，实际状态以当前进度为准。
+`main` 是线上运营记录。固定分支建立后禁止新增分支、删除分支和强推，合并后不自动删除源分支；旧 `task/*` 分支只读。分支生命周期保护与 `main` 的 owner bypass 使用不同 ruleset，详见 [BRANCH_RULES](BRANCH_RULES.md)。
 
-## 设计变更
+## 2. 工作项与版本
 
-来源记录与已确认设计分开保存。新的50ms约束是用户新增硬目标；测量场景与工具方案可以细化，但不能静默放宽阈值或以平均帧率替代。若实际测量要求修改既定架构，记录具体证据和取舍再处理，不能以“默认引擎限制”直接删除需求。
+- 需求、任务、交付、验证和发布均带 `x.y.z`。当前工作目标版本记录在 [state.json](../releases/state.json)，实际线上版本同一文件记录；未发布时为 `null`。
+- 正常交付链中的 growth、narrative、tech、art、test、ops 围绕同一待发布版本推进；同一版本内可按功能点连续交付。
+- 当前版本上线前，下一版本只准备需求，不并入当前实现。提前准备的 0.2.0 需求放在独立文件，不进入 0.1.0 的接收条件。
+- 一个可独立验收的功能点或修复形成一个提交；代码、用例、说明和验证同提交。修复另起提交，不改写已公开历史。
 
-正式候选/审查/冻结版本仍使用架构流程；本地初始化不改变WORKING的discussion阶段，也不伪造正式版本。当前任务列表和工作规则是可执行的仓库基线，后续按实际进度维护。
+## 3. 日常步骤
 
-## 一个功能点一次提交
+1. 在所属工作区执行 `Get-PipelineContext.ps1`，读本管线 `CURRENT.md`、协议和必要契约。
+2. 按本管线写入范围实现；跨范围修改先在 MR 中说明依赖。
+3. 运行与改动相符的检查（见 [VALIDATION](VALIDATION.md)）；按改动决定是否执行 Linux 核心构建、受影响行为验证和发布候选主路径检查。
+4. 取得独立 agent 审查；审查实际 diff、验证和未满足项。复用未变化提交的审查，只补充新增/修改内容。
+5. 上游用 `Submit-PipelineRequest.ps1` 发起 MR；下游按接收条件合并。合并使用 merge commit，保留功能提交。
+6. 发布时由 ops 接收一个已验候选，发起 `ops → main`，组织审核，由 `main` 授权接收者合并；发布成功后登记线上版本。
+7. 更新本管线 `CURRENT.md` 和 `spec/evidence/evidence.md` 的当前状态；历史由 Git 保存。
 
-依据：[2026-11-06用户授权](../requirements/001-causal-prototype/sources/2026-11-06-public-repository-and-commits.md)。
+## 4. MR 与审查
 
-- 每个可独立描述、验收的功能或修复形成一个提交；完成相关验证与独立审查后立即提交，再开始下一个功能点，不把整个B任务攒成一个大提交。
-- 同一功能必要的代码、测试、文档与契约一并提交；无关整理、另一功能和后续发现的修复分别提交。提交说明写明具体行为及任务ID；验证及审查证据关联该变更。
-- 已公开提交不通过amend、rebase或强推改写。PR集成保留功能提交，可用merge或fast-forward；不将多个功能点squash为一个提交。进度/集成记录可独立提交，写清对应功能与证据。
-- 本轮公开仓库初始化先在独立发布worktree准备MIT与流程，验证、独立审查后由协调者快进main并首次推送。远端建立后B00及后续任务使用分支→PR→RepositoryBaseline CI→独立审查→合并；每次集成后canonical复核。独立agent审查不冒充另一GitHub账户的批准，未配置分支保护也不得声称已强制执行。
-- 本轮发布授权仅覆盖本项目的公开仓库、任务分支及正常集成；不自动发布游戏包、创建其他远端服务或发送通知。
+常规流向：
+
+```text
+growth → tech / narrative
+narrative → tech
+tech → art / test
+art → tech
+test → ops
+maintenance → ops
+ops → main
+```
+
+上游发起并独立审查；下游检查接收条件并合并。PR 正文只保留目标版本与工作项、交付内容、接收条件、最新验证、未满足项五项。问题在原 PR 讨论/验收条目反馈，由所属管线修复后正向交付；禁止在另一文件写平行“最终结论”。
+
+`main` 的规则要求 PR、1 次 GitHub 账号批准、讨论解决和 `repository-baseline` 检查，仅允许 merge commit。既有 owner bypass 只用于 `main`；独立 agent 审查和 CI 仍须完成，owner bypass 不冒充账号批准。
+
+## 5. 发布与线上基线
+
+- `maintenance` 从当前 `main` 基线维护；线上补丁走 `maintenance → ops → main`。test 可直接验证维护候选或其构建产物。
+- ops 一次接收一个发布候选。发布 PR 合并前必须确认：候选构建身份、验收结论、未满足项、回退方式、线上版本记录。
+- 发布成功后更新 `main`：ops 发起并审核发布 PR，发布同一构建产物，确认实际可用；接收方合并后把 `x.y.z` 写入 `state.json` 和发布记录。发布失败保持原线上版本；发布成功但合并失败时完成记录同步或回退。
+- 首次正式上线前，`onlineVersion` 保持 `null`；本轮治理合并不改变该状态。正式产品发布后，才允许 `main → pipeline/*` 的基线同步 MR，由接收管线合并并保留各自目标版本。
+
+## 6. 检查与证据
+
+- 本地/CI 共用 `Scripts/Validation/Invoke-RepositoryChecks.ps1`；文本契约由 `Scripts/Validation/Test-NarrativeText.ps1` 检查。
+- CI 按改动执行：`repository-baseline` 始终运行；涉及 `Source/`、`Tests/`、构建入口或验证脚本时运行 `core-linux`；涉及剧情文本时运行 `narrative-text`。只有 `repository-baseline` 是 `main` 的 required check，其他检查按改动执行。
+- 不执行、零用例、跳过、缺报告或只发现测试不记通过。发布候选的有效结果可复用，但候选内容或构建身份变化后必须重新取得对应证据。
+- 所有当前结论只写 `spec/evidence/evidence.md`。失败条目修复通过后原地更新；变更导致结果失效时原地改为待复测。
+
+## 7. 安全边界
+
+不自动发送消息、发布其他仓库/服务或创建游戏发行包。GitHub 操作只沿用本仓库既有公开仓库、任务分支和发布授权。不可逆操作、正式产品发布或范围外新功能需要明确依据。

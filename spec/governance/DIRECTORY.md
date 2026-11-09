@@ -1,40 +1,58 @@
 # 目录规范
 
-沿已确认A03/A12建立下列布局。保留现有`spec/requirements/001-causal-prototype/`及`spec/architecture/001-causal-prototype/`路径，避免破坏历史来源与图文链接。业务目录用于分工，运行时仍只有一个UEgame模块。
+沿已确认 A03/A12 保留现有 `spec/requirements/001-causal-prototype/`、`spec/architecture/001-causal-prototype/`、`Source/`、`Content/` 路径，避免破坏历史来源与图文链接。业务目录仍属于同一个 UEgame Runtime 模块，不新增 Runtime 模块。
 
 ```text
 AGENTS.md / CLAUDE.md / README.md
 spec/
-  requirements/001-causal-prototype/  # 唯一需求正文和不可改写的原始来源
-  architecture/                      # WORKING及已确认逐项架构
-  governance/                        # 流程、范围、验证与目录规范
-  tasks/001-causal-prototype/         # B00–B15任务分配
-  progress/                          # 当前执行、审查及集成记录
-  performance/                       # 端到端50ms目标与测量口径
-Source/UEgame/Private/
-  ExperimentCore/include/experiment/ # 标准C++头，按功能分区
-  ExperimentCore/src/                # 同份核心实现，UBT/CMake分别编译
-  ExperimentAdapter/                # 共享Session/时钟/效果适配
-  Contracts/                        # 跨域UE值契约，集成角色维护
-  World/{Spherical,Navigation,Movement,Player,Goblin,Trees}/
-  Combat/ Environment/ Revisit/ Audio/ Persistence/
-  UI/{Spherical,Player,Revisit,Audio,Recovery}/
-  Tests/                             # 仅开发条件编入的UE测试
-Tests/{Shared,ExperimentCore}/        # 模块外纯C++检查
-Content/UEgame/                       # 按领域导入的UE资产；主Maps由集成管理
-Config/                              # 工程配置，共享入口集成管理
-Assets/Provenance/                    # 素材请求、来源/合成/加工、导入记录
-Scripts/Validation/                  # 本地与CI共用验证入口
-Validation/                         # 版本化检查计划与记录格式
-.github/workflows/                  # 远端接入后调用相同入口
+  pipelines/                       # 七管线总表、协议、各管线 CURRENT.md
+    growth|narrative|tech|art|test|ops|maintenance/
+  contracts/
+    narrative/                     # 唯一剧情文本真源和导入说明
+    art/                           # tech 请求 / art 响应
+  evidence/evidence.md             # 当前验收结论（唯一）
+  releases/
+    state.json                     # 目标版本与实际线上版本
+    0.1.0/                         # 当前版本计划
+  requirements/001-causal-prototype/  # 需求正文和只读原始来源
+  architecture/                    # WORKING 及已确认逐项架构
+  governance/                      # 流程、范围、验证、目录、分支规则
+  tasks/001-causal-prototype/      # B00–B15 任务分配（映射七管线）
+  progress/                        # 当前进度与历史实施记录
+  performance/                     # 端到端 50ms 目标与测量口径
+Source/UEgame/                     # 代码与共享构建入口；tech 唯一写
+Tests/                             # 共享/UE 测试；tech 写，test 管验收用例
+Content/UEgame/                    # UE 二进制资产；tech 唯一写
+Config/                            # 工程配置；tech 唯一写
+Assets/                            # 美术/声音源素材与制作记录；art 写
+Scripts/
+  Collaboration/                   # 固定管线/工作区/MR 工具；tech 写
+  Narrative/                       # 文本导入辅助；narrative 写
+  Materials/                       # 素材处理；art 写
+  Release/                         # 发布状态查询；ops 写
+  Validation/                      # 本地/CI 检查；test 写
+Validation/                        # 执行记录、验收用例；test 写
+.github/workflows/                 # CI；tech 写
 .build/ Saved/ Intermediate/ Binaries/ DerivedDataCache/
-Deliverables/ .worktrees/             # 输出/工作树，不纳入源码Git
+Deliverables/ .worktrees/          # 输出/工作树，不纳入源码 Git
 ```
 
-已创建的占位目录不宣称已有实现。B00/B01负责创建真实`.uproject`、Target/Build规则和CMake入口；本次不生成空测试或假成功的游戏构建脚本。
+## 工作区 sparse-checkout
 
-核心头文件与实现使用相同的领域子目录：`Session/ Spherical/ Navigation/ Player/ Combat/ Goblin/ Trees/ Environment/ Revisit/ Checkpoint/`。这些名称与[任务范围](../tasks/001-causal-prototype/TASKS.md)保持一致；共享类型和注册由B02统一。UE类文件按现有类图命名，不能为目录方便复制状态或新增Runtime模块。
+每个固定分支对应 `.worktrees/pipelines/<name>`，由 `Scripts/Collaboration/Initialize-PipelineWorkspaces.ps1` 建立并配置 sparse-checkout。工作区只显示：
 
-`Content/UEgame/<Domain>/`保存导入后的项目资产；原始检索/生成临时文件留忽略的`Assets/Incoming/`、`Assets/Generated/`，可复用来源与处理记录进入`Assets/Provenance/`。不将引擎安装、SDK、个人凭据、运行快照和报告缓存提交为项目代码。大型资产的版本策略在首次实际导入时核对，本次未启用LFS或远端存储。
+- 根 `AGENTS.md`、`CLAUDE.md`、`README.md`、`.gitignore`；
+- `spec/pipelines/README.md`、`PROTOCOL.md` 和本管线 `CURRENT.md`；
+- `spec/governance/WRITE_SCOPE.md`、`VALIDATION.md`；
+- `spec/releases/`、`spec/contracts/` 中与本管线任务相关的契约；
+- 本管线执行所需的代码/脚本/资产子目录。
 
-文本默认UTF-8/LF。历史`spec/**`在Git中禁用换行自动转换，保留来源SHA-256依据；改正文时应由协调者同步当前证据引用，已有原始来源不得为排版改字节。二进制图/UE资产保持二进制处理。
+不要求每个工作区看到全部 `spec/requirements/`、`spec/architecture/` 或历史进度；当前任务需要时按 `CURRENT.md` 链接读取。sparse 配置是工作区本地状态，不提交为第二套目录规范。
+
+## 文件约定
+
+- 文本 UTF-8/LF；`.gitattributes` 保持 `spec/**` 的稳定字节，但验证不再依赖 SHA-256 或精确引文。
+- `Content/` 的 `.uasset`、`.umap` 等二进制资产只由 tech 写入；art 在 `Assets/` 交付源素材和导入清单。
+- 原始素材临时文件放忽略的 `Assets/Incoming/`、`Assets/Generated/`；来源和加工记录进 `Assets/Provenance/`。
+- `spec/requirements/**/sources/` 既有原始来源不改写；新用户指示作为新来源文件登记。
+- 不提交引擎安装、SDK、凭据、运行快照或报告缓存。大型资产版本策略在首次实际导入时核对；本轮未启用 LFS。
