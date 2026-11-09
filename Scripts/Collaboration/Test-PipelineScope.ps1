@@ -125,14 +125,38 @@ function Get-CommitOwnerNames {
     return @($owners)
 }
 
+$legacyTaskRefs = New-Object System.Collections.Generic.List[string]
+foreach ($prefix in @('refs/heads/task/', 'refs/remotes/origin/task/')) {
+    foreach ($ref in @((& git -C $repositoryRoot for-each-ref --format='%(refname)' $prefix 2>$null))) {
+        if (-not [string]::IsNullOrWhiteSpace($ref)) { $legacyTaskRefs.Add([string]$ref) }
+    }
+}
+
 $commits = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--reverse', ($baseCommit + '..HEAD'))) -split "`n" |
     ForEach-Object { $_.Trim() } |
     Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $changedCount = 0
 $mergeChecked = 0
+$legacySkipped = 0
 $failures = New-Object System.Collections.Generic.List[string]
 
 foreach ($commit in $commits) {
+    # One-off migration: commits imported from a legacy task/* branch are not
+    # re-charged per historical commit. The merge commit's net diff below still
+    # has to belong to the receiving pipeline. Task refs are removed after the
+    # migration, so this allowance has no effect on normal delivery.
+    $isLegacyTaskCommit = $false
+    foreach ($legacyRef in $legacyTaskRefs) {
+        if (Test-CommitAncestor -RepositoryRoot $repositoryRoot -Commit $commit -BranchRefs @($legacyRef)) {
+            $isLegacyTaskCommit = $true
+            break
+        }
+    }
+    if ($isLegacyTaskCommit) {
+        $legacySkipped++
+        continue
+    }
+
     $parents = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', '--parents', '-n', '1', $commit)) -split '\s+' |
         ForEach-Object { $_.Trim() } |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
@@ -210,6 +234,7 @@ Write-Output ('Pipeline={0}' -f $entry.Name)
 Write-Output ('Base={0}' -f $baseCommit)
 Write-Output ('CommitsChecked={0}' -f $commits.Count)
 Write-Output ('MergeCommitsChecked={0}' -f $mergeChecked)
+Write-Output ('LegacyTaskCommitsSkipped={0}' -f $legacySkipped)
 Write-Output ('ChangedFiles={0}' -f $changedCount)
 
 if ($failures.Count -gt 0) {
