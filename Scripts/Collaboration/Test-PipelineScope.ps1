@@ -141,9 +141,16 @@ foreach ($commit in $commits) {
 
     $ownerNames = New-Object System.Collections.Generic.List[string]
     if ($isMerge) {
-        foreach ($parent in @($parents[1..($parents.Count - 1)])) {
-            foreach ($owner in @(Get-CommitOwnerNames -RepositoryRoot $repositoryRoot -Commit $parent)) {
-                if ($ownerNames -notcontains $owner) { $ownerNames.Add($owner) }
+        $firstParent = $parents[1]
+        foreach ($parent in @($parents[2..($parents.Count - 1)])) {
+            $brought = @((Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-list', ($firstParent + '..' + $parent))) -split "`n" |
+                ForEach-Object { $_.Trim() } |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+            $brought += $parent
+            foreach ($broughtCommit in $brought) {
+                foreach ($owner in @(Get-CommitOwnerNames -RepositoryRoot $repositoryRoot -Commit $broughtCommit)) {
+                    if ($ownerNames -notcontains $owner) { $ownerNames.Add($owner) }
+                }
             }
         }
     }
