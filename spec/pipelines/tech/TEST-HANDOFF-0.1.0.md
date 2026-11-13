@@ -2,7 +2,7 @@
 
 - 版本：0.1.0
 - 工作项：TECH-0.1.0-01 / B01 默认启动、后果灰盒与中文 draft 探针。
-- 状态：本机接收准备，尚未发起本批 MR、尚未被 test 接收；B01 InProgress。本页可直接作为五项 PR 正文，替代旧治理批次内容；历史由 Git 保存。
+- 状态：受限候选已由 [PR #33](https://github.com/nilesthump/UEgame/pull/33) 接收，merge commit `b848a0de9fa04d6a83ef2045b4d8fc43fdcb73a5`；B01 InProgress。本页保留该批复现入口，不作为新批次 PR 正文；历史由 Git 保存。
 
 ## 交付内容
 
@@ -60,13 +60,14 @@ foreach ($case in $cases) {
 - 默认包一次命令中的第二个 RunTests 未执行，不计通过；文本解析由 source-packaged 单独启动实际执行。
 - `.build/package-draft-text-20261113-final.log` 为 BUILD SUCCESSFUL，AutomationTool ExitCode=0；Linux 沿用前批 `.build/core-linux-aftermath/ctest-junit.xml` 实际 6/6，0 失败/禁用/跳过。
 - 独立审查目视：`Saved/Screenshots/WindowsEditor/B01Aftermath00001.png`，包内 `Windows/UEgame/Saved/Screenshots/Windows/B01Aftermath00000.png` 和 `B01Bootstrap00000.png`。中文、标点、NAR-0004/draft、七个标记和结束提示完整可读；默认入口为 ready。
-- 远端只读核查：tech=`69fb8f7`、main=`e67a6f7`、test=`c3875ed`；旧 PR #27 已合并，无开放 tech PR。本批未推送、无对应远端 CI；发送前重新核对。
-- 本页接收命令尚待 test 执行，不把准备命令计作游戏复测通过。
+- 2026-11-13 本轮远端只读核查：PR #33 已合并，接收 head=`a5251c6`，merge=`b848a0d`。原 PR 记录 [CI 43392806576](https://github.com/nilesthump/UEgame/actions/runs/43392806576) repository-baseline/core-linux 成功、核心 6/6；narrative-text 跳过，不计通过。本轮未重跑 CI。
+- test 已独立执行接收命令；当前结论与实际执行身份以 test 分支 `00b4670` 的 `spec/evidence/evidence.md` 为准（可用 `git show pipeline/test:spec/evidence/evidence.md` 读取）。本轮只读核对，不重跑游戏、不另建验收结论。
+- test 披露 HTML 模板缺失，未生成 HTML 页面；实际 JSON、日志和新截图用于其受限验收。原 PR 接收讨论与唯一 evidence 引用不同独立复测轮次，报告与截图必须按各自执行身份配套，不混用。
 
 ## 未满足项
 
-- tech：本批远端候选、MR、对应 CI 未建立；本机访问准备不代表已交付。完整包、报告、截图仍为本地忽略输出。
-- tech：真实玩法/成功路线、正式字幕与媒体送达、其余文本显示未完成；下一步由 test 按本页及 CURRENT 检查受限候选。
+- tech：完整包、报告、截图仍为本地忽略输出，跨机器交付仍须提供完整候选和证据访问；PR 接收不使这些输出自动进入 Git。
+- tech：真实玩法/成功路线、正式字幕与媒体送达、其余文本显示未完成；后续按 CURRENT 的下一批入口推进，新内容重新验证和审查。
 - tech/test：输入→核心处理→对应画面实际呈现 <50ms、本人体验、真实手柄未执行。
 - narrative：NAR-0001–0007 全部 draft；定稿由 narrative 决定，不启动批量素材制作。
-- test：正式接收与验收未完成。B01 InProgress，B02–B15 不启动；onlineVersion=null，不发布、不创建 tag。
+- test：受限候选接收已完成，完整 B01 尚未验收；下游交付由 test → ops 推进。B01 InProgress，B02–B15 不启动；onlineVersion=null，不发布、不创建 tag。
