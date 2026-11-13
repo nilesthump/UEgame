@@ -7,12 +7,12 @@
 
 ## 当前工作项
 
-`OPS-0.1.0-01` 的治理集成已完成。当前跟进 `0.1.0 / B01`：通过 [MR #34](https://github.com/nilesthump/UEgame/pull/34) 接收 test 的受限 Win64 候选验收证据，合并提交 `6598a5105026004bce8e18647cf9c6ae7bdd0d64`，源提交 `00b467049486c07f228a1aa1642306dcf5c2b605`。该接收不是完整 B01 验收或发布批准。
+`OPS-0.1.0-01` 的治理集成已完成。当前跟进 `0.1.0 / B01`：通过 [MR #36](https://github.com/nilesthump/UEgame/pull/36) 接收 test 的生命周期受限 Win64 候选验收证据，合并提交 `324bf9fe96e1e8c41ade8479c91981c88b1a3cce`，源提交 `15d31034edffe1ad9045fd4e717d9a62a039033f`。该接收不是完整 B01 验收或发布批准。
 
 - 唯一当前验收结论由 test 维护：[evidence.md](../../evidence/evidence.md)，重点查看 `PROD-B01`、`DISPLAY-01`、`PERF-01` 和 `FEEL-01`；ops 不另写验收结论。
-- 候选、实际执行报告和截图身份以及历史独立审查见原 MR 与 evidence；agent 审查不等于 GitHub 账号批准。
+- 候选、实际执行报告和截图身份见原 MR 与 evidence；本次独立 agent `/root/ops_receive_review` 重新审查完整批次并批准受限接收，无阻断项，记录见 [原 PR 接收评论](https://github.com/nilesthump/UEgame/pull/36#issuecomment-6853106352)。未重新核实历史审查原始轨迹；agent 审查不等于 GitHub 账号批准。
 - 包、原生 JSON、日志与截图为本机忽略产物，不随 Git/MR 传递；跨机器接收须另行提供同一产物。
-- 保留 HTML 报告模板缺失及提交前工作树构建限制，不把原生 JSON 成功扩大为日志无错误或干净提交构建。
+- 当前包 BUILD-IDENTITY 记录产品 `74772e2` 的干净源码构建；此前包的提交前工作树构建限制不套用于本包。四份日志仍有 HTML 报告模板缺失错误，不把原生 JSON 成功扩大为日志无错误。本次 ops 只复核已有报告、日志与截图，未重跑 UE、Editor、构建或 Linux。
 
 ## 未满足项与下一步
 
@@ -28,4 +28,4 @@
 
 ## MR
 
-上游：`test`、`maintenance`；下游：`main`（由授权接收者合并）。本批上游 [MR #34](https://github.com/nilesthump/UEgame/pull/34) 已合并，后续交付仍遵循固定管线协议。
+上游：`test`、`maintenance`；下游：`main`（由授权接收者合并）。本批上游 [MR #36](https://github.com/nilesthump/UEgame/pull/36) 已合并，后续交付仍遵循固定管线协议。
