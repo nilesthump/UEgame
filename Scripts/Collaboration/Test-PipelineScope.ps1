@@ -61,7 +61,11 @@ function Test-PathList {
 }
 
 $repositoryRoot = Get-RepositoryRoot -RequestedRoot $Root
-$config = [IO.File]::ReadAllText((Join-Path $repositoryRoot 'Scripts/Collaboration/pipelines.json')) | ConvertFrom-Json
+# Use the config that ships with this checker, not the target worktree's older
+# copy. This keeps cross-worktree checks (for example -Root tech from ops)
+# deterministic.
+$configRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+$config = [IO.File]::ReadAllText((Join-Path $configRoot 'Scripts/Collaboration/pipelines.json')) | ConvertFrom-Json
 $branch = Invoke-GitText -RepositoryRoot $repositoryRoot -Arguments @('rev-parse', '--abbrev-ref', 'HEAD')
 
 $entry = $null
