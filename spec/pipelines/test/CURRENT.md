@@ -1,28 +1,25 @@
 # test — 当前工作
 
-- 目标版本：`0.1.0`
-- 状态：InProgress（治理/CI 验收；产品功能 NotRun）
-- 分支/工作区：`pipeline/test` / `.worktrees/pipelines/test`
+- 目标版本：`0.1.0`；线上未发布，`onlineVersion=null`。
+- 状态：InProgress（PR #33 受限候选已接收；完整 B01 未验收）。
+- 分支/工作区：`pipeline/test` / `.worktrees/pipelines/test`。
 
 ## 当前工作项
 
-`TEST-0.1.0-01` 收敛验收证据并验证精简后的 CI/PR 门禁。
+`TEST-0.1.0-01`：接收 tech 的 B01 默认启动、后果灰盒与中文 draft 探针。
 
 - 唯一当前结论：[evidence.md](../../evidence/evidence.md)。
-- 只维护按版本和验收项的当前状态；修复通过原地更新，结果失效原地改为待复测。
-- 禁止新增 `evidence-latest.md`、`evidence-final.md`。
-- 验收结论引用实际执行链接、PR/提交或 CI；未执行、零用例、跳过、缺报告不记通过。
+- 上游 [MR #33](https://github.com/nilesthump/UEgame/pull/33)：`a5251c6`，产品构建 `fb2861e`；已按 merge commit `b848a0d` 合并，当前远端状态以原 PR 为准。
+- 本机同一包三个用例已独立运行，各 1/1、零失败，日志及进程退出码 0；新截图已目视。报告为 `.build/b01-receive-20261113-163037/`，身份、截图与限制见唯一证据页。
+- 接收条件及复现命令见原 PR 和 tech 的 `TEST-HANDOFF-0.1.0.md`（可用 `git show pipeline/tech:spec/pipelines/tech/TEST-HANDOFF-0.1.0.md` 读取）。交接文档为发送前快照，远端状态以 PR 为准。
+- 新增或变化内容须独立审查；问题留在原 PR，由 tech 修复后正向交付；满足接收条件后使用 merge commit。
 
-## 本轮验证范围
+## 未满足项与下一步
 
-- 七管线文档/分支/工作区一致性；
-- `repository-baseline`、`narrative-text`、受影响 `core-linux` 的实际 CI；
-- 全部规定 MR 流向和 merge commit；
-- 不把治理检查扩大为游戏功能、性能或本人体验通过。
-
-## 未满足项
-
-- 少量文本的 UE 显示/字幕接入、声音绑定、完整 B01、Win64 独立包、50ms 和本人体验均未验收。
+- 本批结论只覆盖受限灰盒骨架与 NAR-0004 draft 显示；B01 InProgress，B02–B15 不启动。
+- 真实玩法/成功路线、正式字幕与媒体送达、其余文本显示、端到端 <50ms、本人体验、真实手柄未完成。全部 NAR 仍 draft。
+- 本批独立审查及 MR 接收已完成；下一步按 test → ops 正向交付验收证据；不得把受限检查通过扩展为发布批准。
+- 只写 test 范围；不改业务代码、文本真源、资产或发布状态，不发布或创建 tag。
 
 ## MR
 
