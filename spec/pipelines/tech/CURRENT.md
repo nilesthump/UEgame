@@ -87,3 +87,6 @@ $Engine = 'G:/Epic Games/UE_5.6'
 ## MR
 
 上游：`growth`、`narrative`、`art`；下游：`art`、`test`。
+
+- 本批五项 PR 正文与本机接收入口：[TEST-HANDOFF-0.1.0.md](TEST-HANDOFF-0.1.0.md)。用户选择本机接收；复用完整包，不改写构建身份。
+- 产品候选保持 `fb2861e`；交接文档提交与产品构建身份分开记录。尚未推送或发送 MR，test 尚未接收。
