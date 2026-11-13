@@ -21,7 +21,7 @@ cmake --build .build/core-linux-gcc13 --verbose
 ctest --test-dir .build/core-linux-gcc13 --no-tests=error --verbose --output-junit ctest-junit.xml
 ```
 
-当前显式用例为 `B01.Session.WorldReady`、`B01.Session.IndependentStarts`、`B01.Session.FactIdentityAndDelivery`。期待非空报告、全部通过且无跳过；NullRHI/核心宿主只证明核心，不证明真实渲染或世界交互。
+当前显式用例为 `B01.Session.WorldReady`、`B01.Session.IndependentStarts`、`B01.Session.FactIdentityAndDelivery`、`B01.Session.StableBatchDeathPriority`、`B01.Session.AftermathAndMissingMethod`、`B01.Session.EffectEligibility`。2026-11-09 已在 WSL Ubuntu 24.04/GCC 13.3/CMake 3.28.3 实际执行 6/6，无失败、无跳过；CI `core-linux` 也实际执行这 6 个用例。NullRHI/核心宿主只证明核心，不证明真实渲染或世界交互。
 
 ## 2. 仓库基线检查内容
 
@@ -60,7 +60,7 @@ ctest --test-dir .build/core-linux-gcc13 --no-tests=error --verbose --output-jun
 | --- | --- | --- |
 | RepositoryBaseline | 已执行 | 本轮 sparse 本地检查与 GitHub PR CI 实际通过；执行链接见 evidence |
 | NarrativeText | 已执行 | 7 条结构检查通过；不等于 UE 显示/字幕接入 |
-| Linux GCC13 shared core | 按改动执行 | 本轮无源码/构建改动，相关 PR 的 `core-linux` 按路径跳过，不记执行；完整 B01 未完成 |
+| Linux GCC13 shared core | 已执行 6/6 | B01 核心 6 个用例在 WSL 与 #27 CI 实际通过；真实 UE/独立包/性能/本人体验仍 NotRun，B01 未完成 |
 | UE 真实世界场景 | NotRun | 现有 NullRHI 核心宿主不等于真实世界 |
 | Win64 独立包 | NotRun | 未 Cook/Stage/启动 |
 | 输入→渲染 <50ms | NotRun | 测量链和场景未建立 |

@@ -8,7 +8,6 @@
 | --- | --- | --- | --- | --- |
 | `main-integration` | `26700391` | `refs/heads/main` | 禁止删除、禁止非快进；要求 PR、1 次 GitHub 账号批准、推送后撤销旧批准、解决讨论；仅允许 merge commit；required check `repository-baseline` 严格最新 | 既有 owner bypass（RepositoryRole 5，`pull_request` 模式），与生命周期规则分开 |
 | `fixed-branch-lifecycle` | `26855799` | `refs/heads/**` | 禁止新增分支、禁止删除、禁止非快进 | 无 bypass；`current_user_can_bypass=never` |
-| `archived-task-branches` | `26855800` | `refs/heads/task/**` | 禁止更新、删除、非快进；旧任务分支只读 | 无 bypass；`current_user_can_bypass=never` |
 
 ## 实际拒绝证据（2026-11-09）
 
@@ -19,7 +18,13 @@
 - 探针随后在规则临时关闭时删除，生命周期规则已重新启用。规则集查询显示 `fixed-branch-lifecycle` 为 `active`、无 bypass。
 - `delete_branch_on_merge=false` 通过仓库设置 API 实际确认。
 
-`fixed-branch-lifecycle` 在七条固定分支和既有任务分支创建/推送后启用，避免把“禁止新增分支”误配置成无法建立初始固定分支。`archived-task-branches` 只冻结旧 `task/*`，不影响 `pipeline/*` 的日常提交。
+`fixed-branch-lifecycle` 在七条固定分支创建/推送后启用，避免把“禁止新增分支”误配置成无法建立初始固定分支。
+
+## 任务分支退役（2026-11-09）
+
+- 旧 7 个远端 `task/*`、9 个本地 `task/*` 和 5 个 task 工作区已删除；B01 三个功能提交已通过 #27 并入 `pipeline/tech`/`pipeline/test`/`pipeline/ops`，待最终 `ops → main` 合并后进入 `main`。
+- 旧 `archived-task-branches`（26855800）已删除；`fixed-branch-lifecycle` 在删除后重新启用为 `active`。
+- 当前只保留 `main` 和七条 `pipeline/*`；不再存在 task ref，也不再有 task 动态豁免。
 
 ## 仓库设置
 
@@ -40,4 +45,4 @@ gh api repos/nilesthump/UEgame --jq ".delete_branch_on_merge"
 
 ## 固定分支
 
-`pipeline/growth`、`pipeline/narrative`、`pipeline/tech`、`pipeline/art`、`pipeline/test`、`pipeline/ops`、`pipeline/maintenance`；`main` 只记录线上运营版本。旧 `task/*` 保留为只读历史，不删除、不再接收新提交。
+`pipeline/growth`、`pipeline/narrative`、`pipeline/tech`、`pipeline/art`、`pipeline/test`、`pipeline/ops`、`pipeline/maintenance`；`main` 只记录线上运营版本。旧 `task/*` 已全部删除，不再保留只读 task ref。
