@@ -42,7 +42,7 @@ ctest --test-dir .build/core-linux-gcc13 --no-tests=error --verbose --output-jun
 - 说话者、场景/结果类型、正文、制作说明非空；
 - `status` 只能是 `draft`、`final`、`retired`。
 
-文本检查只证明条目结构可导入，不等于 UE 内显示/音频接入通过。少量文本的显示与接入验证在 0.1.0 中仍为 NotRun，详见 [evidence](../evidence/evidence.md)。
+文本检查只证明条目结构可导入，不等于 UE 内显示/音频接入通过。显示与接入的当前结论只在 [evidence](../evidence/evidence.md) 的 `DISPLAY-01` 维护；单条 draft 显示探针不能替代其余文本、正式字幕、声音或媒体送达验收。
 
 ## 4. CI 与 required checks
 
@@ -54,17 +54,19 @@ ctest --test-dir .build/core-linux-gcc13 --no-tests=error --verbose --output-jun
 
 `main` 还要求 PR、1 次 GitHub 账号批准、讨论解决、仅 merge commit。`core-linux`/`narrative-text` 的跳过不等于通过；涉及对应改动时必须取得实际成功。候选内容或构建身份变化后重新执行受影响检查。
 
-## 5. 状态
+## 5. 验证证据入口
 
-| 检查 | 当前状态 | 说明 |
-| --- | --- | --- |
-| RepositoryBaseline | 已执行 | 本轮 sparse 本地检查与 GitHub PR CI 实际通过；执行链接见 evidence |
-| NarrativeText | 已执行 | 7 条结构检查通过；不等于 UE 显示/字幕接入 |
-| Linux GCC13 shared core | 已执行 6/6 | B01 核心 6 个用例在 WSL 与 #27 CI 实际通过；真实 UE/独立包/性能/本人体验仍 NotRun，B01 未完成 |
-| UE 真实世界场景 | NotRun | 现有 NullRHI 核心宿主不等于真实世界 |
-| Win64 独立包 | NotRun | 未 Cook/Stage/启动 |
-| 输入→渲染 <50ms | NotRun | 测量链和场景未建立 |
-| 本人因果体验 | NotRun | 未试玩 |
+当前验收结论只在 [evidence.md](../evidence/evidence.md) 维护，本契约不复制状态表。`0.1.0 / B01` 受限 Win64 候选证据已通过 [MR #34](https://github.com/nilesthump/UEgame/pull/34) 交付 ops；该接收不代表完整 B01 或发布条件满足。
+
+| 检查范围 | 读取入口与判断边界 |
+| --- | --- |
+| 仓库基线、文本结构与 CI | evidence 的 `GOV-05`、`GOV-06`、`GOV-07` 及原 PR 的实际执行链接；跳过不记通过 |
+| Linux 核心、真实 UE 宿主及 Win64 独立包 | evidence 的 `PROD-B01` 及本机独立复测记录；区分核心、默认启动、预设死亡灰盒与完整真实玩法 |
+| 文本显示、字幕与媒体 | evidence 的 `DISPLAY-01`；区分单条草稿显示、正式字幕、音频接入和媒体送达 |
+| 输入→核心处理→对应画面实际呈现 <50ms | evidence 的 `PERF-01`；核心计时或截图不能证明端到端延迟 |
+| 本人体验与真实手柄 | evidence 的 `FEEL-01`、`PROD-B01` 未满足项；软件注入不能替代实物输入与本人体验 |
+
+复核本机报告时应读取实际 `index.json` 中的非零用例数、逐例状态和错误/警告计数，并核对日志测试退出码及构建身份。三份既有报告的 HTML 模板缺失限制、提交前工作树构建说明和实际截图身份见原 MR 与 evidence；不能把原生 JSON 成功称为日志无错误。忽略产物不随 Git/MR 交付，跨机器必须先建立同一产物访问。
 
 ## 6. 证据维护
 
