@@ -76,6 +76,21 @@ $Engine = 'G:/Epic Games/UE_5.6'
 
 复现中文探针：向上述新包根程序同时传 `-B01AftermathGraybox -B01DraftTextPreview -windowed -ResX=1280 -ResY=720`，按 E。自动化复用灰盒命令，报告目录使用 `.build/b01-draft-packaged`；文本解析用例为 `UEgame.B01.DraftTextSource`，须单独启动一次执行。
 
+## 2026-11-13 真实宿主生命周期验证续作
+
+- 实施者：本对话 tech agent；代码基线 `6d7cd2e`（上一批产品 `fb2861e`）。写入限 `Source/UEgame/Private/Tests/Bootstrap/BootstrapLifecycleChecks.cpp` 与本文件，无生产逻辑或核心源码修改。
+- 新用例 `UEgame.WorldScenario.B01.Lifecycle` 使用 ClientContext + NonNullRHI，在真实游戏宿主同一 UWorld 内连续三轮观察结束、DestroyActor/EndPlay、SpawnActor/BeginPlay；检查旧 Director 与旧 Run 的 ready/观察回执被拒绝、旧 unbind 不影响新绑定、旧标记清理、新轮 Rescue/ready 和恰好一个 Director/七个标记，最后经 PlayerController 注入 E 检查重建输入、结束反馈与重复观察拒绝。
+- Editor Development 实际编译成功，退出码 0：`.build/b01-lifecycle-editor-build.log`；真实 D3D12 游戏宿主实际执行 `.build/b01-lifecycle-game/index.json`，1/1 Success，failed/notRun/inProcess/succeededWithWarnings 均为 0，逐例 errors/warnings=0，进程与日志 TEST COMPLETE 退出码均为 0。运行同时启用两个灰盒/草稿开关。
+- 本用例仅检查同一运行世界内 Actor 生命周期及属性反馈；没有验证未结束 Rescue 时卸载或 GC 后回调，也没有测量画面像素、Slate 控件残留、地图 travel、跨进程恢复、实物输入或输入到呈现延迟。不构成 B12 恢复实现或完整 B01 验收。
+- 本轮 RepositoryBaseline 209 文档/681 链接、NarrativeText 7 条与 diff 检查通过。独立 agent `/root/tech_review` 已实查用例源码、编译日志和实际游戏报告，无源码阻断项；不等于 test 接收。
+- 新用例未打入独立包；既有 `Deliverables/B01-draft-text-20261113/` 和 BUILD-IDENTITY 保持原产品身份，不能用其证明新用例执行。Linux 核心与既有 Editor 用例本轮未重跑。
+
+复现（先编译 UEgameEditor）：
+
+```powershell
+& 'G:/Epic Games/UE_5.6/Engine/Binaries/Win64/UnrealEditor.exe' "$PWD/UEgame.uproject" -game -B01AftermathGraybox -B01DraftTextPreview -windowed -ResX=1280 -ResY=720 -unattended '-ExecCmds=Automation RunTests UEgame.WorldScenario.B01.Lifecycle;Quit' '-TestExit=Automation Test Queue Empty' "-ReportExportPath=$PWD/.build/b01-lifecycle-rerun" "-abslog=$PWD/.build/b01-lifecycle-rerun.log"
+```
+
 ## 未满足项与下一步
 
 - 本批新增可选灰盒死亡后果观察链；真实角色感知/战斗与成功路线尚未实现，不能将预设死亡 Marker 当作真实战斗结果，B01 不得结清。
@@ -90,5 +105,5 @@ $Engine = 'G:/Epic Games/UE_5.6'
 
 - PR #33 历史交接与本机复现入口：[TEST-HANDOFF-0.1.0.md](TEST-HANDOFF-0.1.0.md)。用户选择本机接收；复用完整包，不改写构建身份。
 - 产品候选保持 `fb2861e`；交接候选 `a5251c6` 已由 [PR #33](https://github.com/nilesthump/UEgame/pull/33) 合入 test。交接文档提交与产品构建身份分开记录。
-- 2026-11-13 本轮恢复：GitHub 只读确认 merged=true、merge=`b848a0d`；读取 test `00b4670` 的 CURRENT/evidence，保留其受限验收及 HTML 报告模板缺失限制。本轮未重跑 UE/Linux，不复写 test 结论。
-- 下一批入口：优先补齐 B01 真实游戏宿主中的 Director 销毁/重建和旧轮回执隔离验证；限定 Bootstrap 用例及必要适配修复，不启动 B02–B15，不扩展为完整玩法或媒体验收。新内容须重新验证及独立审查后交付。
+- 2026-11-13 本轮恢复：GitHub 只读确认 merged=true、merge=`b848a0d`；读取 test `00b4670` 的 CURRENT/evidence，保留其受限验收及 HTML 报告模板缺失限制。恢复核查未重跑旧候选 UE/Linux，不复写 test 结论；新增 Lifecycle 的本轮执行见上节。
+- 下一批入口：将本轮 Lifecycle 用例纳入新 Win64 构建并实际执行，另建构建身份与报告后按 tech → test 交付；既有包不含此用例。仍限定 B01，不启动 B02–B15，不扩展为完整玩法或媒体验收。
