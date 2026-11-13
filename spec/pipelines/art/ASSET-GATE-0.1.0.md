@@ -5,7 +5,7 @@
 - 上游请求：[REQUEST-0.1.0.md](../../contracts/art/REQUEST-0.1.0.md)
 - 阻塞回复：[RESPONSE-0.1.0.md](../../contracts/art/RESPONSE-0.1.0.md)
 - 当前状态：**Blocked（门禁未通过）**
-- 更新：2026-11-09
+- 更新：2026-11-13
 
 本文件定义 0.1.0 未来资产入场的最低检查项，并记录当前阻塞事实。它本身不是资产交付、验收通过或发布结论；计划、占位文件和未执行步骤都不能写成已完成资产。
 
@@ -14,7 +14,7 @@
 | 入场前提 | 当前状态 | 依据 |
 | --- | --- | --- |
 | 文本已定稿 | 未满足：`NAR-0001`–`NAR-0007` 全部为 `draft` | [TEXT.csv](../../contracts/narrative/TEXT.csv) |
-| UE 显示/字幕接入已验证 | NotRun | [evidence.md](../../evidence/evidence.md) 的 `DISPLAY-01` |
+| UE 显示/字幕接入已验证 | Partial：仅 `NAR-0004 draft` 显示通过；正式字幕与声音未验收 | test `15d3103` 的 [DISPLAY-01](https://github.com/nilesthump/UEgame/blob/15d31034edffe1ad9045fd4e717d9a62a039033f/spec/evidence/evidence.md)，交付见 [PR #36](https://github.com/nilesthump/UEgame/pull/36) |
 | 存在可制作的 CueId 批次 | 未形成：CueId 只出现在 `draft` 条目的制作说明中，不构成开工批次 | [TEXT.csv](../../contracts/narrative/TEXT.csv)、[REQUEST-0.1.0.md](../../contracts/art/REQUEST-0.1.0.md) |
 | 来源/加工记录与导入清单 | 未执行 | `Assets/Audio/`、`Assets/Provenance/Audio/` 仅有占位 `.gitkeep` |
 | 实际听辨和独立包试听 | 未执行 | 没有任何成品声音或试听记录 |
@@ -22,9 +22,11 @@
 因此 art 在 `0.1.0` 的状态仍是 **Blocked**：
 
 - 没有 `final` 文本，不能据 `draft` 条目批量制作对白或演出声音；
-- 没有已完成的文本显示/字幕验证，无法确认文本、触发和字幕绑定可用；
+- 单条草稿显示已有结果，但不提交媒体送达回执；其余条目、正式字幕与声音仍未验收，不能据此解锁制作；
 - 没有可制作的 CueId/SegmentId 批次，`CUE-NAR-xxxx` 尚未形成获准开工的清单；
 - 没有源素材、来源/加工记录、导入清单或听辨结果，也没有 `Content/**` 下的导入资产。
+
+本轮只读核对 test `15d3103` 的唯一 evidence；art 分支尚未接收该证据更新，本地相对链接可能仍显示旧状态。此处引用 test 结论，不新增验收结论，也未重跑游戏或目视截图。narrative `8be7e08` 的文本仍全部 draft，未提供 final revision；tech `36b0529` 的请求仍为 Blocked，其中旧 NotRun 描述由 tech 维护。PR #36 与 PR #37 核对时均未合并，PR #37 新候选不沿用旧包验收。
 
 ## 2. 未来资产入场检查项
 
@@ -104,6 +106,6 @@
 
 ## 5. 本轮执行声明
 
-- 本轮只定义门禁和写入边界，不检索、不合成、不加工、不导入、不试听任何素材。
+- 本轮只同步已核对的草稿显示进展、门禁和写入边界，不检索、不合成、不加工、不导入、不试听任何素材。
 - 未在 `Assets/Audio/**` 或 `Assets/Provenance/Audio/**` 新增资产或记录，未在 `Content/**` 写入任何二进制资产。
 - 未产生可交付资产清单，也不能把本文件的检查项写成已执行或已通过。
