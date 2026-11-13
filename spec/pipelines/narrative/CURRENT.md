@@ -1,7 +1,7 @@
 # narrative — 当前工作
 
 - 目标版本：`0.1.0`
-- 状态：InProgress（文本契约；运行时显示未验证）
+- 状态：InProgress（文本契约；仅 NAR-0004 draft 显示通过，正式字幕与其余条目未验收）
 - 分支/工作区：`pipeline/narrative` / `.worktrees/pipelines/narrative`
 
 ## 当前工作项
@@ -20,9 +20,10 @@
 
 ## 未满足项
 
-- 当前条目为 `draft`，尚未在 UE 内验证显示/字幕；
+- 当前 7 条仍为 `draft`；仅 NAR-0004 草稿探针显示通过，不等于正式字幕或其余条目通过；
 - 未批量制作声音资产，未生成绑定；
-- 因此 `narrative → tech` 只交付文本契约，不宣称运行时接入通过。
+- 本批 `narrative → tech` 仅修订显示范围说明，不改变正文或条目状态，不宣称整体运行时接入通过。验收依据为 test 唯一 [evidence / DISPLAY-01](https://github.com/nilesthump/UEgame/blob/pipeline/test/spec/evidence/evidence.md)（Partial）及原 [PR #35](https://github.com/nilesthump/UEgame/pull/35)。
+- 正式首批样本仍为 NAR-0001–NAR-0003；NAR-0004 草稿探针不替代该批门槛，不解锁 B13。DISPLAY-GATE 文档不在本批修改范围。
 
 ## MR
 
