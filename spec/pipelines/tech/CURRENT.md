@@ -107,7 +107,7 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 输入至画面实际呈现 <50ms、本人体验、真实手柄未执行。
 - NAR-0001–0007 仍 draft；NAR-0004 单条中文显示探针已有技术执行和截图，正式字幕/媒体送达及其余条目未验证，不改 final，不启动 B13。test 已接收单条草稿探针的受限结果，剩余正式字幕另行交付；narrative 独立决定文本定稿。
 - test 已通过 PR #33 接收受限候选，合并提交 `b848a0d`；正式当前结论由 test 分支的唯一 evidence 维护。本分支尚未接收下游证据，不能把本地旧 evidence 当作最新结论。后续按 tech → test → ops → main 正向交付，不直接修改证据或发布状态。
-- 上批候选 `a5251c6` 已推送并经 PR #33 接收；本轮只读核对远端接收状态，不发送消息、不发布、不创建 tag、不修改 main。
+- 上批候选 `a5251c6` 已经 PR #33 接收；本批已正常推送并发起 PR #35，等待 test 接收。不发布、不创建 tag、不修改 main。
 
 ## MR
 
@@ -116,4 +116,4 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 本批 Lifecycle 五项交接正文与本机复现入口：[TEST-HANDOFF-0.1.0.md](TEST-HANDOFF-0.1.0.md)。沿用本机接收；使用新完整包，不改写构建身份。
 - 上批产品 `fb2861e` / 交接候选 `a5251c6` 已由 [PR #33](https://github.com/nilesthump/UEgame/pull/33) 合入 test。交接文档提交与产品构建身份分开记录。
 - 2026-11-13 本轮恢复：GitHub 只读确认 merged=true、merge=`b848a0d`；读取 test `00b4670` 的 CURRENT/evidence，保留其受限验收及 HTML 报告模板缺失限制。恢复核查未重跑旧候选 UE/Linux，不复写 test 结论；新增 Lifecycle 的本轮执行见上节。
-- 下一步入口：本批新包已含 Lifecycle 且实际通过，按 TEST-HANDOFF 完成对应远端候选/CI 与 tech → test 接收；本轮未推送、未发 MR。仍限定 B01，不启动 B02–B15，不扩展为完整玩法或媒体验收。
+- 下一步入口：本批新包已含 Lifecycle 且实际通过，[PR #35](https://github.com/nilesthump/UEgame/pull/35) 已发起；CI 和接收的最新状态以原 PR 为准。test 按 TEST-HANDOFF 复测同一新包并检查接收条件，tech 只接收本批修正。仍限定 B01，不启动 B02–B15，不扩展为完整玩法或媒体验收。
