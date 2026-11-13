@@ -10,6 +10,7 @@ AExperimentWorldDirector::AExperimentWorldDirector()
     SetRootComponent(StatusText);
     StatusText->SetText(FText::FromString(TEXT("B01: preparing bootstrap")));
     StatusText->SetWorldSize(40.f);
+    StatusText->SetHorizontalAlignment(EHTA_Center);
 }
 bool AExperimentWorldDirector::IsBootstrapAssembled() const
 {
@@ -30,7 +31,11 @@ void AExperimentWorldDirector::BeginPlay()
                 // Only the accepted Session projection drives this bootstrap feedback.
                 const auto View = Adapter->View();
                 if (View.IsSet() && View->phase == experiment::ExperimentPhase::Rescue)
+                {
                     StatusText->SetText(FText::FromString(TEXT("B01: bootstrap ready")));
+                    UE_LOG(LogTemp, Display, TEXT("B01 bootstrap world ready: Run=%llu"),
+                        static_cast<unsigned long long>(BindingRun));
+                }
             }
         }
     }
