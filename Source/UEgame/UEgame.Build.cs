@@ -9,7 +9,7 @@ public class UEgame : ModuleRules
         bUseRTTI = false;
         PCHUsage = PCHUsageMode.NoPCHs;
         bUseUnity = false;
-        PrivateDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine" });
+        PrivateDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "InputCore" });
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private/ExperimentCore/include"));
         PrivateIncludePaths.Add(Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Tests/Shared")));
     }

@@ -3,6 +3,7 @@
 #include "GameFramework/Actor.h"
 #include "experiment/Session/ExperimentSession.h"
 #include "ExperimentWorldDirector.generated.h"
+class ABootstrapMarker;
 class UTextRenderComponent;
 class UExperimentSubsystem;
 
@@ -14,12 +15,20 @@ class AExperimentWorldDirector final : public AActor
 public:
     AExperimentWorldDirector();
     bool IsBootstrapAssembled() const;
+    bool HasObservableAftermath() const;
+    experiment::EncounterSnapshot SampleBootstrapEncounter(experiment::RunId Run, experiment::BatchId Batch) const;
+
+    void ObserveBootstrapAftermath();
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
+    friend class UExperimentSubsystem;
+    bool ExecuteBootstrapEffect(const experiment::ExperimentEffect& Effect);
     UPROPERTY()
     TObjectPtr<UTextRenderComponent> StatusText;
+    UPROPERTY() TArray<TObjectPtr<ABootstrapMarker>> Markers;
+    bool bGrayboxStopped = false;
     TWeakObjectPtr<UExperimentSubsystem> Adapter;
     experiment::RunId BindingRun = 0;
 };

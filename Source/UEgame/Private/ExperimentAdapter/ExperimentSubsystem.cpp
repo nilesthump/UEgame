@@ -14,6 +14,7 @@ experiment::RunId UExperimentSubsystem::BindWorld(AExperimentWorldDirector* Dire
     if (Session) Session->InvalidatePendingEffects();
     Session = MakeUnique<experiment::ExperimentSession>(NextRunId++);
     BoundDirector = Director;
+    NextSequence = 1; NextBatch = 1;
     return Session->View().runId;
 }
 bool UExperimentSubsystem::IsCurrentBinding(const AExperimentWorldDirector* Director, experiment::RunId Run) const
@@ -49,4 +50,40 @@ void UExperimentSubsystem::Deinitialize()
     BoundDirector.Reset();
     Session.Reset();
     Super::Deinitialize();
+}
+
+experiment::FactContext UExperimentSubsystem::NextContext(experiment::RunId Run)
+{
+    return {Run, NextSequence++, {GetGameInstance()->GetWorld()->GetTimeSeconds(), FPlatformTime::Seconds()}};
+}
+bool UExperimentSubsystem::ObserveBootstrapAftermath(AExperimentWorldDirector* Director, experiment::RunId Run)
+{
+    check(IsInGameThread());
+    if (!IsCurrentBinding(Director, Run) || !Director->HasObservableAftermath()) return false;
+    const auto Effects = Session->NotifyAftermathObserved({NextContext(Run)});
+    if (!Effects.accepted) return false;
+    // Receipts retain occurrence context and drain only after the entire effect batch.
+    struct SnapshotReceipt { experiment::SettlementCompletedFact Fact; experiment::EncounterSnapshot Snapshot; };
+    TArray<SnapshotReceipt> Receipts;
+    for (const auto& Effect : Effects.commands)
+    {
+        if (!IsCurrentBinding(Director, Run) || !Session->TryConsumeEffect(Effect)) return false;
+        if (Effect.kind != experiment::EffectKind::RequestStableSnapshot) return false;
+        const auto Batch = NextBatch++;
+        const auto Snapshot = Director->SampleBootstrapEncounter(Run, Batch);
+        if (!Snapshot.valid) return false;
+        Receipts.Add({{NextContext(Run), Batch, true}, Snapshot});
+    }
+    for (const auto& Receipt : Receipts)
+    {
+        if (!IsCurrentBinding(Director, Run)) return false;
+        const auto Settled = Session->NotifyBatchSettled(Receipt.Fact, Receipt.Snapshot);
+        if (!Settled.accepted) return false;
+        for (const auto& Effect : Settled.commands)
+        {
+            if (!IsCurrentBinding(Director, Run) || !Session->TryConsumeEffect(Effect) ||
+                !Director->ExecuteBootstrapEffect(Effect)) return false;
+        }
+    }
+    return true;
 }
