@@ -54,7 +54,7 @@ bool FBootstrapAftermathChecks::RunTest(const FString&)
         TestFalse(TEXT("duplicate observation cannot replay effects"), WeakAdapter->ObserveBootstrapAftermath(WeakDirector.Get(), Run));
         TestEqual(TEXT("typed stop effect updates visible feedback"),
             WeakDirector->FindComponentByClass<UTextRenderComponent>()->Text.ToString(), FString(TEXT("B01 GRAYBOX: ended - child dead")));
-        FScreenshotRequest::RequestScreenshot(TEXT("B01Aftermath"), false, true);
+        FScreenshotRequest::RequestScreenshot(TEXT("B01Aftermath"), true, true);
         return true;
     }));
     ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(1.f));

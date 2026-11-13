@@ -6,6 +6,7 @@
 class ABootstrapMarker;
 class UTextRenderComponent;
 class UExperimentSubsystem;
+class SWidget;
 
 // B01 bootstrap only. No encounter health, navigation or media readiness is asserted.
 UCLASS()
@@ -23,6 +24,8 @@ protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
+    void ShowBootstrapTextPreview();
+    TSharedPtr<SWidget> TextPreview;
     friend class UExperimentSubsystem;
     bool ExecuteBootstrapEffect(const experiment::ExperimentEffect& Effect);
     UPROPERTY()

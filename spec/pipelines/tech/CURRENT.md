@@ -63,11 +63,24 @@ $Engine = 'G:/Epic Games/UE_5.6'
 & 'G:/Epic Games/UE_5.6/Engine/Binaries/Win64/UnrealEditor.exe' "$PWD/UEgame.uproject" -game -B01AftermathGraybox -windowed -ResX=1280 -ResY=720 -unattended '-ExecCmds=Automation RunTests UEgame.WorldScenario.B01.Aftermath;Quit' '-TestExit=Automation Test Queue Empty' "-ReportExportPath=$PWD/.build/b01-chain-game" "-abslog=$PWD/.build/b01-chain-game.log"
 ```
 
+## 2026-11-13 中文草稿显示探针续作
+
+- 实施者：本对话 tech agent；基线 `83df86e`。写入范围为 `Source/UEgame/Private/ExperimentAdapter/BootstrapTextPreview.{h,cpp}`、`ExperimentWorldDirector.{h,cpp}`、`Source/UEgame/Private/Tests/Bootstrap/BootstrapTextChecks.cpp`、`BootstrapAftermathChecks.cpp`、`Source/UEgame/UEgame.Build.cs` 及本文件。
+- 在 `-B01AftermathGraybox` 基础上另加 `-B01DraftTextPreview`，按 E 结束后显示 NAR-0004 的中文草稿预览；默认入口仍为 ready，单独灰盒开关仍不展示草稿。字幕探针带 ID/draft 标识，不代表 B10 媒体实现或内容送达，不向 Session 提交送达回执。
+- 按文本契约直接读取唯一 `spec/contracts/narrative/TEXT.csv`，保留 id/speaker/scene/status；由 RuntimeDependencies 作为 UFS 文件随包提供，不另存正文副本。不接受缺失、重复、错误场景或非 draft 的 NAR-0004；EndPlay 移除视口控件。
+- Editor Development 编译成功，日志 `.build/b01-draft-editor-build.log`；Editor 自动化 `.build/b01-draft-editor/index.json` 为 8/8（原 7 项与新文本源用例），真实 D3D12 游戏宿主 `.build/b01-draft-game/index.json` 为 1/1，均无失败/未运行，日志退出码 0。
+- 新本地包 `Deliverables/B01-draft-text-20261113/Windows/UEgame.exe` 已 Build/Cook/Stage/Package/Archive 成功，退出码 0；最终日志 `.build/package-draft-text-20261113-final.log`。Editor 自动生成的无关 DefaultInput.ini 已移至 `.build/DefaultInput-editor-generated.ini`，随后重新打包，没有将该配置纳入源码或最终构建输入。
+- 最终包灰盒 `.build/b01-draft-packaged/index.json`、默认入口 `.build/b01-draft-default-packaged/index.json`、文本解析 `.build/b01-draft-source-packaged/index.json` 各 1/1，0 失败/未运行，进程退出码 0。文本解析单独执行，不把一次命令中第二个未执行的 RunTests 算作通过。
+- 已目视宿主 `Saved/Screenshots/WindowsEditor/B01Aftermath00001.png` 与包内 `Windows/UEgame/Saved/Screenshots/Windows/B01Aftermath00000.png`：中文、标点、ID/draft 完整可读；包内 `B01Bootstrap00000.png` 显示原 ready 入口。中文可见性来自截图目视检查，自动化只证明解析和原灰盒断言，不证明中文字形像素或媒体送达。
+- 核心源码未改；Linux 沿用前批实际 6/6，本轮未重跑。仓库 209 文档/681 链接、NarrativeText 7 条、diff 检查通过。独立 agent 已批准源码、实际报告/截图和本节说明，无阻断项；最终提交后运行 PipelineScope。原生报告、截图及 BUILD-IDENTITY.json 均为忽略的本地输出。
+
+复现中文探针：向上述新包根程序同时传 `-B01AftermathGraybox -B01DraftTextPreview -windowed -ResX=1280 -ResY=720`，按 E。自动化复用灰盒命令，报告目录使用 `.build/b01-draft-packaged`；文本解析用例为 `UEgame.B01.DraftTextSource`，须单独启动一次执行。
+
 ## 未满足项与下一步
 
 - 本批新增可选灰盒死亡后果观察链；真实角色感知/战斗与成功路线尚未实现，不能将预设死亡 Marker 当作真实战斗结果，B01 不得结清。
 - 输入至画面实际呈现 <50ms、本人体验、真实手柄未执行。
-- NAR-0001–0007 仍 draft；少量中文文本/字幕显示与接入 NotRun，不改 final，不启动 B13。
+- NAR-0001–0007 仍 draft；NAR-0004 单条中文显示探针已有技术执行和截图，正式字幕/媒体送达及其余条目未验证，不改 final，不启动 B13。下一步由 test 接收技术结果；narrative 独立决定文本定稿。
 - test 尚未接收本批；本地报告不能替代独立验收和远端 CI。后续按 tech → test → ops → main 正向交付，不直接修改证据或发布状态。
 - 本批未推送、未发 MR、未发布、未创建 tag；main 未修改。
 

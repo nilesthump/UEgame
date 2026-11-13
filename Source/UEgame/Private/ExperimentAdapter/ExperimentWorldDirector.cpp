@@ -9,6 +9,14 @@
 #include "InputCoreTypes.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "BootstrapTextPreview.h"
+#include "Engine/GameViewportClient.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Styling/CoreStyle.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
 
 AExperimentWorldDirector::AExperimentWorldDirector()
 {
@@ -66,6 +74,9 @@ void AExperimentWorldDirector::BeginPlay()
 }
 void AExperimentWorldDirector::EndPlay(const EEndPlayReason::Type Reason)
 {
+    if (TextPreview.IsValid() && GetWorld()->GetGameViewport())
+        GetWorld()->GetGameViewport()->RemoveViewportWidgetContent(TextPreview.ToSharedRef());
+    TextPreview.Reset();
     if (Adapter.IsValid()) Adapter->UnbindWorld(this);
     for (const auto& Marker : Markers) if (IsValid(Marker)) Marker->Destroy();
     Markers.Reset();
@@ -113,7 +124,33 @@ bool AExperimentWorldDirector::ExecuteBootstrapEffect(const experiment::Experime
         const auto View = Adapter->View();
         if (!View.IsSet() || View->phase != experiment::ExperimentPhase::Ended) return false;
         StatusText->SetText(FText::FromString(TEXT("B01 GRAYBOX: ended - child dead")));
+        ShowBootstrapTextPreview();
         return true;
     }
     return false; // No fake TimeSkip/environment completion.
+}
+
+void AExperimentWorldDirector::ShowBootstrapTextPreview()
+{
+    // Separate opt-in: draft content is a display probe, not production narration.
+    if (!FParse::Param(FCommandLine::Get(), TEXT("B01DraftTextPreview")) ||
+        TextPreview.IsValid() || !GetWorld()->GetGameViewport()) return;
+    FString Csv;
+    FBootstrapTextEntry Entry;
+    if (!FFileHelper::LoadFileToString(Csv, *(FPaths::ProjectDir() / TEXT("spec/contracts/narrative/TEXT.csv"))) ||
+        !LoadBootstrapTextPreview(Csv, Entry))
+    {
+        UE_LOG(LogTemp, Error, TEXT("B01 draft preview: missing or invalid NAR-0004 source"));
+        return;
+    }
+    const FString Display = FString::Printf(TEXT("B01 DRAFT PREVIEW | %s | %s\n%s: %s"),
+        *Entry.Id, *Entry.Status, *Entry.Speaker, *Entry.Text);
+    TextPreview = SNew(SBox).VAlign(VAlign_Bottom).HAlign(HAlign_Center).Padding(FMargin(24.f, 24.f, 24.f, 48.f))
+        [SNew(SBorder).Padding(16.f).BorderBackgroundColor(FLinearColor::Black)
+            [SNew(STextBlock).Text(FText::FromString(Display))
+                .Font(FCoreStyle::GetDefaultFontStyle(TEXT("Regular"), 24))
+                .ColorAndOpacity(FLinearColor::White).WrapTextAt(1050.f)]];
+    TextPreview->SetVisibility(EVisibility::HitTestInvisible);
+    GetWorld()->GetGameViewport()->AddViewportWidgetContent(TextPreview.ToSharedRef(), 10);
+    UE_LOG(LogTemp, Display, TEXT("B01 draft preview attached: %s (%s)"), *Entry.Id, *Entry.Status);
 }
