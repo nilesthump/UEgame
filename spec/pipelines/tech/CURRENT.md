@@ -97,7 +97,7 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 新包 `Deliverables/B01-lifecycle-20261113/` 已实际 Build/Cook/Stage/Package/Archive 成功，进程及 AutomationTool 退出码 0；日志 `.build/package-lifecycle-20261113.log`。包根 BUILD-IDENTITY.json 记录上述干净源码提交及构建配置；旧包保留。
 - 新包根启动程序分别执行 Lifecycle、Bootstrap、Aftermath、DraftTextSource，报告 `.build/b01-lifecycle-packaged/{lifecycle,default,aftermath,text-source}/index.json` 各 1/1 Success，所有失败/未运行/进行中/警告成功计数为 0，逐例 errors/warnings=0，四进程与日志测试退出码均 0；实际 D3D12。
 - 已目视该包内 `Windows/UEgame/Saved/Screenshots/Windows/B01Bootstrap00000.png` 与 `B01Aftermath00000.png`，默认 ready、灰盒结束提示/七标记/中文草稿清晰完整；Lifecycle 不截屏，不用 Aftermath 图推定其控件清理或呈现。
-- 四日志保留 HTML 报告模板缺失错误；原生 JSON、日志及截图完整，不宣称 HTML 已生成或日志零错误。Editor/Linux 本轮未重跑，新包仍待 test 独立接收；详细复现与限制见 TEST-HANDOFF。
+- 四日志保留 HTML 报告模板缺失错误；原生 JSON、日志及截图完整，不宣称 HTML 已生成或日志零错误。Editor/Linux 本轮未重跑；该包随后已通过 PR #35 被 test 接收；详细复现与限制见 TEST-HANDOFF。
 
 - 独立 agent `/root/package_review` 已核对 `74772e2` 用例、实际构建日志、BUILD-IDENTITY、四份精确报告/日志、两张新包截图及本轮文档 diff，批准受限本机候选交接，无阻断项；未代替 test 验收或远端 CI。
 
@@ -107,13 +107,30 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 输入至画面实际呈现 <50ms、本人体验、真实手柄未执行。
 - NAR-0001–0007 仍 draft；NAR-0004 单条中文显示探针已有技术执行和截图，正式字幕/媒体送达及其余条目未验证，不改 final，不启动 B13。test 已接收单条草稿探针的受限结果，剩余正式字幕另行交付；narrative 独立决定文本定稿。
 - test 已通过 PR #33 接收受限候选，合并提交 `b848a0d`；正式当前结论由 test 分支的唯一 evidence 维护。本分支尚未接收下游证据，不能把本地旧 evidence 当作最新结论。后续按 tech → test → ops → main 正向交付，不直接修改证据或发布状态。
-- 上批候选 `a5251c6` 已经 PR #33 接收；本批已正常推送并发起 PR #35，等待 test 接收。不发布、不创建 tag、不修改 main。
+- 上批候选 `a5251c6` 已经 PR #33 接收；Lifecycle 批次已通过 PR #35 被 test 接收，merge `4ba150c`，test 证据提交 `15d3103`。不发布、不创建 tag、不修改 main。
 
 ## MR
 
 上游：`growth`、`narrative`、`art`；下游：`art`、`test`。
 
-- 本批 Lifecycle 五项交接正文与本机复现入口：[TEST-HANDOFF-0.1.0.md](TEST-HANDOFF-0.1.0.md)。沿用本机接收；使用新完整包，不改写构建身份。
+- 本批 RescueTeardown 五项交接正文与本机复现入口：[TEST-HANDOFF-0.1.0.md](TEST-HANDOFF-0.1.0.md)。沿用本机接收；使用新完整包，不改写构建身份。
 - 上批产品 `fb2861e` / 交接候选 `a5251c6` 已由 [PR #33](https://github.com/nilesthump/UEgame/pull/33) 合入 test。交接文档提交与产品构建身份分开记录。
 - 2026-11-13 本轮恢复：GitHub 只读确认 merged=true、merge=`b848a0d`；读取 test `00b4670` 的 CURRENT/evidence，保留其受限验收及 HTML 报告模板缺失限制。恢复核查未重跑旧候选 UE/Linux，不复写 test 结论；新增 Lifecycle 的本轮执行见上节。
-- 下一步入口：本批新包已含 Lifecycle 且实际通过，[PR #35](https://github.com/nilesthump/UEgame/pull/35) 已发起；CI 和接收的最新状态以原 PR 为准。test 按 TEST-HANDOFF 复测同一新包并检查接收条件，tech 只接收本批修正。仍限定 B01，不启动 B02–B15，不扩展为完整玩法或媒体验收。
+- 下一步入口：PR #35 已接收。当前继续 B01 RescueTeardown；新用例的包、独立审查及交接按本轮实际结果更新，不用旧包证明新用例。仍限定 B01，不启动 B02–B15。
+
+## 2026-11-13 Rescue 阶段销毁与 GC 隔离
+
+- 实施者：本对话 tech agent，基线 `d3274f8`。只新增 `Source/UEgame/Private/Tests/Bootstrap/BootstrapRescueTeardownChecks.cpp` 并更新 tech 说明，不修改生产逻辑、核心或 test 证据。
+- 新用例 `UEgame.WorldScenario.B01.RescueTeardown` 在同一真实 UWorld 的未结束 Rescue 阶段 DestroyActor，跨帧完整 GC，检查旧 Director/七个 Marker 已实际回收；旧发送者通过弱引用解析后不能 ready/observe/unbind 新轮，旧 Run 不能操作新 Actor；新轮仍能独立观察结束。
+- Editor Development 实际编译成功，退出码 0：`.build/b01-rescue-teardown-editor-build-r2.log`。真实 D3D12 游戏宿主 `.build/b01-rescue-teardown-game-r2/index.json` 精确用例 1/1 Success，失败/未执行/进行中/警告成功均为 0，逐例 errors/warnings=0；进程与日志 TEST COMPLETE 退出码 0。
+- 宿主日志包含两条引擎 VisionOS 编辑器图标缺失警告；不声称日志无警告。未重跑本地 Linux（核心未改）。
+- 此检查只覆盖同一运行世界中的 Actor 销毁及弱发送者迟到调用，不覆盖整个 UWorld 卸载、地图 travel、Slate 残留、持久恢复、实际呈现、实物输入或完整 B01。原 Lifecycle 包仍为 `74772e2`，不包含此新用例。
+- 独立 agent `/root/rescue_review` 已核对最终用例、r2 编译/报告/日志及本文，批准源码提交；审查要求补充新轮绑定后的旧弱发送者 ready/observe 拒绝断言，补齐后重编译复测 1/1。RepositoryBaseline 209 文档/681 链接与 diff 检查通过。
+
+## 2026-11-13 RescueTeardown 独立包
+
+- 干净源码 `b4f94e6` 的新包 `Deliverables/B01-rescue-teardown-20261113/` 已 Build/Cook/Stage/Package/Archive 成功，进程和 AutomationTool 退出码 0，日志 `.build/package-rescue-teardown-20261113.log`；BUILD-IDENTITY 保留构建身份。旧包不改。
+- `.build/b01-rescue-teardown-packaged/{rescue-teardown,lifecycle,default,aftermath,text-source}/index.json` 五项各 1/1 Success、所有失败/未执行/进行中/警告成功为 0，逐例 errors/warnings=0，五个进程和日志测试退出码 0。五次均实际 D3D12。
+- 新包 Bootstrap/Aftermath 的 `00000` 图已目视：ready、ended、七标记、中文标点及 NAR-0004/draft 完整可读。两种生命周期检查不截图，不能据此证明其 Slate 清理或实际呈现。
+- 五日志均有 HTML 模板缺失错误，原生 JSON/日志完整；新包尚待 test 独立接收，MR/CI 当前状态以原 PR 为准。本轮 Linux 未重跑。
+- 独立 agent `/root/rescue_review` 已另行核对构建身份、实际 UAT 日志、五份包报告/日志、两张新包截图及交接 diff/命令，批准受限候选交付。RepositoryBaseline 209 文档/681 链接、五项正文结构、PowerShell 命令语法和 diff 检查通过；未代替新头 CI 或 test 验收。
