@@ -113,7 +113,7 @@ $Engine = 'G:/Epic Games/UE_5.6'
 
 上游：`growth`、`narrative`、`art`；下游：`art`、`test`。
 
-- 本批 Lifecycle 五项交接正文与本机复现入口：[TEST-HANDOFF-0.1.0.md](TEST-HANDOFF-0.1.0.md)。沿用本机接收；使用新完整包，不改写构建身份。
+- 本批 RescueTeardown 五项交接正文与本机复现入口：[TEST-HANDOFF-0.1.0.md](TEST-HANDOFF-0.1.0.md)。沿用本机接收；使用新完整包，不改写构建身份。
 - 上批产品 `fb2861e` / 交接候选 `a5251c6` 已由 [PR #33](https://github.com/nilesthump/UEgame/pull/33) 合入 test。交接文档提交与产品构建身份分开记录。
 - 2026-11-13 本轮恢复：GitHub 只读确认 merged=true、merge=`b848a0d`；读取 test `00b4670` 的 CURRENT/evidence，保留其受限验收及 HTML 报告模板缺失限制。恢复核查未重跑旧候选 UE/Linux，不复写 test 结论；新增 Lifecycle 的本轮执行见上节。
 - 下一步入口：PR #35 已接收。当前继续 B01 RescueTeardown；新用例的包、独立审查及交接按本轮实际结果更新，不用旧包证明新用例。仍限定 B01，不启动 B02–B15。
@@ -126,3 +126,11 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 宿主日志包含两条引擎 VisionOS 编辑器图标缺失警告；不声称日志无警告。未重跑本地 Linux（核心未改）。
 - 此检查只覆盖同一运行世界中的 Actor 销毁及弱发送者迟到调用，不覆盖整个 UWorld 卸载、地图 travel、Slate 残留、持久恢复、实际呈现、实物输入或完整 B01。原 Lifecycle 包仍为 `74772e2`，不包含此新用例。
 - 独立 agent `/root/rescue_review` 已核对最终用例、r2 编译/报告/日志及本文，批准源码提交；审查要求补充新轮绑定后的旧弱发送者 ready/observe 拒绝断言，补齐后重编译复测 1/1。RepositoryBaseline 209 文档/681 链接与 diff 检查通过。
+
+## 2026-11-13 RescueTeardown 独立包
+
+- 干净源码 `b4f94e6` 的新包 `Deliverables/B01-rescue-teardown-20261113/` 已 Build/Cook/Stage/Package/Archive 成功，进程和 AutomationTool 退出码 0，日志 `.build/package-rescue-teardown-20261113.log`；BUILD-IDENTITY 保留构建身份。旧包不改。
+- `.build/b01-rescue-teardown-packaged/{rescue-teardown,lifecycle,default,aftermath,text-source}/index.json` 五项各 1/1 Success、所有失败/未执行/进行中/警告成功为 0，逐例 errors/warnings=0，五个进程和日志测试退出码 0。五次均实际 D3D12。
+- 新包 Bootstrap/Aftermath 的 `00000` 图已目视：ready、ended、七标记、中文标点及 NAR-0004/draft 完整可读。两种生命周期检查不截图，不能据此证明其 Slate 清理或实际呈现。
+- 五日志均有 HTML 模板缺失错误，原生 JSON/日志完整；新包尚待 test 独立接收，MR/CI 当前状态以原 PR 为准。本轮 Linux 未重跑。
+- 独立 agent `/root/rescue_review` 已另行核对构建身份、实际 UAT 日志、五份包报告/日志、两张新包截图及交接 diff/命令，批准受限候选交付。RepositoryBaseline 209 文档/681 链接、五项正文结构、PowerShell 命令语法和 diff 检查通过；未代替新头 CI 或 test 验收。
