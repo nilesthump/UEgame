@@ -7,16 +7,17 @@
 
 ## 当前工作项
 
-`OPS-0.1.0-01` 的治理集成已完成。当前跟进 `0.1.0 / B01`：通过 [MR #36](https://github.com/nilesthump/UEgame/pull/36) 接收 test 的生命周期受限 Win64 候选验收证据，合并提交 `324bf9fe96e1e8c41ade8479c91981c88b1a3cce`，源提交 `15d31034edffe1ad9045fd4e717d9a62a039033f`。该接收不是完整 B01 验收或发布批准。
+`OPS-0.1.0-01` 的治理集成已完成。当前跟进 `0.1.0 / B01`：通过 [MR #39](https://github.com/nilesthump/UEgame/pull/39) 接收 test 的 RescueTeardown 受限 Win64 候选验收证据，合并提交 `3e5d8fd357aaa10d3eff51ce2c2a563eeaf364ad`，源提交 `238b334ac109ee9986340be956c2df6fde294b76`。该接收不是完整 B01 验收或发布批准。
 
 - 唯一当前验收结论由 test 维护：[evidence.md](../../evidence/evidence.md)，重点查看 `PROD-B01`、`DISPLAY-01`、`PERF-01` 和 `FEEL-01`；ops 不另写验收结论。
-- 候选、实际执行报告和截图身份见原 MR 与 evidence；本次独立 agent `/root/ops_receive_review` 重新审查完整批次并批准受限接收，无阻断项，记录见 [原 PR 接收评论](https://github.com/nilesthump/UEgame/pull/36#issuecomment-6853106352)。未重新核实历史审查原始轨迹；agent 审查不等于 GitHub 账号批准。
+- 候选、实际执行报告和截图身份见原 MR 与 evidence；本次独立 agent `/root/ops_receive_review` 实查五文件 diff、构建身份/日志、五份 JSON/运行日志及两张 00001 截图，批准受限接收，无阻断项。未重新核实历史审查原始轨迹；agent 审查不等于 GitHub 账号批准。
 - 包、原生 JSON、日志与截图为本机忽略产物，不随 Git/MR 传递；跨机器接收须另行提供同一产物。
-- 当前包 BUILD-IDENTITY 记录产品 `74772e2` 的干净源码构建；此前包的提交前工作树构建限制不套用于本包。四份日志仍有 HTML 报告模板缺失错误，不把原生 JSON 成功扩大为日志无错误。本次 ops 只复核已有报告、日志与截图，未重跑 UE、Editor、构建或 Linux。
+- 当前包 BUILD-IDENTITY 记录产品 `b4f94e6` 的干净源码构建。报告根为 test 工作区 `.build/b01-rescue-teardown-receive-20261113-205935/`；完整包为 tech 工作区 `Deliverables/B01-rescue-teardown-20261113/`。五份原生报告各精确 1/1 Success，日志测试退出码均为 0；进程退出码沿用 test 原执行记录。五日志仍有 HTML 模板缺失 Error、ROOT 证书 Warning，不把原生 JSON 成功扩大为日志无错误。本次 ops 只复核已有产物，未重跑 UE、Editor、构建或本地 Linux。
+- 主 agent 实读 [PR #39 CI 44109371228](https://github.com/nilesthump/UEgame/actions/runs/44109371228)：repository-baseline/core-linux 成功，Linux 六个显式用例 6/6、零失败；narrative-text skipped 不计通过。接收前 ops RepositoryBaseline（209 文档/683 链接）、源分支 PipelineScope（4 commits/1 merge/9 逐提交文件计数）与 diff 检查通过。
 
 ## 未满足项与下一步
 
-- B01 仍为 InProgress；B02–B15 不启动。真实玩法/成功路线、正式字幕与媒体送达、其余文本显示、输入→核心处理→对应画面实际呈现 <50ms、本人体验和真实手柄仍未完成，详见唯一证据页。
+- B01 仍为 InProgress；B02–B15 不启动。世界卸载、地图切换、Slate 清理、持久恢复、真实异步回调调度系统、真实玩法/成功路线、正式字幕与媒体送达、其余文本显示、输入→核心处理→对应画面实际呈现 <50ms、本人体验和真实手柄仍未完成，详见唯一证据页。
 - 产品修复由 tech 正向交付 test 复测，再通过 test → ops 接收；问题与修正保留在原 PR 讨论/验收条目，不另建平行结论文件。
 - NAR-0001–0007 全部为 draft；文本定稿由 narrative 维护。其他管线 CURRENT 与契约中的旧快照由各文件所有者后续更新，接收状态以原 PR、当前验收以 evidence 为准。
 
@@ -28,4 +29,4 @@
 
 ## MR
 
-上游：`test`、`maintenance`；下游：`main`（由授权接收者合并）。本批上游 [MR #36](https://github.com/nilesthump/UEgame/pull/36) 已合并，后续交付仍遵循固定管线协议。
+上游：`test`、`maintenance`；下游：`main`（由授权接收者合并）。本批上游 [MR #39](https://github.com/nilesthump/UEgame/pull/39) 已合并，后续交付仍遵循固定管线协议。
