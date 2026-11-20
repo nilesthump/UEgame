@@ -1,32 +1,22 @@
 # ops — 当前工作
 
-- 目标版本：`0.1.0`
-- 实际线上版本：未发布（`onlineVersion=null`，无 tag）
-- 状态：InProgress（已接收 B01 受限候选证据；完整 B01 与发布条件未满足）
-- 分支/工作区：`pipeline/ops` / `.worktrees/pipelines/ops`
+- 目标版本 `0.1.0`，线上未发布，`onlineVersion=null`。
+- 固定分支 `pipeline/ops`，工作树 `.worktrees/pipelines/ops`。
+- `OPS-0.1.0-01` 治理集成已完成。B01 仍在实施，完整验收与发布条件待满足。
 
-## 当前工作项
+## 当前接收
 
-`OPS-0.1.0-01` 的治理集成已完成。当前跟进 `0.1.0 / B01`：通过 [MR #39](https://github.com/nilesthump/UEgame/pull/39) 接收 test 的 RescueTeardown 受限 Win64 候选验收证据，合并提交 `3e5d8fd357aaa10d3eff51ce2c2a563eeaf364ad`，源提交 `238b334ac109ee9986340be956c2df6fde294b76`。该接收不是完整 B01 验收或发布批准。
+2026-11-20，ops 通过 [PR #42](https://github.com/nilesthump/UEgame/pull/42) 接收 test 的剑术救援灰盒 Win64 验收记录，合并提交 `b32b88d3310e7dbc6bf57ef771b13ecebf21d5fd`，test 源提交 `dddcd8187f45963014d0dffe9e87faa977b55d33`。test 此前通过 [PR #41](https://github.com/nilesthump/UEgame/pull/41) 接收 tech 候选 `4b31325`。本次受测包来自产品提交 `c7872c3`，配置为 Win64 Development。软件注入的五次剑击全部完成后，玩家和小孩存活，游戏进入 TimeSkip 等待环境结算。
 
-- 唯一当前验收结论由 test 维护：[evidence.md](../../evidence/evidence.md)，重点查看 `PROD-B01`、`DISPLAY-01`、`PERF-01` 和 `FEEL-01`；ops 不另写验收结论。
-- 候选、实际执行报告和截图身份见原 MR 与 evidence；本次独立 agent `/root/ops_receive_review` 实查五文件 diff、构建身份/日志、五份 JSON/运行日志及两张 00001 截图，批准受限接收，无阻断项。未重新核实历史审查原始轨迹；agent 审查不等于 GitHub 账号批准。
-- 包、原生 JSON、日志与截图为本机忽略产物，不随 Git/MR 传递；跨机器接收须另行提供同一产物。
-- 当前包 BUILD-IDENTITY 记录产品 `b4f94e6` 的干净源码构建。报告根为 test 工作区 `.build/b01-rescue-teardown-receive-20261113-205935/`；完整包为 tech 工作区 `Deliverables/B01-rescue-teardown-20261113/`。五份原生报告各精确 1/1 Success，日志测试退出码均为 0；进程退出码沿用 test 原执行记录。五日志仍有 HTML 模板缺失 Error、ROOT 证书 Warning，不把原生 JSON 成功扩大为日志无错误。本次 ops 只复核已有产物，未重跑 UE、Editor、构建或本地 Linux。
-- 主 agent 实读 [PR #39 CI 44109371228](https://github.com/nilesthump/UEgame/actions/runs/44109371228)：repository-baseline/core-linux 成功，Linux 六个显式用例 6/6、零失败；narrative-text skipped 不计通过。接收前 ops RepositoryBaseline（209 文档/683 链接）、源分支 PipelineScope（4 commits/1 merge/9 逐提交文件计数）与 diff 检查通过。
+- 独立审查者 `/root/receive_review` 核对本批 18 个文件的变更范围、灰盒代码与用例、构建身份、UAT 归档日志、test 六份原生报告及对应日志，并目视三张本轮截图。审查批准本批受限接收。记录见原 PR。
+- test 从同一包执行六次，每份原生报告各 1/1 Success。六份日志的测试退出码均为 0，均记录 HTML 模板缺失。进程退出码取自 test 执行记录。ops 本轮复核已有产物，本地游戏用例执行数为 0。
+- [PR #42 CI](https://github.com/nilesthump/UEgame/actions/runs/44753876138) 四项作业成功，Linux 核心六例全部执行并通过。接收前 ops 仓库基线通过，test 源分支写入范围与候选 diff 检查通过。
+- 构建、原生报告、日志与截图保存在本机。复核位置及当前验收结论见 test 维护的 [evidence.md](../../evidence/evidence.md)，关注 `PROD-B01`、`DISPLAY-01`、`PERF-01` 和 `FEEL-01`。跨机复核须取得同一批产物。
 
-## 未满足项与下一步
+## 下一步
 
-- B01 仍为 InProgress；B02–B15 不启动。世界卸载、地图切换、Slate 清理、持久恢复、真实异步回调调度系统、真实玩法/成功路线、正式字幕与媒体送达、其余文本显示、输入→核心处理→对应画面实际呈现 <50ms、本人体验和真实手柄仍未完成，详见唯一证据页。
-- 产品修复由 tech 正向交付 test 复测，再通过 test → ops 接收；问题与修正保留在原 PR 讨论/验收条目，不另建平行结论文件。
-- NAR-0001–0007 全部为 draft；文本定稿由 narrative 维护。其他管线 CURRENT 与契约中的旧快照由各文件所有者后续更新，接收状态以原 PR、当前验收以 evidence 为准。
+tech 从 TimeSkip 接入旧时代环境结算回执、30 年后回访布置与控制恢复，经 test 复测后交付 ops。世界卸载、地图切换、持久恢复、真实战斗、正式字幕与媒体、实物手柄、输入到对应画面实际呈现 <50 ms 和本人体验仍待验证。七条叙事文本均为 draft，当前显示证据仅覆盖 NAR-0004 草稿。B02–B15 尚未启动。
 
 ## 发布边界
 
-- 当前没有满足完整发布条件的产品候选；运营仍一次只接收一个发布候选。
-- 不因本次证据接收执行 ops → main、发布游戏包或创建正式 tag；`onlineVersion=null`，`main` 不作为“已上线 0.1.0”记录。
-- 发布成功后按 [releases/README.md](../../releases/README.md) 更新 `main` 和线上 `x.y.z`；失败保持原线上版本。
-
-## MR
-
-上游：`test`、`maintenance`；下游：`main`（由授权接收者合并）。本批上游 [MR #39](https://github.com/nilesthump/UEgame/pull/39) 已合并，后续交付仍遵循固定管线协议。
+ops 按[交互协议](../PROTOCOL.md)接收 test 或 maintenance 的候选。完整 B01 与发布条件仍待满足。目标版本、线上版本和标签以[发布状态](../../releases/state.json)为准；正式发布依照[发布流程](../../releases/README.md)办理。
