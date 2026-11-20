@@ -35,7 +35,7 @@
 
 ## 4. 接收/验收条件
 
-1. 少量文本已在目标显示链完成 UE 显示/字幕接入验证（当前 NotRun）；
+1. 在目标显示链完成少量文本的 UE 显示与字幕接入验证。当前 `DISPLAY-01` 为 `Partial`，仅 `NAR-0004 draft` 的显示通过。其余条目、正式字幕与声音仍待验收，草稿探针不提交媒体送达回执。见 [test 的 DISPLAY-01 证据](https://github.com/nilesthump/UEgame/blob/238b334ac109ee9986340be956c2df6fde294b76/spec/evidence/evidence.md)。
 2. 文本条目为 `final`，且 art 收到稳定 CueId；
 3. 来源、加工/合成、使用条件和署名记录完整；
 4. 导入清单与实际资产一致，tech 可复现导入；
@@ -43,4 +43,4 @@
 
 ## 5. 当前结论
 
-以上条件均未满足，因此本请求只建立交接规格，不要求 art 制作，也不把计划写成已交付资产。
+制作请求仍为 `Blocked`，B13 继续锁定。待 narrative 提供 final revision、tech/test 完成目标字幕链验证并由 test 更新证据后，tech 再向 art 确认可制作的 CueId/SegmentId 批次、导入规格和验收方式。
