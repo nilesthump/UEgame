@@ -1,24 +1,25 @@
 ## 目标版本与工作项
 
 - 版本：0.1.0
-- 工作项：TECH-0.1.0-01 / B01 剑术救援灰盒，从发现遇险到进入 TimeSkip。
+- 工作项：TECH-0.1.0-01 / B01，剑术救援成功后的环境结算、三十年回访标记布置与控制恢复。
 
 ## 交付内容
 
-- 产品源码 `c7872c3790996d17e499b86b5b46cc0d7ece3c3a`。本地 Win64 Development 包位于 `G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-rescue-success-20261120/`。包内 BUILD-IDENTITY.json 关联源码、引擎、构建日志和逐例报告。
-- 以 `-B01RescueGraybox` 启动包的 `Windows/UEgame.exe`。第一次按 E 发现遇险，随后按五次 E，每次剑击击败一个威胁标记。前四击仍在救援，第五击后核心锁定剑术方式并关闭救援输入。画面应显示等待环境结算、玩家和小孩存活、五个威胁死亡。
-- 相对 test 上次接收的 #37，随 tech 历史带入 #38、#40 及 `518b3b9` 对 DISPLAY-01 草稿显示范围的说明。七条文本均为 draft，B13 素材制作仍受限。
+- 产品源码 `85bb5691eae059255e356a762c33a45c22abe121`。同机 Win64 Development 包位于 `G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-revisit-20261120/`。BUILD-IDENTITY.json 记录源码、引擎、构建日志和用例报告。
+- 传入 `-B01RescueGraybox` 启动默认地图。按一次 E 发现遇险，再按五次 E 完成剑术救援。过渡遮挡旧现场后消费旧时代第 180、300 秒的雨计划，布置镇上玩家、剑术教师与学生，再淡入。按 D 向画面右侧移动，按 A 返回。
+- 回访用例在教师暂时不可用时检查遮罩和输入门槛，再恢复组件，核对回访计时起点、旧现场退役及 A/D 的屏幕方向。核心用例独立核对三项就绪的六种顺序和失效回执。
 
 ## 接收条件
 
-test 在自己的固定工作树核对构建身份、独立审查及当前候选 CI，使用同机完整包，按下面的命令从默认地图分别启动六次。每次都应生成新的原生 JSON 和日志。另目视本轮新生成的 Bootstrap、Aftermath 和 RescueSuccess 三张图，检查 ready、草稿及结束提示、救援结算等待提示与标记状态。用 merge commit 接收后，test 在唯一 evidence 更新本批实际结果。
+test 核对构建身份和本候选 CI，从同一个新包按以下命令中的七项分别启动，保留每次新生成的 JSON 和日志，核对实际设备为 D3D12。目视本次新生成的 Bootstrap、Aftermath、RescueSuccess、Revisit 四张截图，分别检查启动、失败草稿、第五击过渡和回访的角色及控制提示。通过后以 merge commit 接收，更新唯一 evidence 并按协议交付 ops。
 
 ```powershell
 $ErrorActionPreference = 'Stop'
-$candidateExe = 'G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-rescue-success-20261120/Windows/UEgame.exe'
-$reportRoot = Join-Path $PWD ('.build/b01-rescue-success-receive-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$candidateExe = 'G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-revisit-20261120/Windows/UEgame.exe'
+$reportRoot = Join-Path $PWD ('.build/b01-revisit-receive-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 New-Item -ItemType Directory -Path $reportRoot -ErrorAction Stop | Out-Null
 $cases = @(
+    @{ Name='revisit'; Test='UEgame.WorldScenario.B01.Revisit'; Flags=@('-B01RescueGraybox') },
     @{ Name='rescue-success'; Test='UEgame.WorldScenario.B01.RescueSuccess'; Flags=@('-B01RescueGraybox') },
     @{ Name='rescue-teardown'; Test='UEgame.WorldScenario.B01.RescueTeardown'; Flags=@('-B01AftermathGraybox','-B01DraftTextPreview') },
     @{ Name='lifecycle'; Test='UEgame.WorldScenario.B01.Lifecycle'; Flags=@('-B01AftermathGraybox','-B01DraftTextPreview') },
@@ -28,7 +29,7 @@ $cases = @(
 )
 foreach ($case in $cases) {
     $caseReport = Join-Path $reportRoot $case.Name
-    $runArgs = @('-windowed','-ResX=1280','-ResY=720','-unattended') + $case.Flags + @(
+    $runArgs = @('-windowed','-ResX=1280','-ResY=720','-unattended','-d3d12') + $case.Flags + @(
         ('-ExecCmds="Automation RunTests ' + $case.Test + ';Quit"'),
         '-TestExit="Automation Test Queue Empty"',
         ('-ReportExportPath="' + $caseReport + '"'),
@@ -43,19 +44,20 @@ foreach ($case in $cases) {
         throw ('Report requires investigation: ' + $case.Name)
     }
     if ($report.tests[0].errors -ne 0 -or $report.tests[0].warnings -ne 0 -or !(Select-String -LiteralPath ($caseReport + '.log') -SimpleMatch 'TEST COMPLETE. EXIT CODE: 0')) { throw ('Inspect native logs: ' + $case.Name) }
+    if (!(Select-String -LiteralPath ($caseReport + '.log') -Pattern 'LogRHI: Loading RHI module D3D12RHI')) { throw ('Missing D3D12 evidence: ' + $case.Name) }
     Write-Output ('Passed=' + $case.Test)
 }
 ```
 
 ## 最新验证
 
-- 从干净的产品提交构建 Win64 Development，Build、Cook、Stage、Package、Archive 均成功，UAT 退出码 0。日志 `.build/package-rescue-success-20261120.log`。
-- 技术侧从归档根程序六次 D3D12 启动，六项各 1/1 Success，逐例 errors/warnings 和进程/测试退出码均为 0。每份原生 `index.json` 及同名日志位于 `.build/b01-rescue-1120-packaged/` 下，分目录名见 BUILD-IDENTITY。六份日志都报告 HTML 模板缺失。人工目视了新包三张 00000 图，默认 ready、失败后果中文草稿、成功等待环境及七标记均清晰可读。
-- 本轮 Editor Development 编译成功，真实 D3D12 游戏宿主 RescueSuccess 1/1，报告 `.build/b01-success-editor-game-1120/index.json`。Ubuntu/GCC 13.3 同源核心 6/6，报告 `.build/core-b01-1120/ctest-junit.xml`。
-- 独立审查者 `independent_review` 已核对功能提交，并独立核对新包构建身份、UAT 日志、六份包报告和日志、三张截图及交接命令，批准本批候选交付。
+- 从干净的产品提交构建 Win64 Development。Build、Cook、Stage、Package、Archive 成功，AutomationTool 退出码 0，日志 `.build/package-revisit-20261120.log`。
+- 从归档根程序七次 D3D12 启动，每项 1/1 Success，逐例 warnings/errors 为 0，进程及日志退出码均为 0。七份原生 JSON 和同名日志见 `.build/b01-revisit-packaged/`，七份日志均报告 HTML 模板缺失。四张 00000 截图在包内 `Windows/UEgame/Saved/Screenshots/Windows/`，已目视启动提示、失败草稿、第五击的渐变过渡、三十年后回访角色与操作提示。
+- Linux/GCC 13.3 核心 7/7。UE Editor Development 编译成功，D3D12 游戏宿主 Revisit 与 RescueSuccess 各 1/1。执行路径和修复情况见本管线 CURRENT。
+- 独立审查者 review 已批准功能提交，并核对构建身份、UAT 日志、七份原生报告与日志、四张截图和交接命令，批准本批灰盒候选交付 test。
 
 ## 未满足项
 
-- test 待独立复测新包并按版本更新 evidence；当前候选 CI 结果以对应执行记录为准。
-- 救援灰盒止于 TimeSkip。技术后续需接入实际环境结算及完成回执、回访布置和控制恢复，覆盖 30 年后的回访。真实感知与战斗、整个世界卸载和地图切换、旧界面清理、存档恢复、正式字幕与声音送达仍待联调。
-- 自动化使用软件输入。实物手柄、本人试玩及输入经核心到实际画面呈现的 50 ms 约束均待实测。目标 0.1.0 尚未发布。
+- test 待独立复测，当前候选 CI 以原 PR 为准。B01 仍在实施，目标 0.1.0 未发布。
+- 本批剑术灰盒只结算两个固定雨事件。完整火湿和破坏痕迹、真实战斗和导航、世界卸载与恢复、触发并实际听到群众和教师的关键内容、正式声音与字幕仍待对应管线集成。
+- 回访使用屏幕上的角色标记验证 A/D 移动，自动化输入来自软件。实物手柄、本人试玩及输入至对应画面实际呈现小于 50 ms 均待实测。

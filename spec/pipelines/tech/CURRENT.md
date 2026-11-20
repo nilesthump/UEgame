@@ -154,3 +154,4 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - Ubuntu/GCC 13.3 实跑 7/7，报告 `.build/core-revisit-1120/ctest-junit.xml`。新用例覆盖三项就绪的六种顺序及失效、重复、过早回执。UE Editor Development 编译成功，日志 `.build/b01-revisit-editor-r6.log`。
 - D3D12 游戏宿主 Revisit 和 RescueSuccess 各 1/1，进程及日志测试退出码均为 0，原生报告在 `.build/b01-revisit-r6/`。Revisit 还实测了教师失效时保持遮挡、恢复后淡入，以及屏幕上的 D 向右、A 返回。回访截图 `Saved/Screenshots/WindowsEditor/B01Revisit00003.png`。
 - 实现者 revisit_fix，核心用例作者 core_checks。独立审查者 review 核对最终源码、Linux 与 UE 执行记录及回访截图，确认遮挡、控制恢复重试、新演员身份和按键方向修正后批准本批功能提交。
+- 干净产品提交 `85bb569` 已构建 Win64 Development 本地包，七次独立 D3D12 启动各 1/1 成功。七份日志均提示 HTML 模板缺失，已保留原生 JSON。构建身份、截图、test 复测命令及剩余范围见[本批交接](TEST-HANDOFF-0.1.0.md)。
