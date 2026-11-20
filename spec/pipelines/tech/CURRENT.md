@@ -143,3 +143,4 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 灰盒只模拟剑击对标记的结果。后续环境端须结算旧时代剩余计划，再由回访布置、过渡与控制恢复共同解锁 Revisit。B01 仍为 InProgress。
 - 本轮 WSL Ubuntu/GCC 13.3 核心 6/6（`.build/core-b01-1120/ctest-junit.xml`），Editor Development 编译成功（`.build/b01-success-editor-1120.log`）。D3D12 游戏宿主 RescueSuccess 1/1，进程和测试退出码 0（`.build/b01-success-editor-game-1120/index.json`）；已目视 `Saved/Screenshots/WindowsEditor/B01RescueSuccess00000.png` 中等待提示、两个生还标记和五个死亡标记。
 - 独立审查者 `independent_review` 核对适配层、用例、编译日志、两份执行报告及截图，批准本批功能提交。按审查意见校正了输入关闭顺序和用例覆盖描述。
+- 本地完整包以干净源码 `c7872c3` 构建。归档包六次 D3D12 启动各 1/1；本机路径、复测命令和 HTML 模板限制见 [本批交接](TEST-HANDOFF-0.1.0.md)。同机 test 独立接收待执行。
