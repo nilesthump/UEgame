@@ -12,9 +12,11 @@ class ABootstrapMarker final : public AActor
 public:
     ABootstrapMarker();
     void InitializeMarker(const FString& Label, bool Alive);
+    void MarkDefeated();
     bool IsAlive() const { return bAlive; }
     bool IsReady() const;
 private:
     UPROPERTY() TObjectPtr<UTextRenderComponent> LabelText;
+    FString MarkerLabel;
     bool bAlive = true;
 };

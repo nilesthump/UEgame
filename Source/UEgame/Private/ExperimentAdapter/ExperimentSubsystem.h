@@ -17,8 +17,11 @@ public:
     bool NotifyBootstrapReady(AExperimentWorldDirector* Director, experiment::RunId Run);
     bool IsCurrentBinding(const AExperimentWorldDirector* Director, experiment::RunId Run) const;
     TOptional<experiment::ExperimentViewProjection> View() const;
+    bool AdvanceBootstrapRescue(AExperimentWorldDirector* Director, experiment::RunId Run);
     bool ObserveBootstrapAftermath(AExperimentWorldDirector* Director, experiment::RunId Run);
 private:
+    bool ApplySettlement(AExperimentWorldDirector* Director, const experiment::SettlementCompletedFact& Fact,
+        const experiment::EncounterSnapshot& Snapshot);
     experiment::FactContext NextContext(experiment::RunId Run);
     uint64 NextSequence = 1;
     experiment::BatchId NextBatch = 1;

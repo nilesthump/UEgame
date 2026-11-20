@@ -29,4 +29,6 @@
 
 ## 验收限制
 
-当前 7 条均为 `draft`，只完成结构约定，**尚未在 UE 内验证显示或字幕接入**，也未据此批量制作声音/演出资产。少量文本显示验证通过前，不得把文本契约完成写成运行时验收完成。
+当前 7 条均为 `draft`。test 唯一 [evidence / DISPLAY-01](https://github.com/nilesthump/UEgame/blob/pipeline/test/spec/evidence/evidence.md) 为 Partial：仅 NAR-0004 草稿探针显示通过，执行与接收入口见原 [PR #35](https://github.com/nilesthump/UEgame/pull/35)。该探针不提交媒体送达回执；其余条目、正式字幕及声音/媒体仍未验收。
+
+本批只收窄显示说明，不改 TEXT.csv 正文、制作说明或状态。正式首批样本仍为 NAR-0001–NAR-0003；单条草稿显示不代表正式首批门槛通过，不将条目改为 `final`，不解锁 B13，也不宣称整体运行时验收完成。

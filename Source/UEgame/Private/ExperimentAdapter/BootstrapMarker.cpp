@@ -9,9 +9,14 @@ ABootstrapMarker::ABootstrapMarker()
 }
 void ABootstrapMarker::InitializeMarker(const FString& Label, bool Alive)
 {
+    MarkerLabel = Label;
     bAlive = Alive;
     LabelText->SetText(FText::FromString(Label + (Alive ? TEXT(": alive") : TEXT(": dead"))));
     LabelText->SetTextRenderColor(Alive ? FColor::Green : FColor::Red);
+}
+void ABootstrapMarker::MarkDefeated()
+{
+    InitializeMarker(MarkerLabel, false);
 }
 bool ABootstrapMarker::IsReady() const
 {

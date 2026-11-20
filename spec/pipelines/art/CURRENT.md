@@ -1,7 +1,7 @@
 # art — 当前工作
 
 - 目标版本：`0.1.0`
-- 状态：Blocked（等待文本 final/显示验证和技术导入规格）；本轮仅确认交接契约
+- 状态：Blocked（等待文本 final revision、正式显示/字幕链验证和可制作批次）；本轮仅同步 test 的单条草稿显示进展
 - 分支/工作区：`pipeline/art` / `.worktrees/pipelines/art`
 
 ## 当前工作项
@@ -22,7 +22,7 @@
 
 ## 未满足项
 
-上述条件未满足，故当前不交付资产、不把占位或计划写成完成。`art → tech` 只交付就绪/阻塞结论。
+DISPLAY-01 已有 Partial：仅 NAR-0004 draft 显示通过；该结果来自 test 的唯一证据，核对基线及限制见 ASSET-GATE。全部文本仍 draft，上游请求仍 Blocked，正式字幕、声音与制作批次未就绪，故当前不交付资产、不把占位或计划写成完成。`art → tech` 只交付就绪/阻塞结论。
 
 ## MR
 
