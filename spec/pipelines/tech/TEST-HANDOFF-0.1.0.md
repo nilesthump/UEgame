@@ -1,27 +1,25 @@
 ## 目标版本与工作项
 
 - 版本：0.1.0
-- 工作项：TECH-0.1.0-01 / B01 未结束 Rescue 的 Actor 销毁、GC 后弱发送者与旧轮隔离。
-- PR #35 的 Lifecycle 候选已由 test 接收（merge `4ba150c`，test 证据 `15d3103`）。本页为下一批 RescueTeardown 的交接快照；MR/CI 最新状态以对应原 PR 为准，新包尚未由 test 接收，B01 InProgress。
+- 工作项：TECH-0.1.0-01 / B01 剑术救援灰盒，从发现遇险到进入 TimeSkip。
 
 ## 交付内容
 
-- 构建源码：`b4f94e68a834a2f0e95bdb90718de7d89d1b812a`，只新增 RescueTeardown 开发用例及 tech 说明，无生产逻辑/核心修改；后续交接文档不改变构建输入。
-- 在同一真实 UWorld 未结束 Rescue 中销毁 Director，跨帧完整 GC，确认旧 Director/七个 Marker 实际回收；弱发送者解析后的 ready/observe 与 unbind 不影响新轮，旧 Run 无法操作新 Actor，新轮仍能观察结束。
-- 新完整包：`G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-rescue-teardown-20261113/`。`BUILD-IDENTITY.json` 记录干净提交构建、UE 5.6.1 CL44394996、Win64 Development、地图、构建日志和报告路径。旧包保留。
+- 产品源码 `c7872c3790996d17e499b86b5b46cc0d7ece3c3a`。本地 Win64 Development 包位于 `G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-rescue-success-20261120/`。包内 BUILD-IDENTITY.json 关联源码、引擎、构建日志和逐例报告。
+- 以 `-B01RescueGraybox` 启动包的 `Windows/UEgame.exe`。第一次按 E 发现遇险，随后按五次 E，每次剑击击败一个威胁标记。前四击仍在救援，第五击后核心锁定剑术方式并关闭救援输入。画面应显示等待环境结算、玩家和小孩存活、五个威胁死亡。
+- 相对 test 上次接收的 #37，随 tech 历史带入 #38、#40 及 `518b3b9` 对 DISPLAY-01 草稿显示范围的说明。七条文本均为 draft，B13 素材制作仍受限。
 
 ## 接收条件
 
-- 沿用本机完整包接收；包与原生输出为忽略文件，不随 Git 自动交付。跨机器须提供完整目录，不能只复制根启动程序。
-- test 在自身固定工作区按 AGENTS 读序恢复，核对版本/源码/独立审查及对应 CI；分别启动根程序五次，不覆盖地图。Lifecycle、RescueTeardown、Aftermath 使用两个探针开关，另两项不使用。
-- 下述报告路径使用新时间戳，逐例检查精确名称、1/1 Success、全部失败/未执行/进行中/警告成功为零；还需检查逐例 errors/warnings、日志 TEST COMPLETE EXIT CODE 0 与进程退出码。
+test 在自己的固定工作树核对构建身份、独立审查及当前候选 CI，使用同机完整包，按下面的命令从默认地图分别启动六次。每次都应生成新的原生 JSON 和日志。另目视本轮新生成的 Bootstrap、Aftermath 和 RescueSuccess 三张图，检查 ready、草稿及结束提示、救援结算等待提示与标记状态。用 merge commit 接收后，test 在唯一 evidence 更新本批实际结果。
 
 ```powershell
 $ErrorActionPreference = 'Stop'
-$candidateExe = 'G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-rescue-teardown-20261113/Windows/UEgame.exe'
-$reportRoot = Join-Path $PWD ('.build/b01-rescue-teardown-receive-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$candidateExe = 'G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-rescue-success-20261120/Windows/UEgame.exe'
+$reportRoot = Join-Path $PWD ('.build/b01-rescue-success-receive-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 New-Item -ItemType Directory -Path $reportRoot -ErrorAction Stop | Out-Null
 $cases = @(
+    @{ Name='rescue-success'; Test='UEgame.WorldScenario.B01.RescueSuccess'; Flags=@('-B01RescueGraybox') },
     @{ Name='rescue-teardown'; Test='UEgame.WorldScenario.B01.RescueTeardown'; Flags=@('-B01AftermathGraybox','-B01DraftTextPreview') },
     @{ Name='lifecycle'; Test='UEgame.WorldScenario.B01.Lifecycle'; Flags=@('-B01AftermathGraybox','-B01DraftTextPreview') },
     @{ Name='default'; Test='UEgame.WorldScenario.B01.Bootstrap'; Flags=@() },
@@ -44,24 +42,20 @@ foreach ($case in $cases) {
     if ($report.succeeded -ne 1 -or $report.failed -ne 0 -or $report.notRun -ne 0 -or $report.inProcess -ne 0 -or $report.succeededWithWarnings -ne 0) {
         throw ('Report requires investigation: ' + $case.Name)
     }
+    if ($report.tests[0].errors -ne 0 -or $report.tests[0].warnings -ne 0 -or !(Select-String -LiteralPath ($caseReport + '.log') -SimpleMatch 'TEST COMPLETE. EXIT CODE: 0')) { throw ('Inspect native logs: ' + $case.Name) }
     Write-Output ('Passed=' + $case.Test)
 }
 ```
 
-- 五日志均有 HTML 模板缺失错误，未生成 HTML。原生 JSON、日志与截图完整；不得声称日志无错误。
-- test 必须目视本次复测新编号的 `Windows/UEgame/Saved/Screenshots/Windows/B01Bootstrap*.png` 和 `B01Aftermath*.png`；技术本轮 `00000` 图保留。RescueTeardown/Lifecycle 不生成截图，不能用 Aftermath 图证明其 Slate 清理或呈现。
-- 满足条件后用 merge commit 接收；正式当前结论只由 test 写唯一 evidence，问题回到原 PR，由 tech 修复。
-
 ## 最新验证
 
-- 干净提交 `b4f94e6` 构建前及归档后工作区干净；Build/Cook/Stage/Package/Archive 实际全部成功，进程与 AutomationTool 退出码 0：`.build/package-rescue-teardown-20261113.log`。MSVC 14.38.33145 / SDK 10.0.22621.0，禁用 UBA、单并发编译。
-- 2026-11-13 18:29–18:30（Asia/Shanghai），新包五次 D3D12 启动实际通过：`.build/b01-rescue-teardown-packaged/{rescue-teardown,lifecycle,default,aftermath,text-source}/index.json` 各精确 1/1 Success，failed/notRun/inProcess/succeededWithWarnings=0，逐例 errors/warnings=0；五进程与日志测试退出码均 0。
-- 已目视新包 `B01Bootstrap00000.png`（ready）及 `B01Aftermath00000.png`（ended、七标记、中文标点及 NAR-0004/draft 完整可读）。截图不证明端到端延迟。
-- Editor r2 实际编译成功：`.build/b01-rescue-teardown-editor-build-r2.log`；真实 D3D12 宿主 `.build/b01-rescue-teardown-game-r2/index.json` 新用例 1/1、进程/测试退出码0。宿主有两条 VisionOS 编辑器图标缺失警告；包日志 HTML 限制如上。
-- 独立 agent `/root/rescue_review` 已核对最终源码、r2 编译/宿主报告与说明并批准。同一独立 agent 已另行核对新包 BUILD-IDENTITY、实际 UAT 日志、五份精确报告/日志、两张新包截图、文档 diff 与复测命令，批准本批受限候选交接，无阻断项；本地 Linux 未重跑（核心未改），新头远端 CI 尚待实际执行，不复用旧头 CI 作为通过。
+- 从干净的产品提交构建 Win64 Development，Build、Cook、Stage、Package、Archive 均成功，UAT 退出码 0。日志 `.build/package-rescue-success-20261120.log`。
+- 技术侧从归档根程序六次 D3D12 启动，六项各 1/1 Success，逐例 errors/warnings 和进程/测试退出码均为 0。每份原生 `index.json` 及同名日志位于 `.build/b01-rescue-1120-packaged/` 下，分目录名见 BUILD-IDENTITY。六份日志都报告 HTML 模板缺失。人工目视了新包三张 00000 图，默认 ready、失败后果中文草稿、成功等待环境及七标记均清晰可读。
+- 本轮 Editor Development 编译成功，真实 D3D12 游戏宿主 RescueSuccess 1/1，报告 `.build/b01-success-editor-game-1120/index.json`。Ubuntu/GCC 13.3 同源核心 6/6，报告 `.build/core-b01-1120/ctest-junit.xml`。
+- 独立审查者 `independent_review` 已核对功能提交，并独立核对新包构建身份、UAT 日志、六份包报告和日志、三张截图及交接命令，批准本批候选交付。
 
 ## 未满足项
 
-- test：新完整包尚未独立接收。全部本机输出须完整保留；旧 PR #35 的验收不自动覆盖新候选。
-- tech/test：只覆盖同一 UWorld 的 Actor 销毁及通过弱引用解析的迟到调用；不覆盖整个 UWorld 卸载、地图切换、Slate 残留、持久恢复、真实玩法/成功路线、正式媒体、端到端 <50ms、本人体验或实物输入。不声称存在真实异步回调调度系统；软件注入不冒充实物测试。
-- narrative：全部 NAR 仍 draft；不改 final、不启动 B13。B01 InProgress，B02–B15 不启动，onlineVersion=null；不发布、不建 tag。
+- test 待独立复测新包并按版本更新 evidence；当前候选 CI 结果以对应执行记录为准。
+- 救援灰盒止于 TimeSkip。技术后续需接入实际环境结算及完成回执、回访布置和控制恢复，覆盖 30 年后的回访。真实感知与战斗、整个世界卸载和地图切换、旧界面清理、存档恢复、正式字幕与声音送达仍待联调。
+- 自动化使用软件输入。实物手柄、本人试玩及输入经核心到实际画面呈现的 50 ms 约束均待实测。目标 0.1.0 尚未发布。

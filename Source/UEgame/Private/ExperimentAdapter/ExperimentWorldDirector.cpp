@@ -36,7 +36,8 @@ void AExperimentWorldDirector::BeginPlay()
 {
     Super::BeginPlay();
     // Opt-in fixture: never claim these markers are implemented encounter gameplay.
-    if (FParse::Param(FCommandLine::Get(), TEXT("B01AftermathGraybox")))
+    bRescueFixture = FParse::Param(FCommandLine::Get(), TEXT("B01RescueGraybox"));
+    if (bRescueFixture || FParse::Param(FCommandLine::Get(), TEXT("B01AftermathGraybox")))
     {
         for (int32 Index = 0; Index < 7; ++Index)
         {
@@ -44,12 +45,13 @@ void AExperimentWorldDirector::BeginPlay()
                 GetActorLocation() + FVector(0, 0, -60.f - Index * 28.f), FRotator::ZeroRotator);
             Markers.Add(Marker);
             if (Marker) Marker->InitializeMarker(Index == 0 ? TEXT("Player") :
-                Index == 1 ? TEXT("Child") : FString::Printf(TEXT("Threat %d"), Index - 1), Index != 1);
+                Index == 1 ? TEXT("Child") : FString::Printf(TEXT("Threat %d"), Index - 1), bRescueFixture || Index != 1);
         }
         if (auto* Controller = GetWorld()->GetFirstPlayerController())
         {
             EnableInput(Controller);
-            InputComponent->BindKey(EKeys::E, IE_Pressed, this, &AExperimentWorldDirector::ObserveBootstrapAftermath);
+            InputComponent->BindKey(EKeys::E, IE_Pressed, this, bRescueFixture
+                ? &AExperimentWorldDirector::AdvanceBootstrapRescue : &AExperimentWorldDirector::ObserveBootstrapAftermath);
         }
     }
     if (UGameInstance* Instance = GetGameInstance())
@@ -64,7 +66,10 @@ void AExperimentWorldDirector::BeginPlay()
                 const auto View = Adapter->View();
                 if (View.IsSet() && View->phase == experiment::ExperimentPhase::Rescue)
                 {
-                    StatusText->SetText(FText::FromString(Markers.IsEmpty() ? TEXT("B01: bootstrap ready") : TEXT("B01 GRAYBOX: E = observe aftermath")));
+                    const TCHAR* Prompt = TEXT("B01: bootstrap ready");
+                    if (bRescueFixture) Prompt = TEXT("GRAYBOX: E = spot threats");
+                    else if (!Markers.IsEmpty()) Prompt = TEXT("B01 GRAYBOX: E = observe aftermath");
+                    StatusText->SetText(FText::FromString(Prompt));
                     UE_LOG(LogTemp, Display, TEXT("B01 bootstrap world ready: Run=%llu"),
                         static_cast<unsigned long long>(BindingRun));
                 }
@@ -87,7 +92,7 @@ void AExperimentWorldDirector::EndPlay(const EEndPlayReason::Type Reason)
 
 bool AExperimentWorldDirector::HasObservableAftermath() const
 {
-    if (bGrayboxStopped || Markers.Num() != 7) return false;
+    if (bRescueFixture || bGrayboxStopped || Markers.Num() != 7) return false;
     for (const auto& Marker : Markers)
         if (!IsValid(Marker) || !Marker->IsReady()) return false;
     return !Markers[1]->IsAlive();
@@ -105,6 +110,23 @@ experiment::EncounterSnapshot AExperimentWorldDirector::SampleBootstrapEncounter
     Snapshot.allFiveThreatsDead = true;
     for (int32 Index = 2; Index < 7; ++Index) Snapshot.allFiveThreatsDead &= !Markers[Index]->IsAlive();
     return Snapshot;
+}
+ABootstrapMarker* AExperimentWorldDirector::NextRescueThreat() const
+{
+    if (!bRescueFixture || bGrayboxStopped || Markers.Num() != 7) return nullptr;
+    ABootstrapMarker* Next = nullptr;
+    for (int32 Index = 0; Index < Markers.Num(); ++Index)
+    {
+        auto* Marker = Markers[Index].Get();
+        if (!IsValid(Marker) || !Marker->IsReady() || Marker->GetWorld() != GetWorld()) return nullptr;
+        if (Index >= 2 && !Next && Marker->IsAlive()) Next = Marker;
+    }
+    return Next;
+}
+void AExperimentWorldDirector::AdvanceBootstrapRescue()
+{
+    if (Adapter.IsValid() && Adapter->AdvanceBootstrapRescue(this, BindingRun) && !bGrayboxStopped)
+        StatusText->SetText(FText::FromString(TEXT("GRAYBOX: E = sword strike")));
 }
 void AExperimentWorldDirector::ObserveBootstrapAftermath()
 {
@@ -127,7 +149,12 @@ bool AExperimentWorldDirector::ExecuteBootstrapEffect(const experiment::Experime
         ShowBootstrapTextPreview();
         return true;
     }
-    return false; // No fake TimeSkip/environment completion.
+    if (Effect.kind == experiment::EffectKind::BeginTimeSkip && bGrayboxStopped)
+    {
+        StatusText->SetText(FText::FromString(TEXT("TimeSkip: awaiting environment")));
+        return true;
+    }
+    return false;
 }
 
 void AExperimentWorldDirector::ShowBootstrapTextPreview()

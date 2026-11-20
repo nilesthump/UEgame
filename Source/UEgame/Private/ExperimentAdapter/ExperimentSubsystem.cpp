@@ -1,5 +1,6 @@
 #include "ExperimentSubsystem.h"
 #include "ExperimentWorldDirector.h"
+#include "BootstrapMarker.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "HAL/PlatformTime.h"
@@ -75,15 +76,38 @@ bool UExperimentSubsystem::ObserveBootstrapAftermath(AExperimentWorldDirector* D
         Receipts.Add({{NextContext(Run), Batch, true}, Snapshot});
     }
     for (const auto& Receipt : Receipts)
+        if (!ApplySettlement(Director, Receipt.Fact, Receipt.Snapshot)) return false;
+    return true;
+}
+bool UExperimentSubsystem::ApplySettlement(AExperimentWorldDirector* Director,
+    const experiment::SettlementCompletedFact& Fact, const experiment::EncounterSnapshot& Snapshot)
+{
+    if (!IsCurrentBinding(Director, Fact.context.runId)) return false;
+    const auto Settled = Session->NotifyBatchSettled(Fact, Snapshot);
+    if (!Settled.accepted) return false;
+    for (const auto& Effect : Settled.commands)
     {
-        if (!IsCurrentBinding(Director, Run)) return false;
-        const auto Settled = Session->NotifyBatchSettled(Receipt.Fact, Receipt.Snapshot);
-        if (!Settled.accepted) return false;
-        for (const auto& Effect : Settled.commands)
-        {
-            if (!IsCurrentBinding(Director, Run) || !Session->TryConsumeEffect(Effect) ||
-                !Director->ExecuteBootstrapEffect(Effect)) return false;
-        }
+        if (!IsCurrentBinding(Director, Effect.runId) || !Session->TryConsumeEffect(Effect) ||
+            !Director->ExecuteBootstrapEffect(Effect)) return false;
     }
     return true;
+}
+bool UExperimentSubsystem::AdvanceBootstrapRescue(AExperimentWorldDirector* Director, experiment::RunId Run)
+{
+    check(IsInGameThread());
+    if (!IsCurrentBinding(Director, Run) || Session->View().phase != experiment::ExperimentPhase::Rescue)
+        return false;
+    auto* Target = Director->NextRescueThreat();
+    if (!Target) return false;
+    if (!Session->View().threatDiscoveredAt)
+        return Session->NotifyThreatDiscovered({NextContext(Run)});
+
+    const auto Used = NextContext(Run);
+    const experiment::ActionId Action = Used.sequence;
+    if (!Session->NotifyActionUsed({Used, Action, experiment::ActionKind::Sword}) ||
+        !Session->NotifyAttackAtGoblin({NextContext(Run), Action})) return false;
+    Target->MarkDefeated();
+    const auto Batch = NextBatch++;
+    const auto Snapshot = Director->SampleBootstrapEncounter(Run, Batch);
+    return ApplySettlement(Director, {NextContext(Run), Batch, true}, Snapshot);
 }
