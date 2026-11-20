@@ -37,9 +37,10 @@ add_test(NAME B01.Session.FactIdentityAndDelivery COMMAND experiment_core_checks
 add_test(NAME B01.Session.StableBatchDeathPriority COMMAND experiment_core_checks B01.Session.StableBatchDeathPriority)
 add_test(NAME B01.Session.AftermathAndMissingMethod COMMAND experiment_core_checks B01.Session.AftermathAndMissingMethod)
 add_test(NAME B01.Session.EffectEligibility COMMAND experiment_core_checks B01.Session.EffectEligibility)
+add_test(NAME B01.Session.TimeSkipReceipts COMMAND experiment_core_checks B01.Session.TimeSkipReceipts)
 set_tests_properties(B01.Session.WorldReady B01.Session.IndependentStarts B01.Session.FactIdentityAndDelivery
   B01.Session.StableBatchDeathPriority B01.Session.AftermathAndMissingMethod B01.Session.EffectEligibility
-  PROPERTIES TIMEOUT 10)
+  B01.Session.TimeSkipReceipts PROPERTIES TIMEOUT 10)
 file(GLOB_RECURSE CORE_HEADERS CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/${CORE_ROOT}/include ${CORE_ROOT}/include/*.h)
 foreach(HEADER IN LISTS CORE_HEADERS)
   string(MAKE_C_IDENTIFIER "${HEADER}" HEADER_ID)

@@ -143,4 +143,14 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 灰盒只模拟剑击对标记的结果。后续环境端须结算旧时代剩余计划，再由回访布置、过渡与控制恢复共同解锁 Revisit。B01 仍为 InProgress。
 - 本轮 WSL Ubuntu/GCC 13.3 核心 6/6（`.build/core-b01-1120/ctest-junit.xml`），Editor Development 编译成功（`.build/b01-success-editor-1120.log`）。D3D12 游戏宿主 RescueSuccess 1/1，进程和测试退出码 0（`.build/b01-success-editor-game-1120/index.json`）；已目视 `Saved/Screenshots/WindowsEditor/B01RescueSuccess00000.png` 中等待提示、两个生还标记和五个死亡标记。
 - 独立审查者 `independent_review` 核对适配层、用例、编译日志、两份执行报告及截图，批准本批功能提交。按审查意见校正了输入关闭顺序和用例覆盖描述。
-- 本地完整包以干净源码 `c7872c3` 构建。归档包六次 D3D12 启动各 1/1；本机路径、复测命令和 HTML 模板限制见 [本批交接](TEST-HANDOFF-0.1.0.md)。同机 test 独立接收待执行。
+- 本地完整包以干净源码 `c7872c3` 构建。归档包六次 D3D12 启动各 1/1；test 通过 [PR #41](https://github.com/nilesthump/UEgame/pull/41) 接收候选 `4b31325`。ops 通过 [PR #42](https://github.com/nilesthump/UEgame/pull/42) 接收 test 的 `dddcd81`，合并提交为 `b32b88d`。
+
+
+## 2026-11-20 剑术救援后的回访灰盒
+
+- 基线 `4b31325`。默认地图传入 `-B01RescueGraybox`，按一次 E 发现遇险，再按五次 E 完成剑术救援。停用救援输入后，旧时代雨计划在第 180 秒开始、第 300 秒结束。剑术标记场景没有着火或砍伐材料。
+- 全屏遮罩约用一秒淡出，Slate 绘制不透明遮罩后补齐旧雨计划。在同一世界创建三十年后的玩家、教师和学生标记，三个标记全部注册后退役七个旧标记，再约用一秒淡入。核心按本轮跳时请求接受环境、布置、过渡三个独立回执，各就绪后只派发一次恢复请求。收到真实绑定的控制恢复回执时记录回访起点。镇上用 A/D 横移玩家标记。
+- 回访范围止于恢复操作。火湿与材质、球面移动与导航、关键对白送达仍待集成，本人因果体验待试玩。B01 为 InProgress。
+- Ubuntu/GCC 13.3 实跑 7/7，报告 `.build/core-revisit-1120/ctest-junit.xml`。新用例覆盖三项就绪的六种顺序及失效、重复、过早回执。UE Editor Development 编译成功，日志 `.build/b01-revisit-editor-r6.log`。
+- D3D12 游戏宿主 Revisit 和 RescueSuccess 各 1/1，进程及日志测试退出码均为 0，原生报告在 `.build/b01-revisit-r6/`。Revisit 还实测了教师失效时保持遮挡、恢复后淡入，以及屏幕上的 D 向右、A 返回。回访截图 `Saved/Screenshots/WindowsEditor/B01Revisit00003.png`。
+- 实现者 revisit_fix，核心用例作者 core_checks。独立审查者 review 核对最终源码、Linux 与 UE 执行记录及回访截图，确认遮挡、控制恢复重试、新演员身份和按键方向修正后批准本批功能提交。

@@ -7,6 +7,7 @@ class ABootstrapMarker;
 class UTextRenderComponent;
 class UExperimentSubsystem;
 class SWidget;
+class SBootstrapTransitionCover;
 
 // B01 bootstrap only. No encounter health, navigation or media readiness is asserted.
 UCLASS()
@@ -20,10 +21,32 @@ public:
     experiment::EncounterSnapshot SampleBootstrapEncounter(experiment::RunId Run, experiment::BatchId Batch) const;
 
     void ObserveBootstrapAftermath();
+    int32 GetConsumedRainEvents() const { return ConsumedRainEvents; }
+    double GetOldEraSeconds() const { return OldEraSeconds; }
+    bool IsTownCovered() const;
+    virtual void Tick(float DeltaSeconds) override;
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
+    enum class ETransitionStep { Idle, FadeOut, Covered, PrepareTown, FadeIn, Restoring, Complete };
+    ETransitionStep TransitionStep = ETransitionStep::Idle;
+    uint64 SkipToken = 0;
+    int32 ConsumedRainEvents = 0;
+    double OldEraSeconds = 0;
+    float CoverOpacity = 0;
+    TSharedPtr<SBootstrapTransitionCover> TransitionCover;
+    void AdvanceOldEra(double Until);
+    bool BeginBootstrapSkip(uint64 Token);
+    bool PrepareTown();
+    bool IsTownReady() const;
+    bool RevealReadyTown(float DeltaSeconds);
+    UPROPERTY() TArray<TObjectPtr<ABootstrapMarker>> TownMarkers;
+    bool RestoreTownInput();
+    void MoveTownLeft();
+    void MoveTownRight();
+    void MoveInTown(float Distance);
+    void RemoveTransitionCover();
     void AdvanceBootstrapRescue();
     ABootstrapMarker* NextRescueThreat() const;
     bool bRescueFixture = false;

@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <unordered_set>
@@ -11,7 +12,7 @@ struct ExperimentMoment {
     double engineWorldSeconds{};
     double realSeconds{};
 };
-enum class ExperimentPhase { Preparing, Rescue, TimeSkip, Ended };
+enum class ExperimentPhase { Preparing, Rescue, TimeSkip, Ended, Revisit };
 struct WorldReadyFact {
     RunId runId{};
     ExperimentMoment occurredAt{};
@@ -55,7 +56,8 @@ struct ExperimentFlowRules final {
     static RescueDecision EvaluateRescue(const EncounterSnapshot& snapshot,
         bool threatObserved, bool aftermathObserved, bool hasMethod) noexcept;
 };
-enum class EffectKind { RequestStableSnapshot, StopRescue, BeginTimeSkip, StopRun };
+enum class EffectKind { RequestStableSnapshot, StopRescue, BeginTimeSkip, StopRun, RestoreControl };
+enum class SkipMilestone { EnvironmentSettled, TownPrepared, TransitionFinished };
 struct ExperimentEffect {
     RunId runId{};
     ExperimentPhase phase{};
@@ -84,6 +86,7 @@ struct ExperimentViewProjection {
     std::optional<ExperimentMoment> firstAttackAt;
     bool swordUsed{};
     bool magicUsed{};
+    std::optional<ExperimentMoment> revisitStartedAt;
 };
 // The only owner of experimental state; world readiness is supplied by the host.
 class ExperimentSession final {
@@ -100,6 +103,8 @@ public:
     ExperimentStepEffects NotifyAftermathObserved(const AftermathObservedFact& fact);
     ExperimentStepEffects NotifyBatchSettled(const SettlementCompletedFact& fact,
         const EncounterSnapshot& snapshot);
+    ExperimentStepEffects NotifySkipReady(const FactContext& context, std::uint64_t token, SkipMilestone milestone);
+    bool NotifyControlRestored(const FactContext& context, std::uint64_t token);
     [[nodiscard]] std::optional<RescueResult> RescueOutcome() const noexcept { return state_.rescueResult; }
     [[nodiscard]] ExperimentViewProjection View() const noexcept;
 private:
@@ -111,6 +116,7 @@ private:
         std::optional<ExperimentMoment> worldStartedAt;
         std::optional<FactContext> discovery;
         std::optional<FactContext> firstAttack;
+        std::optional<ExperimentMoment> revisitStartedAt;
         bool aftermathObserved{};
         std::optional<RescueResult> rescueResult;
         bool swordUsed{};
@@ -125,6 +131,10 @@ private:
     std::optional<ExperimentMoment> latestFactMoment_;
     void ClearRescueCaches();
     ExperimentEffect IssueEffect(EffectKind kind);
+    bool MatchesTransition(const FactContext& context, std::uint64_t token) const;
+    std::uint64_t transitionToken_{};
+    std::array<std::optional<FactContext>, 3> skipReady_{};
+    bool restoreDispatched_{};
     std::uint64_t nextRequestId_{1};
     std::vector<ExperimentEffect> pendingEffects_;
 };

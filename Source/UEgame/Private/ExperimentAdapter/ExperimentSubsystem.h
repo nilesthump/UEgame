@@ -20,6 +20,10 @@ public:
     bool AdvanceBootstrapRescue(AExperimentWorldDirector* Director, experiment::RunId Run);
     bool ObserveBootstrapAftermath(AExperimentWorldDirector* Director, experiment::RunId Run);
 private:
+    friend class AExperimentWorldDirector;
+    bool ReportSkipReady(AExperimentWorldDirector* Director, experiment::RunId Run, uint64 Token,
+        experiment::SkipMilestone Milestone);
+    bool ReportControlRestored(AExperimentWorldDirector* Director, experiment::RunId Run, uint64 Token);
     bool ApplySettlement(AExperimentWorldDirector* Director, const experiment::SettlementCompletedFact& Fact,
         const experiment::EncounterSnapshot& Snapshot);
     experiment::FactContext NextContext(experiment::RunId Run);
