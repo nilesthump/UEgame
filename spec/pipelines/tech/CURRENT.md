@@ -103,7 +103,7 @@ $Engine = 'G:/Epic Games/UE_5.6'
 
 ## 未满足项与下一步
 
-- 本批新增可选灰盒死亡后果观察链；真实角色感知/战斗与成功路线尚未实现，不能将预设死亡 Marker 当作真实战斗结果，B01 不得结清。
+- 死亡后果与剑术救援均有独立灰盒入口。真实感知、战斗、环境结算和 30 年后回访仍待联调。
 - 输入至画面实际呈现 <50ms、本人体验、真实手柄未执行。
 - NAR-0001–0007 仍 draft；NAR-0004 单条中文显示探针已有技术执行和截图，正式字幕/媒体送达及其余条目未验证，不改 final，不启动 B13。test 已接收单条草稿探针的受限结果，剩余正式字幕另行交付；narrative 独立决定文本定稿。
 - test 已通过 PR #33 接收受限候选，合并提交 `b848a0d`；正式当前结论由 test 分支的唯一 evidence 维护。本分支尚未接收下游证据，不能把本地旧 evidence 当作最新结论。后续按 tech → test → ops → main 正向交付，不直接修改证据或发布状态。
@@ -113,10 +113,10 @@ $Engine = 'G:/Epic Games/UE_5.6'
 
 上游：`growth`、`narrative`、`art`；下游：`art`、`test`。
 
-- 本批 RescueTeardown 五项交接正文与本机复现入口：[TEST-HANDOFF-0.1.0.md](TEST-HANDOFF-0.1.0.md)。沿用本机接收；使用新完整包，不改写构建身份。
+- tech → test 交接与本机复现入口：[TEST-HANDOFF-0.1.0.md](TEST-HANDOFF-0.1.0.md)。沿用本机接收；使用新完整包，不改写构建身份。
 - 上批产品 `fb2861e` / 交接候选 `a5251c6` 已由 [PR #33](https://github.com/nilesthump/UEgame/pull/33) 合入 test。交接文档提交与产品构建身份分开记录。
 - 2026-11-13 本轮恢复：GitHub 只读确认 merged=true、merge=`b848a0d`；读取 test `00b4670` 的 CURRENT/evidence，保留其受限验收及 HTML 报告模板缺失限制。恢复核查未重跑旧候选 UE/Linux，不复写 test 结论；新增 Lifecycle 的本轮执行见上节。
-- 下一步入口：PR #35 已接收。当前继续 B01 RescueTeardown；新用例的包、独立审查及交接按本轮实际结果更新，不用旧包证明新用例。仍限定 B01，不启动 B02–B15。
+- PR #37 的 RescueTeardown 已由 test 接收。其独立包 5/5 记录在 test 提交 `238b334`。本轮基线为接收 narrative #40 后的 `f24c700`。
 
 ## 2026-11-13 Rescue 阶段销毁与 GC 隔离
 
@@ -134,3 +134,12 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 新包 Bootstrap/Aftermath 的 `00000` 图已目视：ready、ended、七标记、中文标点及 NAR-0004/draft 完整可读。两种生命周期检查不截图，不能据此证明其 Slate 清理或实际呈现。
 - 五日志均有 HTML 模板缺失错误，原生 JSON/日志完整；新包尚待 test 独立接收，MR/CI 当前状态以原 PR 为准。本轮 Linux 未重跑。
 - 独立 agent `/root/rescue_review` 已另行核对构建身份、实际 UAT 日志、五份包报告/日志、两张新包截图及交接 diff/命令，批准受限候选交付。RepositoryBaseline 209 文档/681 链接、五项正文结构、PowerShell 命令语法和 diff 检查通过；未代替新头 CI 或 test 验收。
+
+## 2026-11-20 剑术救援灰盒
+
+- 本批基线 `f24c700`，实现者 `rescue_fix`。变更限 ExperimentAdapter、Bootstrap UE 用例和 tech 说明。
+- 使用 `-B01RescueGraybox` 进入七标记现场。第一次按 E 发现遇险，随后每按一次 E 执行一次灰盒剑击。每击更新一个威胁标记，采样全部参与者后提交稳定批次。前四击保持 Rescue，第五击由 Session 判定成功，执行 StopRescue 和 BeginTimeSkip。先关闭救援输入，再显示等待环境结算。
+- 新用例 `UEgame.WorldScenario.B01.RescueSuccess` 通过 PlayerController 注入六次 E，逐击检查生还者、威胁数、发现和首次攻击标记是否已设置、救助方式和阶段，也检查失效轮次和不完整现场。新开关与后果开关同时传入时使用救援场景。
+- 灰盒只模拟剑击对标记的结果。后续环境端须结算旧时代剩余计划，再由回访布置、过渡与控制恢复共同解锁 Revisit。B01 仍为 InProgress。
+- 本轮 WSL Ubuntu/GCC 13.3 核心 6/6（`.build/core-b01-1120/ctest-junit.xml`），Editor Development 编译成功（`.build/b01-success-editor-1120.log`）。D3D12 游戏宿主 RescueSuccess 1/1，进程和测试退出码 0（`.build/b01-success-editor-game-1120/index.json`）；已目视 `Saved/Screenshots/WindowsEditor/B01RescueSuccess00000.png` 中等待提示、两个生还标记和五个死亡标记。
+- 独立审查者 `independent_review` 核对适配层、用例、编译日志、两份执行报告及截图，批准本批功能提交。按审查意见校正了输入关闭顺序和用例覆盖描述。

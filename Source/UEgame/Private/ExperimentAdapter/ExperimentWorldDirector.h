@@ -24,6 +24,9 @@ protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
+    void AdvanceBootstrapRescue();
+    ABootstrapMarker* NextRescueThreat() const;
+    bool bRescueFixture = false;
     void ShowBootstrapTextPreview();
     TSharedPtr<SWidget> TextPreview;
     friend class UExperimentSubsystem;
