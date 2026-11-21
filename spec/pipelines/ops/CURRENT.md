@@ -6,16 +6,15 @@
 
 ## 当前接收
 
-2026-11-20，ops 通过 [PR #42](https://github.com/nilesthump/UEgame/pull/42) 接收 test 的剑术救援灰盒 Win64 验收记录，合并提交 `b32b88d3310e7dbc6bf57ef771b13ecebf21d5fd`，test 源提交 `dddcd8187f45963014d0dffe9e87faa977b55d33`。test 此前通过 [PR #41](https://github.com/nilesthump/UEgame/pull/41) 接收 tech 候选 `4b31325`。本次受测包来自产品提交 `c7872c3`，配置为 Win64 Development。软件注入的五次剑击全部完成后，玩家和小孩存活，游戏进入 TimeSkip 等待环境结算。
+2026-11-21，ops 通过 [PR #44](https://github.com/nilesthump/UEgame/pull/44) 接收三十年回访灰盒的受限验收记录，合并提交 `e08636d`，test 源提交 `00ad6c1`。[PR #43](https://github.com/nilesthump/UEgame/pull/43) 对应 tech 候选 `68f2cee`，同一 Win64 Development 包的产品提交为 `85bb569`。test 已验证旧时代两次雨事件结算、教师暂不可用时维持遮挡，以及回访就绪后恢复 A/D 移动。
 
-- 独立审查者 `/root/receive_review` 核对本批 18 个文件的变更范围、灰盒代码与用例、构建身份、UAT 归档日志、test 六份原生报告及对应日志，并目视三张本轮截图。审查批准本批受限接收。记录见原 PR。
-- test 从同一包执行六次，每份原生报告各 1/1 Success。六份日志的测试退出码均为 0，均记录 HTML 模板缺失。进程退出码取自 test 执行记录。ops 本轮复核已有产物，本地游戏用例执行数为 0。
-- [PR #42 CI](https://github.com/nilesthump/UEgame/actions/runs/44753876138) 四项作业成功，Linux 核心六例全部执行并通过。接收前 ops 仓库基线通过，test 源分支写入范围与候选 diff 检查通过。
-- 构建、原生报告、日志与截图保存在本机。复核位置及当前验收结论见 test 维护的 [evidence.md](../../evidence/evidence.md)，关注 `PROD-B01`、`DISPLAY-01`、`PERF-01` 和 `FEEL-01`。跨机复核须取得同一批产物。
+- test 在 D3D12 下执行七项用例，并目视检查启动、失败草稿、第五击过渡及回访四张截图。上游独立审查者 `receive_review` 核对构建、报告、日志、截图及验收文档后批准受限接收。
+- ops 复核构建身份、七份原生 JSON、对应日志及四张截图的位置。每份报告各 1/1 Success，七份日志的测试退出码均为 0。HTML 报告因模板缺失未生成。ops 本轮游戏用例执行数为 0。产物位置见 test 维护的[验收记录](../../evidence/evidence.md)。
+- [#44 CI](https://github.com/nilesthump/UEgame/actions/runs/44872087748) 的仓库基线及 Linux 核心检查成功，剧情文本检查按路径跳过。[候选 CI](https://github.com/nilesthump/UEgame/actions/runs/44761269763) 的 Linux 核心用例 7/7 通过。
 
 ## 下一步
 
-tech 从 TimeSkip 接入旧时代环境结算回执、30 年后回访布置与控制恢复，经 test 复测后交付 ops。世界卸载、地图切换、持久恢复、真实战斗、正式字幕与媒体、实物手柄、输入到对应画面实际呈现 <50 ms 和本人体验仍待验证。七条叙事文本均为 draft，当前显示证据仅覆盖 NAR-0004 草稿。B02–B15 尚未启动。
+tech 继续接入回访后群众与教师关键内容的实际送达，经 test 复测后正向交付。完整环境后果、真实战斗与导航、世界卸载与恢复、正式声音和字幕、实物输入、输入到对应画面实际呈现 <50 ms 及本人试玩仍待验证。B01 为 InProgress，DISPLAY-01 为 Partial，仅 NAR-0004 草稿显示通过。
 
 ## 发布边界
 
