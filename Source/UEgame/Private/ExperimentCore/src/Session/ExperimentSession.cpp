@@ -15,10 +15,17 @@ ExperimentEffect ExperimentSession::IssueEffect(EffectKind kind) {
     pendingEffects_.push_back(effect);
     return effect;
 }
-void ExperimentSession::InvalidatePendingEffects() noexcept { pendingEffects_.clear(); }
+void ExperimentSession::InvalidatePendingEffects() noexcept {
+    pendingEffects_.clear();
+    transitionToken_ = 0;
+    skipReady_ = {};
+    restoreDispatched_ = false;
+}
 bool ExperimentSession::TryConsumeEffect(const ExperimentEffect& effect) {
     if (effect.runId != state_.runId || effect.phase != state_.phase ||
         pendingEffects_.empty() || pendingEffects_.front() != effect) return false;
+    if (effect.kind == EffectKind::BeginTimeSkip) transitionToken_ = effect.requestId;
+    if (effect.kind == EffectKind::RestoreControl) restoreDispatched_ = true;
     pendingEffects_.erase(pendingEffects_.begin());
     return true;
 }
@@ -81,7 +88,7 @@ ExperimentViewProjection ExperimentSession::View() const noexcept {
     return {state_.runId, state_.phase, state_.worldStartedAt,
         state_.discovery ? std::optional{state_.discovery->occurredAt} : std::nullopt,
         state_.firstAttack ? std::optional{state_.firstAttack->occurredAt} : std::nullopt,
-        state_.swordUsed, state_.magicUsed};
+        state_.swordUsed, state_.magicUsed, state_.revisitStartedAt};
 }
 }
 
@@ -131,12 +138,41 @@ ExperimentStepEffects ExperimentSession::NotifyBatchSettled(const SettlementComp
     effects.commands.push_back(IssueEffect(result.succeeded ? EffectKind::BeginTimeSkip : EffectKind::StopRun));
     return effects;
 }
+bool ExperimentSession::MatchesTransition(const FactContext& context, std::uint64_t token) const {
+    return state_.phase == ExperimentPhase::TimeSkip && token != 0 && token == transitionToken_ &&
+        context.runId == state_.runId && context.sequence > latestFactSequence_ && ValidMoment(context.occurredAt) &&
+        context.occurredAt.engineWorldSeconds >= state_.rescueResult->closedAt.engineWorldSeconds &&
+        context.occurredAt.realSeconds >= state_.rescueResult->closedAt.realSeconds;
+}
+ExperimentStepEffects ExperimentSession::NotifySkipReady(const FactContext& context,
+    std::uint64_t token, SkipMilestone milestone) {
+    const auto index = static_cast<std::size_t>(milestone);
+    if (!MatchesTransition(context, token) || index >= skipReady_.size() || skipReady_[index] ||
+        std::any_of(skipReady_.begin(), skipReady_.end(), [&](const auto& receipt) {
+            return receipt && receipt->sequence == context.sequence;
+        })) return {};
+    skipReady_[index] = context;
+    ExperimentStepEffects effects{true, RescueDecision::Continue, {}};
+    if (std::all_of(skipReady_.begin(), skipReady_.end(), [](const auto& receipt) { return receipt.has_value(); }))
+        effects.commands.push_back(IssueEffect(EffectKind::RestoreControl));
+    return effects;
+}
+bool ExperimentSession::NotifyControlRestored(const FactContext& context, std::uint64_t token) {
+    if (!restoreDispatched_ || !MatchesTransition(context, token)) return false;
+    for (const auto& receipt : skipReady_)
+        if (context.sequence <= receipt->sequence ||
+            context.occurredAt.realSeconds < receipt->occurredAt.realSeconds ||
+            context.occurredAt.engineWorldSeconds < receipt->occurredAt.engineWorldSeconds) return false;
+    state_.revisitStartedAt = context.occurredAt;
+    state_.phase = ExperimentPhase::Revisit;
+    InvalidatePendingEffects();
+    return true;
+}
 void ExperimentSession::ClearRescueCaches() {
     std::unordered_set<std::uint64_t>{}.swap(acceptedSequences_);
     std::unordered_set<ActionId>{}.swap(directedActions_);
     std::vector<ActionUsedFact>{}.swap(usedActions_);
     lastSettledBatch_ = 0;
-    latestFactSequence_ = 0;
     latestFactMoment_.reset();
 }
 }
