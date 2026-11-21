@@ -31,7 +31,11 @@ void UExperimentSubsystem::UnbindWorld(AExperimentWorldDirector* Director)
     check(IsInGameThread());
     if (BoundDirector.Get() != Director) return;
     // Unbinding can precede EndPlay while another run takes over the same viewport.
-    if (IsValid(Director)) Director->RemoveTransitionCover();
+    if (IsValid(Director))
+    {
+        Director->RemoveTransitionCover();
+        Director->RemoveTownDialogue();
+    }
     if (Session) Session->InvalidatePendingEffects();
     BoundDirector.Reset();
 }
@@ -49,7 +53,11 @@ TOptional<experiment::ExperimentViewProjection> UExperimentSubsystem::View() con
 }
 void UExperimentSubsystem::Deinitialize()
 {
-    if (BoundDirector.IsValid()) BoundDirector->RemoveTransitionCover();
+    if (BoundDirector.IsValid())
+    {
+        BoundDirector->RemoveTransitionCover();
+        BoundDirector->RemoveTownDialogue();
+    }
     if (Session) Session->InvalidatePendingEffects();
     BoundDirector.Reset();
     Session.Reset();
@@ -114,6 +122,18 @@ bool UExperimentSubsystem::AdvanceBootstrapRescue(AExperimentWorldDirector* Dire
     const auto Snapshot = Director->SampleBootstrapEncounter(Run, Batch);
     return ApplySettlement(Director, {NextContext(Run), Batch, true}, Snapshot);
 }
+bool UExperimentSubsystem::ReportTownContent(AExperimentWorldDirector* Director, experiment::RunId Run,
+    experiment::RevisitContentId Id, uint64 Generation)
+{
+    if (!IsCurrentBinding(Director, Run)) return false;
+    const auto Delivered = Session->NotifyRevisitContentDelivered(NextContext(Run), Id, Generation);
+    for (const auto& Effect : Delivered.commands)
+    {
+        if (!Session->TryConsumeEffect(Effect) || !Director->ExecuteBootstrapEffect(Effect)) return false;
+    }
+    return Delivered.accepted;
+}
+
 bool UExperimentSubsystem::ReportSkipReady(AExperimentWorldDirector* Director, experiment::RunId Run,
     uint64 Token, experiment::SkipMilestone Milestone)
 {

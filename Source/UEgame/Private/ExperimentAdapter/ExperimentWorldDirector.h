@@ -2,12 +2,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "experiment/Session/ExperimentSession.h"
+#include "BootstrapTextPreview.h"
 #include "ExperimentWorldDirector.generated.h"
 class ABootstrapMarker;
 class UTextRenderComponent;
 class UExperimentSubsystem;
 class SWidget;
 class SBootstrapTransitionCover;
+class SBootstrapDialogueText;
 
 // B01 bootstrap only. No encounter health, navigation or media readiness is asserted.
 UCLASS()
@@ -24,6 +26,7 @@ public:
     int32 GetConsumedRainEvents() const { return ConsumedRainEvents; }
     double GetOldEraSeconds() const { return OldEraSeconds; }
     bool IsTownCovered() const;
+    FString GetActiveTownTextId() const;
     virtual void Tick(float DeltaSeconds) override;
 protected:
     virtual void BeginPlay() override;
@@ -43,6 +46,17 @@ private:
     bool RevealReadyTown(float DeltaSeconds);
     UPROPERTY() TArray<TObjectPtr<ABootstrapMarker>> TownMarkers;
     bool RestoreTownInput();
+    bool bTownDialogueChecked = false;
+    FBootstrapTextEntry CrowdLine, TeacherLine;
+    TSharedPtr<SWidget> DialoguePanel;
+    TSharedPtr<SBootstrapDialogueText> DialogueText;
+    uint64 DialogueGeneration = 0;
+    bool bTeacherSpeaking = false;
+    bool LoadTownDialogue();
+    void UpdateTownDialogue();
+    bool IsTownSpeakerEligible(bool bTeacher) const;
+    void ShowTownDialogue(bool bTeacher);
+    void RemoveTownDialogue();
     void MoveTownLeft();
     void MoveTownRight();
     void MoveInTown(float Distance);

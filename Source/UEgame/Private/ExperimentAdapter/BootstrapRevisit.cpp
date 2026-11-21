@@ -129,8 +129,10 @@ void AExperimentWorldDirector::Tick(float DeltaSeconds)
         {
             RemoveTransitionCover();
             TransitionStep = ETransitionStep::Complete;
-            SetActorTickEnabled(false);
         }
+        break;
+    case ETransitionStep::Complete:
+        UpdateTownDialogue();
         break;
     default:
         break;
@@ -143,6 +145,7 @@ bool AExperimentWorldDirector::PrepareTown()
     for (const auto& Marker : Markers)
         if (!IsValid(Marker) || !Marker->IsReady() || Marker->GetWorld() != GetWorld()) return false;
 
+    if (!LoadTownDialogue()) return false;
     // The teacher has a fresh town identity. Retire the rescue cast only once all
     // three replacement markers have registered successfully behind the cover.
     const FVector Origin = GetActorLocation();
