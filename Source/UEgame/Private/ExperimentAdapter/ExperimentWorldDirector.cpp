@@ -20,7 +20,8 @@
 
 AExperimentWorldDirector::AExperimentWorldDirector()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = false;
     StatusText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("BootstrapStatus"));
     SetRootComponent(StatusText);
     StatusText->SetText(FText::FromString(TEXT("B01: preparing bootstrap")));
@@ -37,6 +38,7 @@ void AExperimentWorldDirector::BeginPlay()
     Super::BeginPlay();
     // Opt-in fixture: never claim these markers are implemented encounter gameplay.
     bRescueFixture = FParse::Param(FCommandLine::Get(), TEXT("B01RescueGraybox"));
+    SetActorTickEnabled(bRescueFixture);
     if (bRescueFixture || FParse::Param(FCommandLine::Get(), TEXT("B01AftermathGraybox")))
     {
         for (int32 Index = 0; Index < 7; ++Index)
@@ -82,9 +84,12 @@ void AExperimentWorldDirector::EndPlay(const EEndPlayReason::Type Reason)
     if (TextPreview.IsValid() && GetWorld()->GetGameViewport())
         GetWorld()->GetGameViewport()->RemoveViewportWidgetContent(TextPreview.ToSharedRef());
     TextPreview.Reset();
+    RemoveTransitionCover();
     if (Adapter.IsValid()) Adapter->UnbindWorld(this);
     for (const auto& Marker : Markers) if (IsValid(Marker)) Marker->Destroy();
     Markers.Reset();
+    for (const auto& Marker : TownMarkers) if (IsValid(Marker)) Marker->Destroy();
+    TownMarkers.Reset();
     BindingRun = 0;
     Adapter.Reset();
     Super::EndPlay(Reason);
@@ -151,7 +156,11 @@ bool AExperimentWorldDirector::ExecuteBootstrapEffect(const experiment::Experime
     }
     if (Effect.kind == experiment::EffectKind::BeginTimeSkip && bGrayboxStopped)
     {
-        StatusText->SetText(FText::FromString(TEXT("TimeSkip: awaiting environment")));
+        return BeginBootstrapSkip(Effect.requestId);
+    }
+    if (Effect.kind == experiment::EffectKind::RestoreControl && TransitionStep == ETransitionStep::FadeIn)
+    {
+        TransitionStep = ETransitionStep::Restoring;
         return true;
     }
     return false;
