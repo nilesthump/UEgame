@@ -2,9 +2,9 @@
 
 - 目标版本：`0.1.0`
 - 实际线上版本：未发布（`onlineVersion=null`，无 tag）
-- 更新：2026-11-20
+- 更新：2026-11-21
 - 维护者：test
-- 结论：B01 剑术救援灰盒及回归共六项 Win64 包用例经 test 独立复测通过；NAR-0004 draft 画面已目视验证。完整 B01、正式媒体、性能与本人体验仍未验收。
+- 结论：B01 剑术救援后三十年回访灰盒及回归共七项 Win64 包用例经 test 独立复测通过；NAR-0004 draft 画面已目视验证。完整 B01、正式媒体、性能与本人体验仍未验收。
 
 本文件只保留按版本和验收项的当前结论及执行链接。修复通过就近更新原条目；变更导致结果失效时原地改为“待复测”。历史由 Git 保存，禁止新增 `evidence-latest.md`、`evidence-final.md` 等平行结论文件。
 
@@ -20,25 +20,24 @@
 | GOV-08 | 0.1.0 | 发布状态/流程与未发布记录 | Passed | [state.json](../releases/state.json)：`onlineVersion=null`、`onlineTag=null`、`unreleased` | 无正式产品发布 |
 | FLOW-01 | 0.1.0 | 九个规定 MR 流向 | Passed（9/9） | growth→tech [#9](https://github.com/nilesthump/UEgame/pull/9)；growth→narrative [#10](https://github.com/nilesthump/UEgame/pull/10)；narrative→tech [#11](https://github.com/nilesthump/UEgame/pull/11)；tech→art [#12](https://github.com/nilesthump/UEgame/pull/12)；art→tech [#13](https://github.com/nilesthump/UEgame/pull/13)；tech→test [#14](https://github.com/nilesthump/UEgame/pull/14)；maintenance→ops [#15](https://github.com/nilesthump/UEgame/pull/15)；test→ops [#16](https://github.com/nilesthump/UEgame/pull/16)；ops→main [#17](https://github.com/nilesthump/UEgame/pull/17) | 无（证据修正 PR #18 不改变九条流向） |
 | MAIN-01 | 0.1.0 | `ops → main` 治理集成 | Passed | [#17](https://github.com/nilesthump/UEgame/pull/17) 合并为 `3bd0c84`；证据同步 [#20](https://github.com/nilesthump/UEgame/pull/20)；`main` 已更新，线上仍未发布 | 无产品发布 |
-| PROD-B01 | 0.1.0 | B01 完整功能 | InProgress（受限独立包 6/6，Linux CI 6/6） | [PR #41](https://github.com/nilesthump/UEgame/pull/41)，候选 `4b31325`，产品 `c7872c3`；[CI](https://github.com/nilesthump/UEgame/actions/runs/44750096597)；本机独立报告见下 | 剑术灰盒止于 TimeSkip，环境结算、回访、真实战斗、正式媒体、实物输入、性能与本人体验待验 |
+| PROD-B01 | 0.1.0 | B01 完整功能 | InProgress（Win64 灰盒 7/7，Linux 核心 CI 7/7） | [PR #43](https://github.com/nilesthump/UEgame/pull/43)，候选 `68f2cee`，产品 `85bb569`；[本批 CI](https://github.com/nilesthump/UEgame/actions/runs/44761269763)；本机报告见下 | 已验至回访恢复控制；完整环境后果、战斗、关键内容送达、实物输入、性能与本人体验待验 |
 | DISPLAY-01 | 0.1.0 | 少量文本 UE 显示/字幕接入 | Partial（NAR-0004 draft 显示通过） | 同一包 Aftermath 与 DraftTextSource 各 1/1；本轮新图 `B01Aftermath00001.png` 中文、标点及 ID/draft 完整可读 | 仅单条草稿探针；不提交媒体送达回执，其余条目、正式字幕及声音未验收 |
 | PERF-01 | 0.1.0 | 输入→渲染 <50ms | NotRun | 无 | 测量链未建立 |
 | FEEL-01 | 0.1.0 | 本人因果体验 | NotRun | 无 | 未试玩 |
 
 ```text
 Governance=Passed
-B01.Core=Linux CI 6/6 (4b31325 / PR #41)
+B01.Core=Linux CI 7/7 (68f2cee / PR #43)
 TaskBranches=Removed (7 remote / 9 local / 5 worktrees)
 ProductRelease=NotRun
 MainIntegration=#17 / #20 (exact SHA in Git)
 ```
 
-## 0.1.0 / PR #41 本机独立复测
+## 0.1.0 / PR #43 本机独立复测
 
-- test 于 2026-11-20 22:21（Asia/Shanghai）从 `pipeline/test` 基线 `238b334` 执行。直接启动 tech 完整包 `Deliverables/B01-rescue-success-20261120/Windows/UEgame.exe` 六次，使用默认地图。BUILD-IDENTITY 记录产品 `c7872c3`、UE 5.6.1 CL44394996、Win64 Development。构建日志记录 Archive 成功、UAT 退出码 0。
-- test 本机报告根为 `.build/b01-rescue-success-receive-20261120-222110/`。子目录 rescue-success、rescue-teardown、lifecycle、default、aftermath、text-source 的 index.json 各精确执行一个指定用例，分别为 RescueSuccess、RescueTeardown、Lifecycle、Bootstrap、Aftermath、DraftTextSource。六次进程退出码和同名日志的测试退出码均为 0。六份报告均为 Success，failed、notRun、inProcess、succeededWithWarnings 和逐例 errors/warnings 均为 0。六份日志均记录 HTML 模板缺失，原生报告完整。
-- RescueSuccess 使用软件注入 E 发现遇险，五次剑击各击败一个威胁。前四次仍处于 Rescue，第五次转入 TimeSkip 并拒绝继续攻击。玩家和小孩均存活。RescueTeardown、Lifecycle 同时回归同一 UWorld 的销毁、跨帧 GC、弱引用及旧轮隔离。
-- 已目视包内 `Windows/UEgame/Saved/Screenshots/Windows/` 的本轮三图。B01Bootstrap00001.png 显示 ready；B01Aftermath00001.png 显示小孩死亡、五个威胁存活，NAR-0004 draft 中文及标点可读；B01RescueSuccess00001.png 显示等待环境结算、玩家和小孩存活、五个威胁死亡。报告、日志、截图均为本机文件，跨机复核须传递实际产物。
-- [候选 CI](https://github.com/nilesthump/UEgame/actions/runs/44750096597) 四项成功，core-linux 日志为 6/6、0 失败。上游另在 D3D12 游戏宿主执行 RescueSuccess 1/1；test 本次独立运行的是 Win64 包。
-- [PR #41](https://github.com/nilesthump/UEgame/pull/41) 的候选为 `4b31325`，由上游 independent_review 审查。test 独立审查者 receive_review 复核候选及本轮执行证据，批准本批受限接收。接收 merge commit 为 `e63ab7c`。
-- 环境结算回执、30 年后回访布置与恢复控制、真实感知和战斗、世界卸载/切图、旧界面清理、存档恢复、正式字幕和声音、实物手柄、本人试玩及输入→核心→对应画面实际呈现 <50 ms 均待验证。B01 仍在实施，全部 NAR 仍为 draft，B13 素材制作仍受限。
+- test 于 2026-11-21 13:33（Asia/Shanghai）从基线 `dddcd81` 启动 tech 工作树内 `Deliverables/B01-revisit-20261120/Windows/UEgame.exe` 七次。BUILD-IDENTITY.json 记录产品 `85bb569`、UE 5.6.1 CL44394996、Win64 Development 和默认 B01Bootstrap 地图。构建日志 `.build/package-revisit-20261120.log` 显示 Archive 完成，UAT 退出码 0。产品提交至候选头仅改 tech 交接文档。
+- test 工作树报告根 `.build/b01-revisit-receive-20261121-133318/`。Revisit、RescueSuccess、RescueTeardown、Lifecycle、Bootstrap、Aftermath、DraftTextSource 各有独立子目录的 `index.json` 与根目录的同名日志。七次 D3D12 启动各执行指定用例 1/1 Success，进程与测试日志退出码均为 0，失败、未运行、执行中、带警告成功及逐例错误和警告均为 0。日志均提示 HTML 模板缺失，原生 JSON 完整。
+- 救援成功后，旧时代第 180 秒开雨、第 300 秒停雨两个计划均已消费。教师暂不可用时场景保持遮挡，控制恢复回执等待；恢复绑定后进入回访并开始计时，七个旧标记退出画面。软件注入 D 使玩家向画面右移，A 返回原屏幕位置。此批只覆盖同一世界的剑术标记场景。
+- 已目视包内 `Windows/UEgame/Saved/Screenshots/Windows/` 的四张本轮新图。`B01Bootstrap00001.png` 显示 ready；`B01Aftermath00001.png` 显示小孩死亡及 NAR-0004 draft 中文旁白；`B01RescueSuccess00001.png` 显示第五击后的过渡、两名生还者及五个死亡威胁；`B01Revisit00001.png` 显示三十年后玩家、剑术教师、学生及 A/D 移动提示。原生报告、日志和截图在本机，跨机复核需传递实际产物。
+- [候选 CI](https://github.com/nilesthump/UEgame/actions/runs/44761269763) 中 changes、repository-baseline、core-linux 成功，Linux 核心 7/7，narrative-text 按路径跳过。上游独立审查者 review 已批准产品与交付证据。test 独立审查者 receive_review 核对差异、七份原生报告、日志、四图及验收文档后批准受限接收。#43 接收提交为 `557d522`。
+- 完整火湿与破坏痕迹、真实战斗和导航、世界卸载与恢复、群众与教师关键内容实际送达、正式声音与字幕、实物手柄、本人试玩及输入→核心处理→对应画面实际呈现 <50 ms 待验证。
