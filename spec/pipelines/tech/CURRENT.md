@@ -165,3 +165,5 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 独立审查提出文本晋升 final 会卡在布置阶段。已使回访读取 draft 和 final、拒绝 retired，增加两种可用状态与失效/场景错配测试，原失败旁白探针仍只读取草稿。
 
 - 独立审查者 independent_review 核对最终代码、Linux 报告、两份 D3D12 宿主报告、逐代回执和两张 00001 截图，批准本批受限功能提交。
+
+- 干净提交 `eb00d4b` 的 Win64 Development 归档包八次独立 D3D12 启动各 1/1。独立审查者 independent_review 核实构建身份、UAT 退出码 0、八份报告与日志，逐张目视六张截图。各日志均报 HTML 模板缺失，原生报告完整。包位置和 test 复测命令见[本批交接](TEST-HANDOFF-0.1.0.md)。
