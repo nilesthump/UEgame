@@ -186,3 +186,9 @@ $Engine = 'G:/Epic Games/UE_5.6'
 
 - 0.1.0 / TECH-0.1.0-01。旧包有逐例 JSON，但十份 D3D12 日志均报 HTML 模板加载失败。AutomationController 从 Engine/Content/Automation/Report-Template.html 读取模板。旧包的 UFS 清单缺少该项。修复由 Win64 Development 实测，在 Development Game 构建时将原厂模板随包分发。
 - 本地验证归档 Deliverables/B01-report-fix-1122-check/ 完成 Build/Cook/Stage/Package/Archive，UAT 退出 0（.build/package-report-fix-1122-check.log）。新包 UFS 清单含模板。后台 NullRHI 执行 UEgame.B01.DraftTextSource，1/1，零错误和警告，进程与测试退出码均为 0。.build/report-fix-1122-export/ 同时生成 index.json 和 index.html，导出 HTML 解码后与原厂模板一致。浏览器展示所用的站点静态资源由报告服务器提供，未验证网页部署。
+
+## 2026-11-22 回访字幕超时诊断与 test 候选
+
+- HTML 修复为 `91525df`；回访字幕用例诊断为 `3517bab`。独立审查者 independent_review 分别核对两批改动和正负例后批准提交。超时报告保留首个失败断言、游戏阶段、窗口最小化及活动状态、视口焦点和当前字幕 ID。
+- 旧包四组启动方式对照均通过。历史首轮失败时缺少窗口状态记录，具体原因仍未确认。新诊断包在显示群众字幕后受控最小化，保留两条字幕无送达回执的失败记录。
+- 干净产品提交 `3517bab` 的 Win64 Development 候选为 `Deliverables/B01-routes-diagnostics-20261122/`。正常窗口 D3D12 十项各 1/1，十份 HTML 和 JSON 均实际导出。Linux 核心 8/8。执行目录、截图编号、同包复测命令和受限范围见[本批 test 交接](TEST-HANDOFF-0.1.0.md)。
