@@ -20,25 +20,27 @@
 | GOV-08 | 0.1.0 | 发布状态/流程与未发布记录 | Passed | [state.json](../releases/state.json)：`onlineVersion=null`、`onlineTag=null`、`unreleased` | 无正式产品发布 |
 | FLOW-01 | 0.1.0 | 九个规定 MR 流向 | Passed（9/9） | growth→tech [#9](https://github.com/nilesthump/UEgame/pull/9)；growth→narrative [#10](https://github.com/nilesthump/UEgame/pull/10)；narrative→tech [#11](https://github.com/nilesthump/UEgame/pull/11)；tech→art [#12](https://github.com/nilesthump/UEgame/pull/12)；art→tech [#13](https://github.com/nilesthump/UEgame/pull/13)；tech→test [#14](https://github.com/nilesthump/UEgame/pull/14)；maintenance→ops [#15](https://github.com/nilesthump/UEgame/pull/15)；test→ops [#16](https://github.com/nilesthump/UEgame/pull/16)；ops→main [#17](https://github.com/nilesthump/UEgame/pull/17) | 无（证据修正 PR #18 不改变九条流向） |
 | MAIN-01 | 0.1.0 | `ops → main` 治理集成 | Passed | [#17](https://github.com/nilesthump/UEgame/pull/17) 合并为 `3bd0c84`；证据同步 [#20](https://github.com/nilesthump/UEgame/pull/20)；`main` 已更新，线上仍未发布 | 无产品发布 |
-| PROD-B01 | 0.1.0 | B01 完整功能 | InProgress（三条灰盒回访通过） | [PR #47](https://github.com/nilesthump/UEgame/pull/47)，产品 ac9257a，候选 ddab47d；[CI](https://github.com/nilesthump/UEgame/actions/runs/45001871284)，同包执行记录见下 | 完整战斗、导航、环境火湿与破坏、世界卸载恢复、实物输入、性能与本人体验待验 |
+| PROD-B01 | 0.1.0 | B01 完整功能 | InProgress（三条灰盒回访通过） | [PR #49](https://github.com/nilesthump/UEgame/pull/49)，产品 3517bab，候选 da873ae；[CI](https://github.com/nilesthump/UEgame/actions/runs/45022234998)，同包执行记录见下 | 完整战斗、导航、环境火湿与破坏、世界卸载恢复、实物输入、性能与本人体验待验 |
 | DISPLAY-01 | 0.1.0 | 少量文本 UE 显示/字幕接入 | Partial（六条回访草稿与 NAR-0004 草稿探针可见） | 三条路线各核对两张字幕截图，Aftermath 核对失败旁白；截图编号及文本 ID 见下 | 正式文本、语音与字幕同步、听辨待验 |
 | PERF-01 | 0.1.0 | 输入→渲染 <50ms | NotRun | 无 | 测量链未建立 |
 | FEEL-01 | 0.1.0 | 本人因果体验 | NotRun | 无 | 未试玩 |
 
 ```text
 Governance=Passed
-B01.Core=8/8 (tech GCC 13 JUnit, ac9257a), core-linux CI passed (#47)
+B01.Core=8/8 (tech GCC 13 JUnit, 3517bab), core-linux CI passed (#49)
 TaskBranches=Removed (7 remote / 9 local / 5 worktrees)
 ProductRelease=NotRun
 MainIntegration=#17 / #20 (exact SHA in Git)
 ```
 
-## 0.1.0 / PR #47 本机独立复测
+## 0.1.0 / PR #49 本机独立复测
 
-- 2026-11-22 16:23（上海），test 从 56dfbc9 直接启动 tech 工作树 `Deliverables/B01-revisit-routes-20261122/Windows/UEgame/Binaries/Win64/UEgame.exe`，使用正常窗口和 D3D12。BUILD-IDENTITY.json 对应 ac9257a、Win64 Development、UE 5.6.1 CL44394996、B01Bootstrap。UAT 归档退出码 0，产品至候选 ddab47d 仅变更 tech 文档。
-- test 工作树 `.build/b01-routes-receive-20261122-162312/` 保存逐例 index.json 与同名 .log。MagicTownDialogue、MixedTownDialogue、TownDialogue、Revisit、RescueSuccess、RescueTeardown、Lifecycle、Bootstrap、Aftermath、DraftTextSource 各执行 1/1，进程及测试退出码均为 0。十份原生报告均为 Success，逐例错误和警告为 0。十份日志均报 HTML 模板缺失。
-- 软件按键 E 发现后，分别执行五次 F、两次 E 再三次 F、五次 E。每条路线首次靠近群众后离开，两项回执均为空。返回后第 2 次字幕完整送达，回访继续。第 3 次字幕由教师送达，双回执齐备进入 Ended。
-- 已目视归档包 `Windows/UEgame/Saved/Screenshots/Windows/` 中本轮十张 PNG。魔法 B01MagicTownCrowd/Teacher 后缀 00002（镇民乙 NAR-0002、教师 NAR-0006），混用 B01MixedTownCrowd/Teacher 后缀 00001（镇民丙 NAR-0007、教师 NAR-0003），剑术 B01TownCrowd/Teacher 后缀 00001（镇民甲 NAR-0001、教师 NAR-0005）。六张均显示对应路线标记及 draft / TextFallback，中文全文和标点与 TEXT.csv 一致。
-- 四张回归截图后缀均为 00001。B01Bootstrap 显示就绪；B01Aftermath 显示失败后果及 NAR-0004；B01RescueSuccess 显示玩家与孩子生还、五个威胁死亡；B01Revisit 显示三十年后剑术教师、学生与移动提示。
-- tech 的 GCC 13 JUnit 为 8/8，D3D12 宿主三条路线为 3/3。上游独立审查者 review 已审查构建、运行证据和截图。tech 首轮隐藏启动器的魔法用例失败，日志未记录焦点，原因未确认。本轮结果仅覆盖正常窗口的包内程序启动方式。
-- 独立审查者 receive_review 核对候选差异、归档身份、十份原生报告与日志、十张截图及验收记录，批准本批灰盒接收。#47 以 merge commit 717b4f7 并入 pipeline/test。
+- 2026-11-22，test 从 ccc7dc6 直接运行 tech 工作树内 B01-routes-diagnostics-20261122 的包内游戏程序。BUILD-IDENTITY.json 对应 3517bab、Win64 Development、UE 5.6.1 CL44394996、B01Bootstrap。UAT 归档退出码 0。3517bab 至 da873ae 只改动 tech 交接文档。
+- 正常窗口 D3D12 逐项执行 MagicTownDialogue、MixedTownDialogue、TownDialogue、Revisit、RescueSuccess、RescueTeardown、Lifecycle、Bootstrap、Aftermath、DraftTextSource。十项各 1/1，进程及测试退出码均为 0，每项零错误、零警告。同目录的原生 index.json、非空 index.html 及对应日志中的 HTML 写入成功记录均已核对。[逐例报告](G:/UEgame/.worktrees/pipelines/test/.build/receive49-20261122-203242/normal/) · [进程退出记录](G:/UEgame/.worktrees/pipelines/test/.build/receive49-20261122-203242/normal-process.txt)
+- 三条路线均用软件按键发现并救援。首次群众字幕中断后无回执，重播后第 2 代群众字幕送达，回访继续；第 3 代教师字幕送达后结束。魔法路线对应镇民乙 NAR-0002、教师 NAR-0006，混用对应镇民丙 NAR-0007、教师 NAR-0003，剑术对应镇民甲 NAR-0001、教师 NAR-0005。六张新截图逐张核过角色、ID、中文全文与标点，均显示 draft / TextFallback。
+- 本轮正常窗口十张截图后缀均为 00001。Bootstrap 显示就绪，Aftermath 显示孩子死亡及 NAR-0004，RescueSuccess 显示玩家与孩子生还、五个威胁死亡，Revisit 显示三十年后的剑术师生与移动提示。[本机截图目录](G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-routes-diagnostics-20261122/Windows/UEgame/Saved/Screenshots/Windows/)
+- 上游 independent_review 已审查产品修改和归档交付。tech 的 GCC 13 JUnit 为 8/8，[PR #49 CI](https://github.com/nilesthump/UEgame/actions/runs/45022234998) 仓库基线和 Linux 核心通过，剧情文本检查按路径跳过。
+- 受控最小化负例单列。20:35:45.706（上海）在首次显示 NAR-0002 后确认窗口已最小化。MagicTownDialogue 实跑 1 例失败，5 个超时、0 警告，进程退出 255、测试退出 -1。首错为 crowd subtitle missing。五次超时均为 phase=4、windowMinimized=1、windowActive=0、viewportFocused=1，当前字幕为空；全程未记录群众或教师回执。JSON、HTML 及写入成功日志均已核对。[报告](G:/UEgame/.worktrees/pipelines/test/.build/receive49-20261122-203242/negative/index.json) · [窗口操作与退出记录](G:/UEgame/.worktrees/pipelines/test/.build/receive49-20261122-203242/negative-actions.txt)
+- 第二轮采用上游游戏启动参数。20:38:13.188（上海）在第一代群众字幕出现后确认窗口已最小化。实跑 1 例失败，2 个超时、0 警告，进程 255、测试 -1。首错 crowd receipt missing 时当前字幕为 NAR-0002，随后回访无法结束时为 NAR-0006。两次均为 phase=4、windowMinimized=1、windowActive=1、viewportFocused=1，均无送达回执；JSON、非空 HTML、写入成功日志齐备。[报告](G:/UEgame/.worktrees/pipelines/test/.build/receive49-20261122-203242/negative-r2/index.json) · [窗口操作与退出记录](G:/UEgame/.worktrees/pipelines/test/.build/receive49-20261122-203242/negative-r2-actions.txt)
+- 两轮展示了不同的首个失败断言。旧包隐藏启动的首错同为 crowd subtitle missing，但缺少当时的窗口状态，根因仍待确认。
+- 独立审查者 receive_review 核对候选差异、构建身份、十项正常窗口报告和截图、两轮负例及本轮验收记录，批准本批受限接收。#49 已经由 merge commit 5de495f 并入 pipeline/test。

@@ -5,14 +5,18 @@
 #include "ExperimentAdapter/ExperimentWorldDirector.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
+#include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Engine/Console.h"
+#include "Framework/Application/SlateApplication.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/PlatformTime.h"
 #include "InputCoreTypes.h"
 #include "InputKeyEventArgs.h"
 #include "Tests/AutomationCommon.h"
 #include "UnrealClient.h"
+#include "Widgets/SWindow.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBootstrapTownDialogueChecks, "UEgame.WorldScenario.B01.TownDialogue",
     EAutomationTestFlags::ClientContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::ProductFilter)
@@ -68,7 +72,20 @@ bool RunTownDialogue(FAutomationTestBase& Test, int32 SwordStrikes, const TCHAR*
                 const double Now = FPlatformTime::Seconds();
                 if (Deadline == 0.0) Deadline = Now + 20.0;
                 if (Now < Deadline) return false;
-                Test.AddError(Description);
+                const UWorld* TownWorld = Director->GetWorld();
+                UGameViewportClient* Client = TownWorld ? TownWorld->GetGameViewport() : nullptr;
+                const auto Window = Client ? Client->GetWindow() : nullptr;
+                const bool HasSlate = FSlateApplication::IsInitialized();
+                Test.AddError(FString::Printf(
+                    TEXT("%s (at timeout: phase=%d paused=%d viewportPresent=%d viewportFocused=%d windowPresent=%d ")
+                    TEXT("windowActive=%d windowMinimized=%d slateReady=%d menu=%d modal=%d console=%d activeText='%s')"),
+                    Description, static_cast<int32>(Adapter->View()->phase), TownWorld && TownWorld->IsPaused(), Client && Client->Viewport,
+                    Client && Client->Viewport && Client->Viewport->HasFocus(), Window.IsValid(),
+                    Window.IsValid() && Window->IsActive(), Window.IsValid() && Window->IsWindowMinimized(), HasSlate,
+                    HasSlate && FSlateApplication::Get().AnyMenusVisible(),
+                    HasSlate && FSlateApplication::Get().GetActiveModalWindow().IsValid(),
+                    Client && Client->ViewportConsole && Client->ViewportConsole->ConsoleActive(),
+                    *Director->GetActiveTownTextId()));
                 return true;
             }));
     };
