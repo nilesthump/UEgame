@@ -17,7 +17,8 @@ public:
     bool NotifyBootstrapReady(AExperimentWorldDirector* Director, experiment::RunId Run);
     bool IsCurrentBinding(const AExperimentWorldDirector* Director, experiment::RunId Run) const;
     TOptional<experiment::ExperimentViewProjection> View() const;
-    bool AdvanceBootstrapRescue(AExperimentWorldDirector* Director, experiment::RunId Run);
+    bool AdvanceBootstrapRescue(AExperimentWorldDirector* Director, experiment::RunId Run,
+        experiment::ActionKind Kind = experiment::ActionKind::Sword);
     bool ObserveBootstrapAftermath(AExperimentWorldDirector* Director, experiment::RunId Run);
 private:
     friend class AExperimentWorldDirector;
