@@ -167,3 +167,17 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 独立审查者 independent_review 核对最终代码、Linux 报告、两份 D3D12 宿主报告、逐代回执和两张 00001 截图，批准本批受限功能提交。
 
 - 干净提交 `eb00d4b` 的 Win64 Development 归档包八次独立 D3D12 启动各 1/1。独立审查者 independent_review 核实构建身份、UAT 退出码 0、八份报告与日志，逐张目视六张截图。各日志均报 HTML 模板缺失，原生报告完整。包位置和 test 复测命令见[本批交接](TEST-HANDOFF-0.1.0.md)。
+
+## 2026-11-22 魔法与混用救援后的回访
+
+- 目标 0.1.0，工作项 TECH-0.1.0-01 / B01。基线 `4d053b6`，上一批已由 test 经 #45 接收、ops 经 #46 接收。实现者 route_fix。
+- 在 `-B01RescueGraybox` 中按 E 发现遇险。此后每次 E 剑击或 F 施法击退一个威胁。五击全用 F 进入魔法路线，两种动作都用过则进入混用路线。镇上的教师、学生标记和对白取决于救援结束时锁定的方式。
+- 魔法路线的群众、教师对应 NAR-0002、NAR-0006，混用对应 NAR-0007、NAR-0003。按 A/D 接近说话者，离开会中断本次显示，返回须重新达到连续绘制时长。群众送达后仍可行动，两段均送达才结束。四条均为剧情真源中的 draft，本批使用无语音 TextFallback。
+- 本批限于七标记灰盒、真实 UE 输入回调和字幕送达。法术弹道、环境火湿与破坏、完整战斗与导航、世界卸载恢复、正式声音、实物输入、输入至对应画面呈现小于 50 ms 及本人体验仍待验证。
+
+
+- WSL Ubuntu/GCC 13.3 核心 8/8（`.build/core-routes-1122/ctest-junit.xml`）。Editor Development 复编成功（`.build/routes-editor-r2-1122.log`）。D3D12 游戏宿主 MagicTownDialogue、MixedTownDialogue、TownDialogue 各 1/1，进程和测试退出码均为 0。首项报告在 `.build/routes-editor-1122/`，后两项在 `.build/routes-editor-1122b/`。字幕先中断再送达，三项均以教师回执收尾。
+
+- 独立审查者 review 核对代码、用例、编译和三份宿主报告、核心 JUnit 及逐代日志，目视魔法/混用四张 00000 截图，确认角色、ID、草稿状态和完整字幕可读，批准本批功能提交。
+
+- 干净产品提交 `ac9257a` 的 Win64 Development 包通过 Build/Cook/Stage/Package/Archive。首次隐藏启动的魔法用例失败，未呈现字幕；同包直接运行实际游戏程序、以正常窗口复测，D3D12 十项各 1/1。十份日志均提示 HTML 模板缺失。两轮报告及截图编号保留于[本批交接](TEST-HANDOFF-0.1.0.md)。
