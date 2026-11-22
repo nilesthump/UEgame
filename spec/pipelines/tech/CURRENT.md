@@ -155,3 +155,15 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - D3D12 游戏宿主 Revisit 和 RescueSuccess 各 1/1，进程及日志测试退出码均为 0，原生报告在 `.build/b01-revisit-r6/`。Revisit 还实测了教师失效时保持遮挡、恢复后淡入，以及屏幕上的 D 向右、A 返回。回访截图 `Saved/Screenshots/WindowsEditor/B01Revisit00003.png`。
 - 实现者 revisit_fix，核心用例作者 core_checks。独立审查者 review 核对最终源码、Linux 与 UE 执行记录及回访截图，确认遮挡、控制恢复重试、新演员身份和按键方向修正后批准本批功能提交。
 - 干净产品提交 `85bb569` 已构建 Win64 Development 本地包，七次独立 D3D12 启动各 1/1 成功。七份日志均提示 HTML 模板缺失，已保留原生 JSON。构建身份、截图、test 复测命令及剩余范围见[本批交接](TEST-HANDOFF-0.1.0.md)。
+
+## 2026-11-21 剑术回访的群众与教师字幕送达
+
+- 基线 `68f2cee`（test 已通过 #43 接收，ops 已通过 #44 接收）。使用 `-B01RescueGraybox`，六次 E 进入回访后，从镇中心按四次 A 接近群众，按八次 D 从群众走到教师。两人都可先接近，教师还要求屏内且视线无遮挡。
+- 群众 `NAR-0001`、教师 `NAR-0005` 均取自已接纳的 TEXT.csv，保留说话者、内容 ID 与状态。现场当前为无绑定语音的 TextFallback。窗口和视口有焦点、近距、全文在可绘制范围内且连续绘制达标才产生回执。中断后重新累计。阈值为一秒加正文每六字一秒，属于本批灰盒参数。
+- Session 按救援时锁定的方式登记两个不同内容的回执，只有两者齐全才记录回访结束时间、派发 StopRun。核心覆盖剑术、魔法、混用及两种送达顺序；本批真实 UE 路径覆盖剑术。正式声音、完整遮挡场景、实物输入、端到端延迟和本人因果体验待验，B01 为 InProgress。
+- Ubuntu / GCC 13.3 核心 8/8（`.build/core-content-1121/ctest-junit.xml`）。Editor Development 编译成功（`.build/town-dialogue-editor-r2.log`），D3D12 游戏宿主 TownDialogue、DraftTextSource 各 1/1（`.build/town-editor-r2/`）。群众第一代在玩家离开时中断，第二代达标；教师第三代达标。截图为 `Saved/Screenshots/WindowsEditor/B01TownCrowd00001.png` 和 `B01TownTeacher00001.png`。
+- 独立审查提出文本晋升 final 会卡在布置阶段。已使回访读取 draft 和 final、拒绝 retired，增加两种可用状态与失效/场景错配测试，原失败旁白探针仍只读取草稿。
+
+- 独立审查者 independent_review 核对最终代码、Linux 报告、两份 D3D12 宿主报告、逐代回执和两张 00001 截图，批准本批受限功能提交。
+
+- 干净提交 `eb00d4b` 的 Win64 Development 归档包八次独立 D3D12 启动各 1/1。独立审查者 independent_review 核实构建身份、UAT 退出码 0、八份报告与日志，逐张目视六张截图。各日志均报 HTML 模板缺失，原生报告完整。包位置和 test 复测命令见[本批交接](TEST-HANDOFF-0.1.0.md)。

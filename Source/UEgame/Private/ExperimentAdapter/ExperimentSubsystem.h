@@ -21,6 +21,7 @@ public:
     bool ObserveBootstrapAftermath(AExperimentWorldDirector* Director, experiment::RunId Run);
 private:
     friend class AExperimentWorldDirector;
+    bool ReportTownContent(AExperimentWorldDirector* Director, experiment::RunId Run, experiment::RevisitContentId Id, uint64 Generation);
     bool ReportSkipReady(AExperimentWorldDirector* Director, experiment::RunId Run, uint64 Token,
         experiment::SkipMilestone Milestone);
     bool ReportControlRestored(AExperimentWorldDirector* Director, experiment::RunId Run, uint64 Token);

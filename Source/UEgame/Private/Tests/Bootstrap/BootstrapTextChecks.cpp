@@ -18,6 +18,17 @@ bool FBootstrapTextChecks::RunTest(const FString&)
     TestFalse(TEXT("missing source fails closed"), LoadBootstrapTextPreview(TEXT(""), Entry));
     TestFalse(TEXT("retired source fails closed"), LoadBootstrapTextPreview(Csv.Replace(TEXT(",draft"), TEXT(",retired")), Entry));
     TestFalse(TEXT("duplicate source fails closed"), LoadBootstrapTextPreview(Csv + Csv, Entry));
+    const FString DraftCsv = Csv.Replace(TEXT(",final"), TEXT(",draft"));
+    for (const TCHAR* SourceStatus : {TEXT("draft"), TEXT("final")})
+    {
+        const FString Source = DraftCsv.Replace(TEXT(",draft"), *(FString(TEXT(",")) + SourceStatus));
+        TestTrue(TEXT("active revisit line imports"), LoadBootstrapTextEntry(Source, TEXT("NAR-0001"), TEXT("revisit.crowd.sword"), Entry));
+        TestEqual(TEXT("revisit source status preserved"), Entry.Status, FString(SourceStatus));
+    }
+    TestFalse(TEXT("retired teacher line cannot start a job"), LoadBootstrapTextEntry(
+        DraftCsv.Replace(TEXT(",draft"), TEXT(",retired")), TEXT("NAR-0005"), TEXT("revisit.teacher.sword"), Entry));
+    TestFalse(TEXT("mismatched town role rejected"), LoadBootstrapTextEntry(
+        Csv, TEXT("NAR-0001"), TEXT("revisit.teacher.sword"), Entry));
     return true;
 }
 #endif

@@ -88,7 +88,8 @@ ExperimentViewProjection ExperimentSession::View() const noexcept {
     return {state_.runId, state_.phase, state_.worldStartedAt,
         state_.discovery ? std::optional{state_.discovery->occurredAt} : std::nullopt,
         state_.firstAttack ? std::optional{state_.firstAttack->occurredAt} : std::nullopt,
-        state_.swordUsed, state_.magicUsed, state_.revisitStartedAt};
+        state_.swordUsed, state_.magicUsed, state_.revisitStartedAt,
+        state_.crowdContentDelivered, state_.teacherRecallDelivered, state_.revisitCompletedAt};
 }
 }
 
@@ -163,10 +164,44 @@ bool ExperimentSession::NotifyControlRestored(const FactContext& context, std::u
         if (context.sequence <= receipt->sequence ||
             context.occurredAt.realSeconds < receipt->occurredAt.realSeconds ||
             context.occurredAt.engineWorldSeconds < receipt->occurredAt.engineWorldSeconds) return false;
+    latestFactSequence_ = context.sequence;
+    latestFactMoment_ = context.occurredAt;
     state_.revisitStartedAt = context.occurredAt;
     state_.phase = ExperimentPhase::Revisit;
     InvalidatePendingEffects();
     return true;
+}
+ExperimentStepEffects ExperimentSession::NotifyRevisitContentDelivered(const FactContext& context,
+    RevisitContentId content, std::uint64_t playbackGeneration) {
+    if (state_.phase != ExperimentPhase::Revisit || context.runId != state_.runId ||
+        playbackGeneration <= lastPlaybackGeneration_ || context.sequence <= latestFactSequence_ ||
+        !ValidMoment(context.occurredAt) || context.occurredAt.realSeconds < latestFactMoment_->realSeconds ||
+        context.occurredAt.engineWorldSeconds < latestFactMoment_->engineWorldSeconds) return {};
+
+    RescueMethod method;
+    bool crowd;
+    switch (content) {
+    case RevisitContentId::CrowdSword: method = RescueMethod::Sword; crowd = true; break;
+    case RevisitContentId::CrowdMagic: method = RescueMethod::Magic; crowd = true; break;
+    case RevisitContentId::CrowdMixed: method = RescueMethod::Mixed; crowd = true; break;
+    case RevisitContentId::TeacherSword: method = RescueMethod::Sword; crowd = false; break;
+    case RevisitContentId::TeacherMagic: method = RescueMethod::Magic; crowd = false; break;
+    case RevisitContentId::TeacherMixed: method = RescueMethod::Mixed; crowd = false; break;
+    default: return {};
+    }
+    bool& delivered = crowd ? state_.crowdContentDelivered : state_.teacherRecallDelivered;
+    if (delivered || state_.rescueResult->method != method) return {};
+    delivered = true;
+    latestFactSequence_ = context.sequence;
+    latestFactMoment_ = context.occurredAt;
+    lastPlaybackGeneration_ = playbackGeneration;
+    ExperimentStepEffects progress{true, RescueDecision::Continue, {}};
+    if (state_.crowdContentDelivered && state_.teacherRecallDelivered) {
+        state_.revisitCompletedAt = context.occurredAt;
+        state_.phase = ExperimentPhase::Ended;
+        progress.commands.push_back(IssueEffect(EffectKind::StopRun));
+    }
+    return progress;
 }
 void ExperimentSession::ClearRescueCaches() {
     std::unordered_set<std::uint64_t>{}.swap(acceptedSequences_);
