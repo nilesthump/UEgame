@@ -181,3 +181,8 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - 独立审查者 review 核对代码、用例、编译和三份宿主报告、核心 JUnit 及逐代日志，目视魔法/混用四张 00000 截图，确认角色、ID、草稿状态和完整字幕可读，批准本批功能提交。
 
 - 干净产品提交 `ac9257a` 的 Win64 Development 包通过 Build/Cook/Stage/Package/Archive。首次隐藏启动的魔法用例失败，未呈现字幕；同包直接运行实际游戏程序、以正常窗口复测，D3D12 十项各 1/1。十份日志均提示 HTML 模板缺失。两轮报告及截图编号保留于[本批交接](TEST-HANDOFF-0.1.0.md)。
+
+## 2026-11-22 开发包原生 HTML 报告导出修复
+
+- 0.1.0 / TECH-0.1.0-01。旧包有逐例 JSON，但十份 D3D12 日志均报 HTML 模板加载失败。AutomationController 从 Engine/Content/Automation/Report-Template.html 读取模板。旧包的 UFS 清单缺少该项。修复由 Win64 Development 实测，在 Development Game 构建时将原厂模板随包分发。
+- 本地验证归档 Deliverables/B01-report-fix-1122-check/ 完成 Build/Cook/Stage/Package/Archive，UAT 退出 0（.build/package-report-fix-1122-check.log）。新包 UFS 清单含模板。后台 NullRHI 执行 UEgame.B01.DraftTextSource，1/1，零错误和警告，进程与测试退出码均为 0。.build/report-fix-1122-export/ 同时生成 index.json 和 index.html，导出 HTML 解码后与原厂模板一致。浏览器展示所用的站点静态资源由报告服务器提供，未验证网页部署。
