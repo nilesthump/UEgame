@@ -103,7 +103,8 @@ bool UExperimentSubsystem::ApplySettlement(AExperimentWorldDirector* Director,
     }
     return true;
 }
-bool UExperimentSubsystem::AdvanceBootstrapRescue(AExperimentWorldDirector* Director, experiment::RunId Run)
+bool UExperimentSubsystem::AdvanceBootstrapRescue(AExperimentWorldDirector* Director, experiment::RunId Run,
+    experiment::ActionKind Kind)
 {
     check(IsInGameThread());
     if (!IsCurrentBinding(Director, Run) || Session->View().phase != experiment::ExperimentPhase::Rescue)
@@ -111,11 +112,11 @@ bool UExperimentSubsystem::AdvanceBootstrapRescue(AExperimentWorldDirector* Dire
     auto* Target = Director->NextRescueThreat();
     if (!Target) return false;
     if (!Session->View().threatDiscoveredAt)
-        return Session->NotifyThreatDiscovered({NextContext(Run)});
+        return Kind == experiment::ActionKind::Sword && Session->NotifyThreatDiscovered({NextContext(Run)});
 
     const auto Used = NextContext(Run);
     const experiment::ActionId Action = Used.sequence;
-    if (!Session->NotifyActionUsed({Used, Action, experiment::ActionKind::Sword}) ||
+    if (!Session->NotifyActionUsed({Used, Action, Kind}) ||
         !Session->NotifyAttackAtGoblin({NextContext(Run), Action})) return false;
     Target->MarkDefeated();
     const auto Batch = NextBatch++;

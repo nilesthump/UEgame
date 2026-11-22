@@ -46,6 +46,15 @@ private:
     bool RevealReadyTown(float DeltaSeconds);
     UPROPERTY() TArray<TObjectPtr<ABootstrapMarker>> TownMarkers;
     bool RestoreTownInput();
+    struct FTownRoute
+    {
+        experiment::RescueMethod Method;
+        experiment::RevisitContentId Crowd, Teacher;
+        const TCHAR* SceneSuffix;
+        const TCHAR* TeacherLabel;
+        const TCHAR* StudentsLabel;
+    };
+    const FTownRoute* TownRoute = nullptr;
     bool bTownDialogueChecked = false;
     FBootstrapTextEntry CrowdLine, TeacherLine;
     TSharedPtr<SWidget> DialoguePanel;
@@ -61,7 +70,9 @@ private:
     void MoveTownRight();
     void MoveInTown(float Distance);
     void RemoveTransitionCover();
-    void AdvanceBootstrapRescue();
+    void SpotOrStrike();
+    void CastAtThreat();
+    void AdvanceBootstrapRescue(experiment::ActionKind Kind);
     ABootstrapMarker* NextRescueThreat() const;
     bool bRescueFixture = false;
     void ShowBootstrapTextPreview();

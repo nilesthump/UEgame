@@ -17,27 +17,35 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBootstrapTownDialogueChecks, "UEgame.WorldScenario.B01.TownDialogue",
     EAutomationTestFlags::ClientContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::ProductFilter)
 
-bool FBootstrapTownDialogueChecks::RunTest(const FString&)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBootstrapMagicTownDialogueChecks, "UEgame.WorldScenario.B01.MagicTownDialogue",
+    EAutomationTestFlags::ClientContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::ProductFilter)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBootstrapMixedTownDialogueChecks, "UEgame.WorldScenario.B01.MixedTownDialogue",
+    EAutomationTestFlags::ClientContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::ProductFilter)
+
+namespace
+{
+bool RunTownDialogue(FAutomationTestBase& Test, int32 SwordStrikes, const TCHAR* CrowdId, const TCHAR* TeacherId,
+    FString ScreenshotPrefix)
 {
     UWorld* World = nullptr;
     for (const auto& Context : GEngine->GetWorldContexts())
         if (Context.WorldType == EWorldType::Game) World = Context.World();
-    if (!TestNotNull(TEXT("game world"), World)) return false;
+    if (!Test.TestNotNull(TEXT("game world"), World)) return false;
     TActorIterator<AExperimentWorldDirector> Actors(World);
-    if (!TestTrue(TEXT("director exists"), bool(Actors))) return false;
+    if (!Test.TestTrue(TEXT("director exists"), bool(Actors))) return false;
     const TWeakObjectPtr<AExperimentWorldDirector> Director(*Actors);
     const TWeakObjectPtr<APlayerController> Controller(World->GetFirstPlayerController());
     const TWeakObjectPtr<UExperimentSubsystem> Adapter(World->GetGameInstance()->GetSubsystem<UExperimentSubsystem>());
-    if (!TestTrue(TEXT("rescue ready"), Controller.IsValid() && Adapter.IsValid() &&
+    if (!Test.TestTrue(TEXT("rescue ready"), Controller.IsValid() && Adapter.IsValid() &&
         Adapter->View().IsSet() && Adapter->View()->phase == experiment::ExperimentPhase::Rescue)) return false;
 
-    auto Press = [this, Controller](FKey Key, int Count)
+    auto Press = [&Test, Controller](FKey Key, int Count)
     {
         for (int Index = 0; Index < Count; ++Index)
         {
-            ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Controller, Key]()
+            ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&Test, Controller, Key]()
             {
-                if (!TestTrue(TEXT("controller available"), Controller.IsValid())) return true;
+                if (!Test.TestTrue(TEXT("controller available"), Controller.IsValid())) return true;
                 for (const auto Event : {IE_Pressed, IE_Released})
                     Controller->InputKey(FInputKeyEventArgs(nullptr, FInputDeviceId::CreateFromInternalId(0),
                         Key, Event, FPlatformTime::Cycles64()));
@@ -46,55 +54,79 @@ bool FBootstrapTownDialogueChecks::RunTest(const FString&)
             ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.12f));
         }
     };
-    auto Await = [this, Director, Adapter](const TCHAR* Description, TFunction<bool()> Condition)
+    auto Await = [&Test, Director, Adapter](const TCHAR* Description, TFunction<bool()> Condition)
     {
         ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand(
-            [this, Director, Adapter, Description, Condition, Deadline = 0.0]() mutable
+            [&Test, Director, Adapter, Description, Condition, Deadline = 0.0]() mutable
             {
                 if (!Director.IsValid() || !Adapter.IsValid() || !Adapter->View().IsSet())
                 {
-                    AddError(TEXT("lost town binding"));
+                    Test.AddError(TEXT("lost town binding"));
                     return true;
                 }
                 if (Condition()) return true;
                 const double Now = FPlatformTime::Seconds();
                 if (Deadline == 0.0) Deadline = Now + 20.0;
                 if (Now < Deadline) return false;
-                AddError(Description);
+                Test.AddError(Description);
                 return true;
             }));
     };
-    Press(EKeys::E, 6);
+    Press(EKeys::E, 1); // Discover; this input does not count as a strike.
+    Press(EKeys::E, SwordStrikes);
+    Press(EKeys::F, 5 - SwordStrikes);
     Await(TEXT("control never restored"), [Adapter] { return Adapter->View()->phase == experiment::ExperimentPhase::Revisit; });
+    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&Test, Adapter, SwordStrikes]()
+    {
+        Test.TestTrue(TEXT("rescue facts match the played actions"), Adapter.IsValid() && Adapter->View().IsSet() &&
+            Adapter->View()->swordUsed == (SwordStrikes > 0) && Adapter->View()->magicUsed == (SwordStrikes < 5));
+        return true;
+    }));
     Press(EKeys::A, 4);
-    Await(TEXT("crowd subtitle missing"), [Director] { return Director->GetActiveTownTextId() == TEXT("NAR-0001"); });
+    Await(TEXT("crowd subtitle missing"), [Director, CrowdId] { return Director->GetActiveTownTextId() == CrowdId; });
     Press(EKeys::D, 4);
     Await(TEXT("leaving crowd must clear its subtitle"), [Director] { return Director->GetActiveTownTextId().IsEmpty(); });
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Adapter]()
+    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&Test, Adapter]()
     {
-        TestTrue(TEXT("partial exposure earns neither receipt"), Adapter.IsValid() && Adapter->View().IsSet() &&
+        Test.TestTrue(TEXT("partial exposure earns neither receipt"), Adapter.IsValid() && Adapter->View().IsSet() &&
             !Adapter->View()->crowdContentDelivered && !Adapter->View()->teacherRecallDelivered);
         return true;
     }));
     Press(EKeys::A, 4);
-    Await(TEXT("crowd subtitle never restarted"), [Director] { return Director->GetActiveTownTextId() == TEXT("NAR-0001"); });
+    Await(TEXT("crowd subtitle never restarted"), [Director, CrowdId] { return Director->GetActiveTownTextId() == CrowdId; });
     ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.3f));
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([] { FScreenshotRequest::RequestScreenshot(TEXT("B01TownCrowd"), true, true); return true; }));
+    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([ScreenshotPrefix] { FScreenshotRequest::RequestScreenshot(ScreenshotPrefix + TEXT("Crowd"), true, true); return true; }));
     Await(TEXT("crowd receipt missing"), [Adapter] { return Adapter->View()->crowdContentDelivered; });
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Adapter]()
+    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&Test, Adapter]()
     {
-        TestTrue(TEXT("crowd alone leaves revisit active"), Adapter.IsValid() && Adapter->View().IsSet() &&
+        Test.TestTrue(TEXT("crowd alone leaves revisit active"), Adapter.IsValid() && Adapter->View().IsSet() &&
             Adapter->View()->phase == experiment::ExperimentPhase::Revisit && !Adapter->View()->teacherRecallDelivered);
         return true;
     }));
     Press(EKeys::D, 8);
-    Await(TEXT("teacher subtitle missing"), [Director] { return Director->GetActiveTownTextId() == TEXT("NAR-0005"); });
+    Await(TEXT("teacher subtitle missing"), [Director, TeacherId] { return Director->GetActiveTownTextId() == TeacherId; });
     ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(0.3f));
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([] { FScreenshotRequest::RequestScreenshot(TEXT("B01TownTeacher"), true, true); return true; }));
+    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([ScreenshotPrefix] { FScreenshotRequest::RequestScreenshot(ScreenshotPrefix + TEXT("Teacher"), true, true); return true; }));
     Await(TEXT("two delivered clips must end the run"), [Adapter] {
         const auto View = Adapter->View();
         return View->crowdContentDelivered && View->teacherRecallDelivered && View->phase == experiment::ExperimentPhase::Ended;
     });
     return true;
+}
+}
+
+bool FBootstrapTownDialogueChecks::RunTest(const FString&)
+{
+    return RunTownDialogue(*this, 5, TEXT("NAR-0001"), TEXT("NAR-0005"), TEXT("B01Town"));
+}
+
+bool FBootstrapMagicTownDialogueChecks::RunTest(const FString&)
+{
+    return RunTownDialogue(*this, 0, TEXT("NAR-0002"), TEXT("NAR-0006"), TEXT("B01MagicTown"));
+}
+
+bool FBootstrapMixedTownDialogueChecks::RunTest(const FString&)
+{
+    return RunTownDialogue(*this, 2, TEXT("NAR-0007"), TEXT("NAR-0003"), TEXT("B01MixedTown"));
 }
 #endif
