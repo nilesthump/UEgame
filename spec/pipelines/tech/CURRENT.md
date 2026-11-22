@@ -179,3 +179,5 @@ $Engine = 'G:/Epic Games/UE_5.6'
 - WSL Ubuntu/GCC 13.3 核心 8/8（`.build/core-routes-1122/ctest-junit.xml`）。Editor Development 复编成功（`.build/routes-editor-r2-1122.log`）。D3D12 游戏宿主 MagicTownDialogue、MixedTownDialogue、TownDialogue 各 1/1，进程和测试退出码均为 0。首项报告在 `.build/routes-editor-1122/`，后两项在 `.build/routes-editor-1122b/`。字幕先中断再送达，三项均以教师回执收尾。
 
 - 独立审查者 review 核对代码、用例、编译和三份宿主报告、核心 JUnit 及逐代日志，目视魔法/混用四张 00000 截图，确认角色、ID、草稿状态和完整字幕可读，批准本批功能提交。
+
+- 干净产品提交 `ac9257a` 的 Win64 Development 包通过 Build/Cook/Stage/Package/Archive。首次隐藏启动的魔法用例失败，未呈现字幕；同包直接运行实际游戏程序、以正常窗口复测，D3D12 十项各 1/1。十份日志均提示 HTML 模板缺失。两轮报告及截图编号保留于[本批交接](TEST-HANDOFF-0.1.0.md)。
