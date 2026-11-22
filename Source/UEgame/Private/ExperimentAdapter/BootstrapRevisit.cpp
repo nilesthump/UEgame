@@ -150,7 +150,7 @@ bool AExperimentWorldDirector::PrepareTown()
     // three replacement markers have registered successfully behind the cover.
     const FVector Origin = GetActorLocation();
     const FVector Offsets[] = {FVector(0, 0, -145), FVector(0, -140, -65), FVector(0, 140, -65)};
-    const TCHAR* Labels[] = {TEXT("Town player"), TEXT("Sword teacher"), TEXT("Sword students")};
+    const TCHAR* Labels[] = {TEXT("Town player"), TownRoute->TeacherLabel, TownRoute->StudentsLabel};
     const FName Roles[] = {TEXT("B01TownPlayer"), TEXT("B01Teacher"), TEXT("B01Crowd")};
     for (int32 Index = 0; Index < UE_ARRAY_COUNT(Offsets); ++Index)
     {

@@ -1,4 +1,5 @@
 #include "ExperimentWorldDirector.h"
+#include "Algo/Find.h"
 #include "BootstrapMarker.h"
 #include "ExperimentSubsystem.h"
 #include "Components/TextRenderComponent.h"
@@ -63,22 +64,37 @@ public:
 
 bool AExperimentWorldDirector::LoadTownDialogue()
 {
-    // Only the sword fixture currently has a playable rescue. Bind to its closed
-    // result, not the player's equipment or the last input.
+    if (bTownDialogueChecked) return TownRoute != nullptr;
     const auto Outcome = Adapter->Session->RescueOutcome();
-    if (!Outcome || Outcome->method != experiment::RescueMethod::Sword) return false;
-    if (bTownDialogueChecked) return !CrowdLine.Id.IsEmpty() && !TeacherLine.Id.IsEmpty();
+    if (!Outcome || !Outcome->succeeded || !Outcome->method) return false;
     bTownDialogueChecked = true;
+
+    using experiment::RescueMethod;
+    using experiment::RevisitContentId;
+    static constexpr FTownRoute Routes[] = {
+        {RescueMethod::Sword, RevisitContentId::CrowdSword, RevisitContentId::TeacherSword,
+            TEXT("sword"), TEXT("Sword teacher"), TEXT("Sword students")},
+        {RescueMethod::Magic, RevisitContentId::CrowdMagic, RevisitContentId::TeacherMagic,
+            TEXT("magic"), TEXT("Magic teacher"), TEXT("Magic students")},
+        {RescueMethod::Mixed, RevisitContentId::CrowdMixed, RevisitContentId::TeacherMixed,
+            TEXT("mixed"), TEXT("Sword and magic teacher"), TEXT("Sword and magic students")}
+    };
+    const auto* Route = Algo::FindBy(Routes, *Outcome->method, &FTownRoute::Method);
+    if (!Route) return false;
     FString Csv;
     FBootstrapTextEntry Crowd, Teacher;
-    const bool bValid = FFileHelper::LoadFileToString(Csv, *(FPaths::ProjectDir() / TEXT("spec/contracts/narrative/TEXT.csv"))) &&
-        LoadBootstrapTextEntry(Csv, TEXT("NAR-0001"), TEXT("revisit.crowd.sword"), Crowd) &&
-        LoadBootstrapTextEntry(Csv, TEXT("NAR-0005"), TEXT("revisit.teacher.sword"), Teacher);
-    if (!bValid)
+    auto LoadLine = [&](RevisitContentId Id, const TCHAR* SpeakerRole, FBootstrapTextEntry& Line)
     {
-        UE_LOG(LogTemp, Error, TEXT("B01 town: missing or invalid sword crowd/teacher text; town readiness held"));
+        return LoadBootstrapTextEntry(Csv, *FString::Printf(TEXT("NAR-%04d"), static_cast<int32>(Id)),
+            *FString::Printf(TEXT("revisit.%s.%s"), SpeakerRole, Route->SceneSuffix), Line);
+    };
+    if (!FFileHelper::LoadFileToString(Csv, *(FPaths::ProjectDir() / TEXT("spec/contracts/narrative/TEXT.csv"))) ||
+        !LoadLine(Route->Crowd, TEXT("crowd"), Crowd) || !LoadLine(Route->Teacher, TEXT("teacher"), Teacher))
+    {
+        UE_LOG(LogTemp, Error, TEXT("B01 town: missing or invalid %s crowd/teacher text; town readiness held"), Route->SceneSuffix);
         return false;
     }
+    TownRoute = Route;
     CrowdLine = MoveTemp(Crowd);
     TeacherLine = MoveTemp(Teacher);
     return true;
@@ -166,7 +182,7 @@ void AExperimentWorldDirector::UpdateTownDialogue()
         // plus one second to orient to the speaker.
         const double RequiredSeconds = 1.0 + Line.Text.Len() / 6.0;
         if (!DialogueText->HasContinuousPaint(RequiredSeconds)) return;
-        const auto Id = bTeacherSpeaking ? experiment::RevisitContentId::TeacherSword : experiment::RevisitContentId::CrowdSword;
+        const auto Id = bTeacherSpeaking ? TownRoute->Teacher : TownRoute->Crowd;
         RemoveTownDialogue();
         if (Adapter->ReportTownContent(this, BindingRun, Id, DialogueGeneration))
             UE_LOG(LogTemp, Display, TEXT("B01 town text delivered: %s run=%llu generation=%llu"), *Line.Id, BindingRun, DialogueGeneration);

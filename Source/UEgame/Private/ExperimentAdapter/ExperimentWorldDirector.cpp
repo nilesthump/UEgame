@@ -53,7 +53,9 @@ void AExperimentWorldDirector::BeginPlay()
         {
             EnableInput(Controller);
             InputComponent->BindKey(EKeys::E, IE_Pressed, this, bRescueFixture
-                ? &AExperimentWorldDirector::AdvanceBootstrapRescue : &AExperimentWorldDirector::ObserveBootstrapAftermath);
+                ? &AExperimentWorldDirector::SpotOrStrike : &AExperimentWorldDirector::ObserveBootstrapAftermath);
+            if (bRescueFixture)
+                InputComponent->BindKey(EKeys::F, IE_Pressed, this, &AExperimentWorldDirector::CastAtThreat);
         }
     }
     if (UGameInstance* Instance = GetGameInstance())
@@ -129,10 +131,18 @@ ABootstrapMarker* AExperimentWorldDirector::NextRescueThreat() const
     }
     return Next;
 }
-void AExperimentWorldDirector::AdvanceBootstrapRescue()
+void AExperimentWorldDirector::SpotOrStrike()
 {
-    if (Adapter.IsValid() && Adapter->AdvanceBootstrapRescue(this, BindingRun) && !bGrayboxStopped)
-        StatusText->SetText(FText::FromString(TEXT("GRAYBOX: E = sword strike")));
+    AdvanceBootstrapRescue(experiment::ActionKind::Sword);
+}
+void AExperimentWorldDirector::CastAtThreat()
+{
+    AdvanceBootstrapRescue(experiment::ActionKind::Magic);
+}
+void AExperimentWorldDirector::AdvanceBootstrapRescue(experiment::ActionKind Kind)
+{
+    if (Adapter.IsValid() && Adapter->AdvanceBootstrapRescue(this, BindingRun, Kind) && !bGrayboxStopped)
+        StatusText->SetText(FText::FromString(TEXT("GRAYBOX: E = sword, F = magic")));
 }
 void AExperimentWorldDirector::ObserveBootstrapAftermath()
 {
