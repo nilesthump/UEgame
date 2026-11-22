@@ -4,17 +4,19 @@
 #include "Session/SettlementChecks.h"
 #include "Session/EffectChecks.h"
 #include "Session/TimeSkipChecks.h"
+#include "Session/RevisitContentChecks.h"
 #include <array>
 #include <string_view>
 namespace experiment::checks {
 struct CoreCase { std::string_view id; bool (*run)(); };
-inline constexpr std::array<CoreCase, 7> Catalog{{
+inline constexpr std::array<CoreCase, 8> Catalog{{
     {"B01.Session.WorldReady", &WorldReadyBoundary},
     {"B01.Session.IndependentStarts", &IndependentStarts},
     {"B01.Session.FactIdentityAndDelivery", &FactIdentityAndDelivery},
     {"B01.Session.StableBatchDeathPriority", &StableBatchDeathPriority},
     {"B01.Session.AftermathAndMissingMethod", &AftermathAndMissingMethod},
     {"B01.Session.EffectEligibility", &EffectEligibility},
-    {"B01.Session.TimeSkipReceipts", &TimeSkipReceipts}
+    {"B01.Session.TimeSkipReceipts", &TimeSkipReceipts},
+    {"B01.Session.RevisitContentReceipts", &RevisitContentReceipts}
 }};
 }

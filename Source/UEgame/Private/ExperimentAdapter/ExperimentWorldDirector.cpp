@@ -84,6 +84,7 @@ void AExperimentWorldDirector::EndPlay(const EEndPlayReason::Type Reason)
     if (TextPreview.IsValid() && GetWorld()->GetGameViewport())
         GetWorld()->GetGameViewport()->RemoveViewportWidgetContent(TextPreview.ToSharedRef());
     TextPreview.Reset();
+    RemoveTownDialogue();
     RemoveTransitionCover();
     if (Adapter.IsValid()) Adapter->UnbindWorld(this);
     for (const auto& Marker : Markers) if (IsValid(Marker)) Marker->Destroy();
@@ -150,6 +151,13 @@ bool AExperimentWorldDirector::ExecuteBootstrapEffect(const experiment::Experime
     {
         const auto View = Adapter->View();
         if (!View.IsSet() || View->phase != experiment::ExperimentPhase::Ended) return false;
+        if (View->crowdContentDelivered && View->teacherRecallDelivered)
+        {
+            DisableInput(GetWorld()->GetFirstPlayerController());
+            SetActorTickEnabled(false);
+            StatusText->SetText(FText::FromString(TEXT("B01 GRAYBOX: revisit complete")));
+            return true;
+        }
         StatusText->SetText(FText::FromString(TEXT("B01 GRAYBOX: ended - child dead")));
         ShowBootstrapTextPreview();
         return true;

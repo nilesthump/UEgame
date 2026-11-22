@@ -52,6 +52,9 @@ struct SettlementCompletedFact {
 };
 enum class RescueDecision { Continue, AwaitAftermath, Failed, Succeeded, MissingMethod };
 enum class RescueMethod { Sword, Magic, Mixed };
+// Values correspond to the stable narrative catalog IDs.
+enum class RevisitContentId { CrowdSword = 1, CrowdMagic = 2, TeacherMixed = 3,
+    TeacherSword = 5, TeacherMagic = 6, CrowdMixed = 7 };
 struct ExperimentFlowRules final {
     static RescueDecision EvaluateRescue(const EncounterSnapshot& snapshot,
         bool threatObserved, bool aftermathObserved, bool hasMethod) noexcept;
@@ -87,6 +90,9 @@ struct ExperimentViewProjection {
     bool swordUsed{};
     bool magicUsed{};
     std::optional<ExperimentMoment> revisitStartedAt;
+    bool crowdContentDelivered{};
+    bool teacherRecallDelivered{};
+    std::optional<ExperimentMoment> revisitCompletedAt;
 };
 // The only owner of experimental state; world readiness is supplied by the host.
 class ExperimentSession final {
@@ -106,6 +112,9 @@ public:
     ExperimentStepEffects NotifySkipReady(const FactContext& context, std::uint64_t token, SkipMilestone milestone);
     bool NotifyControlRestored(const FactContext& context, std::uint64_t token);
     [[nodiscard]] std::optional<RescueResult> RescueOutcome() const noexcept { return state_.rescueResult; }
+    // The host seals a continuously presented, identity-checked key segment before reporting it.
+    ExperimentStepEffects NotifyRevisitContentDelivered(const FactContext& context,
+        RevisitContentId content, std::uint64_t playbackGeneration);
     [[nodiscard]] ExperimentViewProjection View() const noexcept;
 private:
     bool AcceptContext(const FactContext& context);
@@ -117,6 +126,9 @@ private:
         std::optional<FactContext> discovery;
         std::optional<FactContext> firstAttack;
         std::optional<ExperimentMoment> revisitStartedAt;
+        bool crowdContentDelivered{};
+        bool teacherRecallDelivered{};
+        std::optional<ExperimentMoment> revisitCompletedAt;
         bool aftermathObserved{};
         std::optional<RescueResult> rescueResult;
         bool swordUsed{};
@@ -132,6 +144,7 @@ private:
     void ClearRescueCaches();
     ExperimentEffect IssueEffect(EffectKind kind);
     bool MatchesTransition(const FactContext& context, std::uint64_t token) const;
+    std::uint64_t lastPlaybackGeneration_{};
     std::uint64_t transitionToken_{};
     std::array<std::optional<FactContext>, 3> skipReady_{};
     bool restoreDispatched_{};
