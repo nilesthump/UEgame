@@ -57,6 +57,8 @@ foreach ($case in $cases) {
 - 产品提交在构建前和归档后工作树均干净。Build/Cook/Stage/Package/Archive 完成，UAT 退出码 0（`.build/package-routes-1122.log`）。独立启动十次、执行十项 D3D12 用例，各 1/1，进程和测试退出码均为 0。报告与日志在 `.build/routes-packaged-r2-1122/`。各份原生报告的 errors/warnings 为 0，十份日志均报 HTML 模板缺失。
 - 包内截图位于 Windows/UEgame/Saved/Screenshots/Windows/。本轮魔法群众和教师取 00001，混用、剑术和其余四张回归取 00000。每条路线的群众第 1 代中断、第 2 代送达、教师第 3 代送达。
 - 此前从包根启动器以隐藏窗口启动时，魔法用例失败（进程 255，测试退出码 -1）。报告 `.build/routes-packaged-1122/MagicTownDialogue/index.json` 和两张魔法 00000 截图保留；画面只有路线标记，没有字幕。该次日志未记录窗口焦点。复测沿用同包、同一套送达条件。
+- 对同一 `ac9257a` 归档包再次运行 MagicTownDialogue。包根启动器、包内游戏程序分别以 PowerShell 的 Hidden 和 Normal 启动，各执行一次。四份 D3D12 原生报告各 1/1，两条字幕均送达，进程和测试退出码均为 0。报告、日志及 Win32 前台采样见 `.build/window-comparison-20261122-182026/`。四轮均采到游戏处于前台，Hidden 启动参数本身不能复现持续失焦。历史失败的首个断言是群众字幕未出现，具体阻断条件仍未知。
+- 提交前诊断包 `Deliverables/B01-routes-window-diagnostic-r2/` 的 BuildCookRun 退出码 0（`.build/window-diagnostic-r2-package.log`）。同包运行两次 D3D12 魔法用例，报告、日志和进程记录在 `.build/window-r2-20261122-182833/`。正常窗口实际 1/1 成功，两条字幕顺序送达，进程与测试退出码均为 0。负例在群众第 1 代字幕出现后最小化游戏窗口，Win32 确认 IsIconic=True。该轮 1 例失败，2 个超时、0 警告，进程 255、测试退出码 -1。两次超时均为回访阶段（phase=4），windowMinimized=1、windowActive=1、viewportFocused=1，当前文本依次为 NAR-0002 和 NAR-0006，均未收到送达回执。最小化负例的首错为群众回执缺失，与历史首错不同。复测遇到超时，先查看首个失败断言后的阶段、窗口、视口及当前文本，再对照各代显示和送达日志。
 - Linux 核心 8/8，Editor Development 构建成功，真实 D3D12 宿主三条路线各 1/1。源码、宿主执行和四张新路线截图经独立审查者 review 核准，位置见 tech 的 CURRENT。
 
 - 独立审查者 review 核实本轮归档身份、UAT 和十份 D3D12 原生报告/日志，逐张目视成功轮十张截图，并复核首次失败截图，批准本候选交付。
