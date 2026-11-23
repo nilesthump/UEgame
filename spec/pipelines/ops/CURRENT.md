@@ -6,15 +6,15 @@
 
 ## 当前接收
 
-2026-11-23，ops 通过 [PR #52](https://github.com/nilesthump/UEgame/pull/52) 接收 B01 回访字幕自动化用例的启动修复及复测记录。ops 合并提交为 `cde5fd0`，test 验收提交为 `446446b`。[PR #51](https://github.com/nilesthump/UEgame/pull/51) 的产品提交为 `a35d3f0`，候选为 `8b7d2c4`，test 接收合并为 `df2d04f`。
+2026-11-23，ops 通过 [PR #54](https://github.com/nilesthump/UEgame/pull/54) 接收 B01 运行时字幕回执修复。ops 合并提交为 `48ac4e6`，test 验收提交为 `df15b96`。[PR #53](https://github.com/nilesthump/UEgame/pull/53) 的产品与 Win64 包均对应 `b58e07d`，test 接收合并为 `ef87e18`。
 
-- ops 核对了同一 Win64 Development 归档包的构建身份、原生报告和窗口操作记录。受控隐藏后，同一游戏窗口在启动用例时恢复可见，魔法路线 1/1 通过，群众与教师各登记一份回执。正常窗口 D3D12 十项各通过 1/1，零错误、零警告，进程均退出 0。
-- 运行中最小化负例出现两次预期超时，零回执，进程退出 255。旧包对照中，外部采样未观察到所选窗口恢复，游戏仍登记两份回执。实际视口与回执的逐帧对应关系待 tech 核实。
-- 上游独立审查者 `verify` 核对了差异、报告、12 张新截图和验收文档，同意按启动修复范围接收。执行链接见 test 维护的[验收记录](../../evidence/evidence.md)。[#52 CI](https://github.com/nilesthump/UEgame/actions/runs/45150011672) 的仓库基线与 Linux 核心检查通过，剧情文本检查按路径跳过。
+- ops 核对了包身份、窗口记录及原生报告。test 在字幕显示时隐藏同一窗口 7.020 秒，210 个采样帧内零合格绘制、零回执。恢复首绘后重新计时，群众和教师字幕分别累计 5.860 秒和 5.669 秒后各送达一次。
+- 隐藏启动恢复原窗口，1/1 通过。正常窗口 D3D12 十项全部通过，零错误、零警告。持续最小化时零回执，原生报告记录四项预期超时。#51 旧包异常的历史原因仍未证实。
+- 独立审查者 `verify` 核对了产品差异、逐帧记录、原生报告和 14 张正例截图，同意阶段性交付。实际执行入口见 test 维护的[验收记录](../../evidence/evidence.md)。[#54 CI](https://github.com/nilesthump/UEgame/actions/runs/45155905721) 的仓库基线与 Linux 核心检查通过，剧情文本检查按路径跳过。
 
 ## 下一步
 
-tech 从 [#51 原讨论](https://github.com/nilesthump/UEgame/pull/51) 继续核对实际视口窗口标识、可见状态、绘制与字幕回执，验证隐藏期间零送达、恢复后重新累计完整显示时长，再交 test 复测。完整战斗、导航、环境后果、世界卸载与恢复仍待 tech 交付。正式字幕与声音、实物输入、输入到对应画面实际呈现小于 50 ms 及本人试玩仍待验证。B01 为 InProgress，DISPLAY-01 为 Partial。
+完整战斗、导航、环境后果、世界卸载与恢复仍待 tech 交付，再由 test 验收。正式字幕与声音、实物输入、输入到对应画面实际呈现小于 50 ms 及本人试玩仍待验证。B01 为 InProgress，DISPLAY-01 为 Partial。
 
 ## 发布边界
 
