@@ -4,7 +4,7 @@
 - 实际线上版本：未发布（`onlineVersion=null`，无 tag）
 - 更新：2026-11-23
 - 维护者：test
-- 结论：test 在同一 Win64 包独立复测隐藏启动 1/1、正常窗口 10/10。魔法、混用、剑术三条灰盒回访均在群众和教师两份字幕回执齐备后结束。B01 仍在实施。
+- 结论：test 在同一 Win64 包独立复测运行中隐藏 1/1、隐藏启动 1/1、正常窗口 10/10。魔法、混用、剑术三条灰盒回访均在群众和教师两份字幕回执齐备后结束。B01 仍在实施。
 
 本文件只保留按版本和验收项的当前结论及执行链接。修复通过就近更新原条目；变更导致结果失效时原地改为“待复测”。历史由 Git 保存，禁止新增 `evidence-latest.md`、`evidence-final.md` 等平行结论文件。
 
@@ -20,25 +20,26 @@
 | GOV-08 | 0.1.0 | 发布状态/流程与未发布记录 | Passed | [state.json](../releases/state.json)：`onlineVersion=null`、`onlineTag=null`、`unreleased` | 无正式产品发布 |
 | FLOW-01 | 0.1.0 | 九个规定 MR 流向 | Passed（9/9） | growth→tech [#9](https://github.com/nilesthump/UEgame/pull/9)；growth→narrative [#10](https://github.com/nilesthump/UEgame/pull/10)；narrative→tech [#11](https://github.com/nilesthump/UEgame/pull/11)；tech→art [#12](https://github.com/nilesthump/UEgame/pull/12)；art→tech [#13](https://github.com/nilesthump/UEgame/pull/13)；tech→test [#14](https://github.com/nilesthump/UEgame/pull/14)；maintenance→ops [#15](https://github.com/nilesthump/UEgame/pull/15)；test→ops [#16](https://github.com/nilesthump/UEgame/pull/16)；ops→main [#17](https://github.com/nilesthump/UEgame/pull/17) | 无（证据修正 PR #18 不改变九条流向） |
 | MAIN-01 | 0.1.0 | `ops → main` 治理集成 | Passed | [#17](https://github.com/nilesthump/UEgame/pull/17) 合并为 `3bd0c84`；证据同步 [#20](https://github.com/nilesthump/UEgame/pull/20)；`main` 已更新，线上仍未发布 | 无产品发布 |
-| PROD-B01 | 0.1.0 | B01 完整功能 | InProgress（三条灰盒回访通过） | [PR #51](https://github.com/nilesthump/UEgame/pull/51)，产品 a35d3f0，候选 8b7d2c4；[CI](https://github.com/nilesthump/UEgame/actions/runs/45147291663)，同包执行记录见下 | 完整战斗、导航、环境火湿与破坏、世界卸载恢复、实物输入、性能与本人体验待验 |
-| DISPLAY-01 | 0.1.0 | 少量文本 UE 显示/字幕接入 | Partial（六条回访草稿与 NAR-0004 草稿探针可见） | 三条路线各核对两张字幕截图，Aftermath 核对失败旁白；截图编号及文本 ID 见下 | 运行时隐藏窗口回执有效性待 tech 核实；正式文本、语音与字幕同步、听辨待验 |
+| PROD-B01 | 0.1.0 | B01 完整功能 | InProgress（三条灰盒回访通过） | [PR #53](https://github.com/nilesthump/UEgame/pull/53)，产品与候选均为 b58e07d；[CI](https://github.com/nilesthump/UEgame/actions/runs/45153258835)，同包执行记录见下 | 完整战斗、导航、环境火湿与破坏、世界卸载恢复、实物输入、性能与本人体验待验 |
+| DISPLAY-01 | 0.1.0 | 少量文本 UE 显示/字幕接入 | Partial（六条回访草稿与 NAR-0004 草稿探针可见） | 三条路线各核对两张字幕截图，Aftermath 核对失败旁白；截图编号及文本 ID 见下 | 正式文本、语音与字幕同步、听辨待验 |
 | PERF-01 | 0.1.0 | 输入→渲染 <50ms | NotRun | 无 | 测量链未建立 |
 | FEEL-01 | 0.1.0 | 本人因果体验 | NotRun | 无 | 未试玩 |
 
 ```text
 Governance=Passed
-B01.Core=8/8 (tech GCC 13 JUnit, upstream handoff), core-linux CI passed (#51)
+B01.Core=8/8 (tech GCC 13 JUnit, upstream handoff), core-linux CI passed (#53)
 TaskBranches=Removed (7 remote / 9 local / 5 worktrees)
 ProductRelease=NotRun
 MainIntegration=#17 / #20 (exact SHA in Git)
 ```
 
-## 0.1.0 / PR #51 本机独立复测
+## 0.1.0 / PR #53 本机独立复测
 
-- 2026-11-23，test 从 9385393 启动 B01-hidden-startup-20261123 归档。BUILD-IDENTITY.json 对应产品 a35d3f0、Win64 Development、UE 5.6.1 CL44394996、B01Bootstrap。上游 UAT 退出 0，交付提交 8b7d2c4 只更新交接文档。
-- 从根启动器受控隐藏子进程的游戏窗口。在用例开始前确认 HWND 199310 已隐藏，随后同一窗口恢复可见，期间未发现第二个匹配窗口。D3D12 魔法用例 1/1，启动器与测试退出 0，群众 NAR-0002 和教师 NAR-0006 送达。[窗口记录](G:/UEgame/.worktrees/pipelines/test/.build/receive51-hidden-1123/window.txt) · [原生报告](G:/UEgame/.worktrees/pipelines/test/.build/receive51-hidden-1123/magic/index.json)
-- 正常窗口串行执行 MagicTownDialogue、MixedTownDialogue、TownDialogue、Revisit、RescueSuccess、RescueTeardown、Lifecycle、Bootstrap、Aftermath、DraftTextSource。十项各 1/1，零错误、零警告，每项均核对 D3D12、进程和测试退出 0、原生 JSON 及 HTML 导出。[逐例报告](G:/UEgame/.worktrees/pipelines/test/.build/receive51-1123/normal/) · [进程记录](G:/UEgame/.worktrees/pipelines/test/.build/receive51-1123/normal-process.txt)
-- 独立审查者 verify 逐张核对 12 张新截图。魔法群众及教师的隐藏启动图后缀为 00002，正常回归为 00003，其余八图为 00001。三条路线的角色、字幕 ID 及正文符合草稿契约，另外四张呈现启动、救援成功、回访及死亡旁白。[截图目录](G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-hidden-startup-20261123/Windows/UEgame/Saved/Screenshots/Windows/)
-- 运行中最小化负例实跑一例。首次出现 NAR-0002 后，17:40:14（上海）确认 IsIconic=True。群众回执超时，随后回访结束超时，对应当前字幕为 NAR-0002、NAR-0006。两次均为 windowMinimized=1，零送达，测试退出 -1、进程 255。[负例报告](G:/UEgame/.worktrees/pipelines/test/.build/receive51-1123/negative-r2/index.json) · [窗口操作](G:/UEgame/.worktrees/pipelines/test/.build/receive51-1123/negative-actions.txt)
-- verify 独立核对候选 diff、包身份、正负例报告和截图，同意按启动范围接收。[#51](https://github.com/nilesthump/UEgame/pull/51) 通过 merge commit df2d04f 并入 test。[CI](https://github.com/nilesthump/UEgame/actions/runs/45147291663) 仓库基线及核心通过，文本检查按路径跳过。
-- 运行时可见性单独交 tech。旧包在所选 HWND 459102 隐藏后未观测到恢复，同轮仍登记了 NAR-0002 和 NAR-0006。需在实际视口 HWND 上逐帧关联可见状态、绘制及回执，验证隐藏期间零送达、恢复后重新累计连续显示时间。11 月 22 日历史首败缺少当时的窗口采样，仍未归因。[旧包对照](G:/UEgame/.worktrees/pipelines/tech/.build/startup-final-red-1123/)
+- test 从 446446b 串行运行同一归档。包根记录的产品提交 b58e07d 与 #53 源提交一致，配置为 Win64 Development，UE 5.6.1 CL44394996。[包身份](G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-town-viewport-20261123/BUILD-IDENTITY.json)
+- 运行中隐藏。外部观测与游戏逐帧记录对应 HWND 526068。群众字幕隐藏前已累计 1.301 秒。隐藏至请求恢复的 7.020 秒内，210 个采样帧零合格绘制、零回执。恢复首绘从零计时，第 706 帧群众累计 5.860 秒（要求 5.833 秒），第 902 帧教师累计 5.669 秒（要求 5.667 秒），各送达一次。D3D12 魔法用例 1/1。[窗口记录](G:/UEgame/.worktrees/pipelines/test/.build/receive53-1123/runtime/window.txt) · [逐帧日志](G:/UEgame/.worktrees/pipelines/test/.build/receive53-1123/runtime/game.log) · [原生报告](G:/UEgame/.worktrees/pipelines/test/.build/receive53-1123/runtime/magic/index.json)
+- 隐藏启动。同一 HWND 1115972 在测试开始前隐藏，随后恢复可见，其他匹配窗口为零。群众、教师分别送达，D3D12 魔法用例 1/1，启动器退出 0。[窗口记录](G:/UEgame/.worktrees/pipelines/test/.build/receive53-1123/startup/window.txt) · [原生报告](G:/UEgame/.worktrees/pipelines/test/.build/receive53-1123/startup/magic/index.json)
+- 正常窗口十项各 1/1，逐项核对 D3D12、进程退出 0、测试退出 0、原生 JSON 和 HTML，零错误、零警告。[逐例日志和报告](G:/UEgame/.worktrees/pipelines/test/.build/receive53-1123/normal/)
+- 独立审查者 verify 逐张核对本轮 14 张正例截图。魔法群众与教师的运行中隐藏、隐藏启动、正常回归图分别为 00003、00004、00005，其余八图为 00001。三条回访路线的角色、字幕 ID 和草稿正文一致，另四图为启动、救援、回访及死亡旁白。[截图目录](G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-town-viewport-20261123/Windows/UEgame/Saved/Screenshots/Windows/)
+- 持续最小化负例。18:18:43（上海）在群众字幕出现后确认游戏窗口 IsIconic=True。原生报告记录四项超时：群众字幕重新出现、群众回执、教师字幕、回访结束。四项均为 windowMinimized=1、activeText 为空，全程零业务回执。原生测试退出 -1，进程 255，符合负例接收条件。上游记录五项超时；本轮首次显示已被用例观察到。[负例报告](G:/UEgame/.worktrees/pipelines/test/.build/receive53-1123/negative-r2/index.json) · [游戏日志](G:/UEgame/.worktrees/pipelines/test/.build/receive53-1123/negative-r2.log)
+- #51 旧样本缺少同帧视口身份，历史原因仍未证实。此次结论仅覆盖所测窗口状态、游戏绘制和业务回执。
+- verify 独立审查本批产品差异、验收记录及 ops 交付说明，批准阶段性交付。[#53 接收记录](https://github.com/nilesthump/UEgame/pull/53) 已以 merge commit ef87e18d 并入 test。
