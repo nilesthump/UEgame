@@ -17,6 +17,9 @@
 #include "Tests/AutomationCommon.h"
 #include "UnrealClient.h"
 #include "Widgets/SWindow.h"
+#if PLATFORM_WINDOWS
+#include "Windows/WindowsHWrapper.h"
+#endif
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBootstrapTownDialogueChecks, "UEgame.WorldScenario.B01.TownDialogue",
     EAutomationTestFlags::ClientContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::ProductFilter)
@@ -42,6 +45,24 @@ bool RunTownDialogue(FAutomationTestBase& Test, int32 SwordStrikes, const TCHAR*
     const TWeakObjectPtr<UExperimentSubsystem> Adapter(World->GetGameInstance()->GetSubsystem<UExperimentSubsystem>());
     if (!Test.TestTrue(TEXT("rescue ready"), Controller.IsValid() && Adapter.IsValid() &&
         Adapter->View().IsSet() && Adapter->View()->phase == experiment::ExperimentPhase::Rescue)) return false;
+
+#if PLATFORM_WINDOWS
+    // External launchers can hide the HWND without updating Slate's cached visibility.
+    auto* StartupViewport = World->GetGameViewport();
+    const auto GameWindow = StartupViewport ? StartupViewport->GetWindow() : nullptr;
+    const auto NativeWindow = GameWindow ? GameWindow->GetNativeWindow() : nullptr;
+    const HWND Handle = NativeWindow ? static_cast<HWND>(NativeWindow->GetOSWindowHandle()) : nullptr;
+    unsigned long WindowProcessId = 0;
+    if (Handle && ::GetWindowThreadProcessId(Handle, &WindowProcessId) &&
+        WindowProcessId == ::GetCurrentProcessId() && !::IsWindowVisible(Handle) && !::IsIconic(Handle))
+    {
+        Test.AddInfo(TEXT("Restoring hidden game viewport at town dialogue test startup"));
+        GameWindow->Restore();
+        if (!Test.TestTrue(TEXT("restored game viewport is visible at startup"), ::IsWindowVisible(Handle) != 0))
+            return false;
+        Test.AddInfo(TEXT("Game viewport restored and visibly shown at startup"));
+    }
+#endif
 
     auto Press = [&Test, Controller](FKey Key, int Count)
     {
