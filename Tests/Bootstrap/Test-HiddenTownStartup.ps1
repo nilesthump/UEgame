@@ -1,9 +1,10 @@
-# Run a real Win64 presentation case with its game window hidden before automation starts.
-[CmdletBinding()]
+# Exercise external hiding of the packaged game's real viewport before startup or during dialogue.
+[CmdletBinding(DefaultParameterSetName='Startup')]
 param(
     [Parameter(Mandatory)][string] $Archive,
     [Parameter(Mandatory)][string] $ReportDirectory,
-    [switch] $RequireForeground
+    [Parameter(ParameterSetName='Startup')][switch] $RequireForeground,
+    [Parameter(Mandatory,ParameterSetName='Runtime')][switch] $DuringDialogue
 )
 $ErrorActionPreference = 'Stop'
 $launcher = (Get-Item -LiteralPath (Join-Path $Archive 'Windows/UEgame.exe')).FullName
@@ -50,9 +51,13 @@ public static class TownStartupWindow {
 }
 "@
 }
+# Keep per-frame trace volume below the async log writer's throughput.
+$commands = 'Automation RunTests ' + $case + ';Quit'
+if ($DuringDialogue) { $commands = 't.MaxFPS 30,' + $commands }
 $gameArgs = @('-windowed','-ResX=1280','-ResY=720','-unattended','-nosplash','-d3d12','-B01RescueGraybox','-FORCELOGFLUSH',
-    ('-ExecCmds="Automation RunTests ' + $case + ';Quit"'),'-TestExit="Automation Test Queue Empty"',
+    ('-ExecCmds="' + $commands + '"'),'-TestExit="Automation Test Queue Empty"',
     ('-ReportExportPath="' + $report + '"'),('-abslog="' + $log + '"'))
+if ($DuringDialogue) { $gameArgs += '-B01TraceTownViewport' }
 $guard = [Threading.Mutex]::new($false, 'Local\UEgame-HiddenTownStartup')
 $ownsGuard = $false
 $bootstrap = $null
@@ -83,58 +88,64 @@ try {
         (Select-String -LiteralPath $log -SimpleMatch -Pattern 'Game Engine Initialized.' -Quiet))
     $foreground = [TownStartupWindow]::GetForegroundWindow()
     "Selected=$(Get-Date -Format o) LauncherPID=$($bootstrap.Id) GamePID=$($game.Id) HWND=$hwnd Class=UnrealWindow Client=1280x720 ForegroundHWND=$foreground RequireForeground=$RequireForeground" | Set-Content -LiteralPath $observation
-    if ($RequireForeground -and $foreground -ne $hwnd -and [TownStartupWindow]::IsGameWindow($hwnd, $game.Id)) {
-        $granted = [TownStartupWindow]::SetForegroundWindow($hwnd)
-        "ForegroundRequested=$(Get-Date -Format o) Granted=$granted" | Add-Content -LiteralPath $observation
-        Write-Host 'Foreground reproduction: select the game window now if Windows did not activate it.'
+    if ($DuringDialogue) {
+        & (Join-Path $PSScriptRoot 'Test-TownRuntimeVisibility.ps1') -Handle $hwnd -Game $game -Launcher $bootstrap -Log $log -Observation $observation
+    }
+    else {
+        if ($RequireForeground -and $foreground -ne $hwnd -and [TownStartupWindow]::IsGameWindow($hwnd, $game.Id)) {
+            $granted = [TownStartupWindow]::SetForegroundWindow($hwnd)
+            "ForegroundRequested=$(Get-Date -Format o) Granted=$granted" | Add-Content -LiteralPath $observation
+            Write-Host 'Foreground reproduction: select the game window now if Windows did not activate it.'
+            $clock.Restart()
+            while ([TownStartupWindow]::GetForegroundWindow() -ne $hwnd -and $clock.Elapsed.TotalSeconds -lt 4) {
+                if (Select-String -LiteralPath $log -SimpleMatch -Pattern 'Test Started.' -Quiet) { break }
+                Start-Sleep -Milliseconds 50
+            }
+        }
+        $foreground = [TownStartupWindow]::GetForegroundWindow()
+        "BeforeHide=$(Get-Date -Format o) HWND=$hwnd ForegroundHWND=$foreground" | Add-Content -LiteralPath $observation
+        if ($RequireForeground -and $foreground -ne $hwnd) {
+            throw 'Experiment setup unmet: the selected game viewport was not confirmed foreground before hiding'
+        }
+        if (-not [TownStartupWindow]::IsGameWindow($hwnd, $game.Id) -or
+            -not [TownStartupWindow]::IsWindowVisible($hwnd)) { throw 'Selected viewport changed before hiding' }
+        if (Select-String -LiteralPath $log -SimpleMatch -Pattern 'Test Started.' -Quiet) {
+            throw 'Experiment setup unmet: automation already started before hiding'
+        }
+        if (-not [TownStartupWindow]::ShowWindowAsync($hwnd, 0)) { throw 'Could not hide the game window' }
         $clock.Restart()
-        while ([TownStartupWindow]::GetForegroundWindow() -ne $hwnd -and $clock.Elapsed.TotalSeconds -lt 4) {
-            if (Select-String -LiteralPath $log -SimpleMatch -Pattern 'Test Started.' -Quiet) { break }
-            Start-Sleep -Milliseconds 50
+        while ([TownStartupWindow]::IsWindowVisible($hwnd)) {
+            if ($clock.Elapsed.TotalSeconds -gt 3) { throw 'Window remained visible' }
+            Start-Sleep -Milliseconds 20
         }
-    }
-    $foreground = [TownStartupWindow]::GetForegroundWindow()
-    "BeforeHide=$(Get-Date -Format o) HWND=$hwnd ForegroundHWND=$foreground" | Add-Content -LiteralPath $observation
-    if ($RequireForeground -and $foreground -ne $hwnd) {
-        throw 'Experiment setup unmet: the selected game viewport was not confirmed foreground before hiding'
-    }
-    if (-not [TownStartupWindow]::IsGameWindow($hwnd, $game.Id) -or
-        -not [TownStartupWindow]::IsWindowVisible($hwnd)) { throw 'Selected viewport changed before hiding' }
-    if (Select-String -LiteralPath $log -SimpleMatch -Pattern 'Test Started.' -Quiet) {
-        throw 'Experiment setup unmet: automation already started before hiding'
-    }
-    if (-not [TownStartupWindow]::ShowWindowAsync($hwnd, 0)) { throw 'Could not hide the game window' }
-    $clock.Restart()
-    while ([TownStartupWindow]::IsWindowVisible($hwnd)) {
-        if ($clock.Elapsed.TotalSeconds -gt 3) { throw 'Window remained visible' }
-        Start-Sleep -Milliseconds 20
-    }
-    if (Select-String -LiteralPath $log -SimpleMatch -Pattern 'Test Started.' -Quiet) {
-        throw 'Window was hidden too late to exercise startup'
-    }
-    if (-not [TownStartupWindow]::IsGameWindow($hwnd, $game.Id)) { throw 'Viewport handle changed before the test' }
-    "HiddenBeforeTest=$(Get-Date -Format o) Valid=True ForegroundHWND=$([TownStartupWindow]::GetForegroundWindow())" | Add-Content -LiteralPath $observation
-    # Only the game can restore its window. A hidden or failed run must not count as a pass.
-    $visibleAgain = $false
-    $otherWindows = [Collections.Generic.HashSet[IntPtr]]::new()
-    while (-not $bootstrap.WaitForExit(50)) {
-        if ($clock.Elapsed.TotalSeconds -gt 200) { throw 'Automation timed out' }
-        foreach ($visible in [TownStartupWindow]::VisibleGameWindows($game.Id)) {
-            if ($visible -eq $hwnd -and -not $visibleAgain) {
-                $visibleAgain = $true
-                "VisibleAgain=$(Get-Date -Format o) HWND=$hwnd Valid=True" | Add-Content -LiteralPath $observation
-            }
-            if ($visible -ne $hwnd -and $otherWindows.Add($visible)) {
-                "OtherVisibleWindow=$(Get-Date -Format o) HWND=$visible GamePID=$($game.Id) Class=UnrealWindow Client=1280x720" | Add-Content -LiteralPath $observation
+        if (Select-String -LiteralPath $log -SimpleMatch -Pattern 'Test Started.' -Quiet) {
+            throw 'Window was hidden too late to exercise startup'
+        }
+        if (-not [TownStartupWindow]::IsGameWindow($hwnd, $game.Id)) { throw 'Viewport handle changed before the test' }
+        "HiddenBeforeTest=$(Get-Date -Format o) Valid=True ForegroundHWND=$([TownStartupWindow]::GetForegroundWindow())" | Add-Content -LiteralPath $observation
+        # Only the game can restore its window. A hidden or failed run must not count as a pass.
+        $visibleAgain = $false
+        $otherWindows = [Collections.Generic.HashSet[IntPtr]]::new()
+        while (-not $bootstrap.WaitForExit(50)) {
+            if ($clock.Elapsed.TotalSeconds -gt 200) { throw 'Automation timed out' }
+            foreach ($visible in [TownStartupWindow]::VisibleGameWindows($game.Id)) {
+                if ($visible -eq $hwnd -and -not $visibleAgain) {
+                    $visibleAgain = $true
+                    "VisibleAgain=$(Get-Date -Format o) HWND=$hwnd Valid=True" | Add-Content -LiteralPath $observation
+                }
+                if ($visible -ne $hwnd -and $otherWindows.Add($visible)) {
+                    "OtherVisibleWindow=$(Get-Date -Format o) HWND=$visible GamePID=$($game.Id) Class=UnrealWindow Client=1280x720" | Add-Content -LiteralPath $observation
+                }
             }
         }
+        $launcherExit = $bootstrap.ExitCode
+        "LauncherExit=$launcherExit VisibleAgain=$visibleAgain OtherVisibleCount=$($otherWindows.Count) ValidAtExit=$([TownStartupWindow]::IsGameWindow($hwnd, $game.Id))" | Add-Content -LiteralPath $observation
     }
     $launcherExit = $bootstrap.ExitCode
-    "LauncherExit=$launcherExit VisibleAgain=$visibleAgain OtherVisibleCount=$($otherWindows.Count) ValidAtExit=$([TownStartupWindow]::IsGameWindow($hwnd, $game.Id))" | Add-Content -LiteralPath $observation
     if (-not $game.WaitForExit(5000)) { throw 'Game process outlived its launcher' }
     $result = Get-Content -LiteralPath (Join-Path $report 'index.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    if (-not $visibleAgain -or
-        -not ($result.tests[0].entries.event.message -contains 'Game viewport restored and visibly shown at startup') -or
+    if ((-not $DuringDialogue -and (-not $visibleAgain -or
+        -not ($result.tests[0].entries.event.message -contains 'Game viewport restored and visibly shown at startup'))) -or
         $null -eq $launcherExit -or $launcherExit -ne 0 -or @($result.tests).Count -ne 1 -or
         $result.tests[0].fullTestPath -ne $case -or $result.tests[0].state -ne 'Success' -or
         $result.succeeded -ne 1 -or $result.tests[0].errors -ne 0 -or $result.tests[0].warnings -ne 0 -or

@@ -8,7 +8,11 @@
 #include "Engine/World.h"
 #include "Framework/Application/SlateApplication.h"
 #include "GameFramework/PlayerController.h"
+#include "Misc/CommandLine.h"
+#include "Misc/DateTime.h"
 #include "Misc/FileHelper.h"
+#include "Misc/Parse.h"
+#include "Rendering/DrawElements.h"
 #include "Misc/Paths.h"
 #include "Styling/CoreStyle.h"
 #include "UnrealClient.h"
@@ -16,6 +20,9 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/SWindow.h"
+#if PLATFORM_WINDOWS
+#include "Windows/WindowsHWrapper.h"
+#endif
 
 namespace
 {
@@ -23,12 +30,49 @@ namespace
 // restarts the interval even when its endpoints would otherwise qualify.
 constexpr double MaxPaintGap = 0.25;
 constexpr double SpeakingRange = 90.0;
+
+struct FTownWindowSample
+{
+    void* Handle = nullptr;
+    bool Visible = false;
+    bool Minimized = false;
+
+    bool CanPresent() const { return Handle && Visible && !Minimized; }
+};
+
+FTownWindowSample SampleWindow(const SWindow* Window)
+{
+    const auto Native = Window ? Window->GetNativeWindow() : nullptr;
+    if (!Native) return {};
+    void* Handle = Native->GetOSWindowHandle();
+#if PLATFORM_WINDOWS
+    // FWindowsWindow::IsVisible() caches Slate's last show/hide request.
+    const HWND Hwnd = static_cast<HWND>(Handle);
+    return {Handle, Hwnd && ::IsWindowVisible(Hwnd) != 0, Hwnd && ::IsIconic(Hwnd) != 0};
+#else
+    return {Handle, Native->IsVisible(), Native->IsMinimized()};
+#endif
+}
+
+void TraceWindow(const TCHAR* Event, const FTownWindowSample& Window, const TCHAR* Id,
+    uint64 Generation, double Elapsed, double Required, bool Qualified)
+{
+    static const bool Enabled = FParse::Param(FCommandLine::Get(), TEXT("B01TraceTownViewport"));
+    if (Enabled)
+        UE_LOG(LogTemp, Display, TEXT("B01 town viewport: event=%s frame=%llu hwnd=%llu visible=%d minimized=%d id=%s generation=%llu elapsed=%.6f required=%.6f qualified=%d utcTicks=%lld"),
+            Event, GFrameCounter, static_cast<uint64>(reinterpret_cast<UPTRINT>(Window.Handle)), Window.Visible,
+            Window.Minimized, Id, Generation, Elapsed, Required, Qualified, FDateTime::UtcNow().GetTicks());
+}
 }
 
 class SBootstrapDialogueText final : public STextBlock
 {
 public:
-    TFunction<bool()> IsEligible;
+    TFunction<bool(const SWindow*)> IsEligible;
+    FString LineId;
+    uint64 Generation = 0;
+    double RequiredSeconds = 0.0;
+    mutable void* PaintedWindow = nullptr;
     mutable double FirstPaint = 0.0;
     mutable double LastPaint = 0.0;
     mutable uint64 LastFrame = 0;
@@ -40,24 +84,30 @@ public:
         const auto Bounds = Geometry.GetRenderBoundingRect();
         const auto Size = Geometry.GetLocalSize();
         const auto Desired = GetDesiredSize();
-        if (!IsEligible || !IsEligible() || Bounds.Left < CullRect.Left - 0.5f || Bounds.Right > CullRect.Right + 0.5f ||
+        const auto* Target = Elements.GetRenderWindow();
+        const auto Window = SampleWindow(Target);
+        if (!Window.CanPresent() || !IsEligible || !IsEligible(Target) || Bounds.Left < CullRect.Left - 0.5f || Bounds.Right > CullRect.Right + 0.5f ||
             Bounds.Top < CullRect.Top - 0.5f || Bounds.Bottom > CullRect.Bottom + 0.5f ||
             Size.X + 0.5f < Desired.X || Size.Y + 0.5f < Desired.Y || Size.GetMin() <= 0.f)
         {
             FirstPaint = LastPaint = 0.0;
+            PaintedWindow = nullptr;
+            TraceWindow(TEXT("paint"), Window, *LineId, Generation, 0, RequiredSeconds, false);
             return Result;
         }
         const double Now = FPlatformTime::Seconds();
-        if (FirstPaint == 0.0 || GFrameCounter > LastFrame + 1 || Now - LastPaint > MaxPaintGap)
+        if (PaintedWindow != Window.Handle || FirstPaint == 0.0 || GFrameCounter > LastFrame + 1 || Now - LastPaint > MaxPaintGap)
             FirstPaint = Now;
         LastPaint = Now;
         LastFrame = GFrameCounter;
+        PaintedWindow = Window.Handle;
+        TraceWindow(TEXT("paint"), Window, *LineId, Generation, LastPaint - FirstPaint, RequiredSeconds, true);
         return Result;
     }
 
-    bool HasContinuousPaint(double RequiredSeconds) const
+    bool HasContinuousPaint(const FTownWindowSample& Window) const
     {
-        return FirstPaint > 0.0 && GFrameCounter <= LastFrame + 1 &&
+        return Window.CanPresent() && Window.Handle == PaintedWindow && FirstPaint > 0.0 && GFrameCounter <= LastFrame + 1 &&
             FPlatformTime::Seconds() - LastPaint <= MaxPaintGap && LastPaint - FirstPaint >= RequiredSeconds;
     }
 };
@@ -146,10 +196,15 @@ void AExperimentWorldDirector::ShowTownDialogue(bool bTeacher)
             [SAssignNew(DialogueText, SBootstrapDialogueText).Text(FText::FromString(Display))
                 .Font(FCoreStyle::GetDefaultFontStyle(TEXT("Regular"), 22)).ColorAndOpacity(FLinearColor::White)
                 .WrapTextAt(560.f)]];
-    DialogueText->IsEligible = [Director = TWeakObjectPtr<AExperimentWorldDirector>(this), bTeacher]()
+    DialogueText->LineId = Line.Id;
+    DialogueText->Generation = DialogueGeneration;
+    // Six Chinese characters per second plus one second to orient to the speaker.
+    DialogueText->RequiredSeconds = 1.0 + Line.Text.Len() / 6.0;
+    DialogueText->IsEligible = [Director = TWeakObjectPtr<AExperimentWorldDirector>(this), bTeacher](const SWindow* Target)
     {
         // Slate can continue painting while a paused world no longer ticks.
-        return Director.IsValid() && Director->IsTownSpeakerEligible(bTeacher);
+        if (!Director.IsValid() || !Director->IsTownSpeakerEligible(bTeacher)) return false;
+        return Director->GetWorld()->GetGameViewport()->GetWindow().Get() == Target;
     };
     DialogueText->ForceVolatile(true);
     DialoguePanel->SetVisibility(EVisibility::HitTestInvisible);
@@ -170,6 +225,17 @@ void AExperimentWorldDirector::UpdateTownDialogue()
 {
     const auto View = Adapter->View();
     if (View->phase != experiment::ExperimentPhase::Revisit) return;
+    auto* Client = GetWorld() ? GetWorld()->GetGameViewport() : nullptr;
+    const auto Window = SampleWindow(Client ? Client->GetWindow().Get() : nullptr);
+    const double Elapsed = DialogueText && Window.CanPresent() && Window.Handle == DialogueText->PaintedWindow
+        ? DialogueText->LastPaint - DialogueText->FirstPaint : 0.0;
+    TraceWindow(TEXT("tick"), Window, DialogueText ? *DialogueText->LineId : TEXT("none"),
+        DialogueGeneration, Elapsed, DialogueText ? DialogueText->RequiredSeconds : 0.0, false);
+    if (!Window.CanPresent())
+    {
+        if (DialogueText) RemoveTownDialogue();
+        return;
+    }
     if (DialogueText.IsValid())
     {
         if (!IsTownSpeakerEligible(bTeacherSpeaking))
@@ -178,14 +244,15 @@ void AExperimentWorldDirector::UpdateTownDialogue()
             return;
         }
         const auto& Line = bTeacherSpeaking ? TeacherLine : CrowdLine;
-        // Graybox reading allowance: six Chinese characters per second,
-        // plus one second to orient to the speaker.
-        const double RequiredSeconds = 1.0 + Line.Text.Len() / 6.0;
-        if (!DialogueText->HasContinuousPaint(RequiredSeconds)) return;
+        if (!DialogueText->HasContinuousPaint(Window)) return;
+        const double RequiredSeconds = DialogueText->RequiredSeconds;
         const auto Id = bTeacherSpeaking ? TownRoute->Teacher : TownRoute->Crowd;
         RemoveTownDialogue();
         if (Adapter->ReportTownContent(this, BindingRun, Id, DialogueGeneration))
+        {
+            TraceWindow(TEXT("receipt"), Window, *Line.Id, DialogueGeneration, Elapsed, RequiredSeconds, true);
             UE_LOG(LogTemp, Display, TEXT("B01 town text delivered: %s run=%llu generation=%llu"), *Line.Id, BindingRun, DialogueGeneration);
+        }
         return;
     }
     if (!View->teacherRecallDelivered && IsTownSpeakerEligible(true)) ShowTownDialogue(true);

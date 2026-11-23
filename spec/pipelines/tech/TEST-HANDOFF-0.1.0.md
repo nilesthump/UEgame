@@ -1,29 +1,31 @@
 ## 目标版本与工作项
 
 - 版本：0.1.0
-- 工作项：TECH-0.1.0-01 / B01，Win64 回访字幕自动化用例在游戏窗口隐藏时的启动恢复。跟进 [#49 诊断](https://github.com/nilesthump/UEgame/pull/49)。
+- 工作项：TECH-0.1.0-01 / B01，跟进 [#51 的接收记录](https://github.com/nilesthump/UEgame/pull/51)，核验 Win64 回访时隐藏游戏视口对字幕送达的影响。
 
 ## 交付内容
 
-- 产品提交 `a35d3f09ec5eeadc8a0ce8f87ede6df037f76e88`；本机 Win64 Development 归档 `G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-hidden-startup-20261123/`，身份见包根 BUILD-IDENTITY.json。
-- 剑术、魔法及混用的三项回访字幕用例在开始前检查本进程游戏视口的原生窗口。已隐藏且未最小化时，恢复同一窗口一次，核对可见性后继续。该逻辑仅在 Win64 开发自动化入口执行。群众中断重播、教师靠近条件及连续绘制送达规则沿用 #49。
+运行时从游戏视口取得原生窗口，在字幕绘制时核对 Slate 绘制目标、Win32 可见性和最小化状态。窗口失去呈现资格会中断该段计时。恢复后，回执需要同一窗口重新积满该条字幕的阅读时长。可选参数 `-B01TraceTownViewport` 记录帧号、事件采样 UTC、窗口、字幕代号、绘制资格和时长。
 
 ## 接收条件
 
-从 test 工作树在同一包串行运行。先执行受控隐藏启动夹具。夹具通过根启动器启动游戏，在用例开始前隐藏游戏子进程的 1280×720 UnrealWindow。核对 window.txt 中同一 HWND 隐藏后重新可见、LauncherExit=0；在报告与游戏日志中核对恢复记录、群众 NAR-0002 中断再送达、教师 NAR-0006 送达、D3D12 和测试退出 0。将采样与本次新生成的两张截图一起复核。夹具保存在 tech 工作树，可在接收前调用：
+从 test 工作树串行运行同一个 Win64 Development 包。核对包根 BUILD-IDENTITY.json 所列的 tech 提交，再运行两种窗口回归。运行中隐藏用例应在群众字幕第二次显示后将原 HWND 隐藏七秒，期间无合格绘制和回执。恢复后第一次合格绘制从零开始，群众和教师各获得一次回执。隐藏启动用例继续要求同一窗口恢复可见。保存每次的 window.txt、game.log 和原生报告供复核。
 
 ```powershell
 $tech = 'G:/UEgame/.worktrees/pipelines/tech'
-$archive = Join-Path $tech 'Deliverables/B01-hidden-startup-20261123'
-& (Join-Path $tech 'Tests/Bootstrap/Test-HiddenTownStartup.ps1') -Archive $archive -ReportDirectory (Join-Path $PWD ('.build/hidden-startup-' + (Get-Date -Format 'yyyyMMdd-HHmmss')))
+$archive = Join-Path $tech 'Deliverables/B01-town-viewport-20261123'
+$fixture = Join-Path $tech 'Tests/Bootstrap/Test-HiddenTownStartup.ps1'
+$batch = Get-Date -Format yyyyMMdd-HHmmss
+& $fixture -Archive $archive -ReportDirectory ".build/runtime-hide-$batch" -DuringDialogue
+& $fixture -Archive $archive -ReportDirectory ".build/startup-hide-$batch"
 ```
 
-按以下入口做十项正常窗口回归，核对原生 JSON/HTML 及新生成的十张截图。最后按 #49 的最小化负例，在独立运行的魔法用例首次显示 NAR-0002 后最小化并保持至结束，记录时刻、窗口状态、超时和回执。该项应失败并且没有送达。由 test 在唯一 evidence 原地维护结论。
+十项正常窗口回归沿用下列入口。核对 D3D12、逐项报告和本轮新生成的截图。
 
 ```powershell
 $ErrorActionPreference = 'Stop'
-$candidateExe = 'G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-hidden-startup-20261123/Windows/UEgame/Binaries/Win64/UEgame.exe'
-$reportRoot = Join-Path $PWD ('.build/b01-hidden-receive-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$candidateExe = 'G:/UEgame/.worktrees/pipelines/tech/Deliverables/B01-town-viewport-20261123/Windows/UEgame/Binaries/Win64/UEgame.exe'
+$reportRoot = Join-Path $PWD ('.build/b01-viewport-receive-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 New-Item -ItemType Directory -Path $reportRoot -ErrorAction Stop | Out-Null
 $cases = @(
     @{ Name='magic'; Test='UEgame.WorldScenario.B01.MagicTownDialogue'; Flags=@('-B01RescueGraybox') },
@@ -63,15 +65,10 @@ foreach ($case in $cases) {
 
 ## 最新验证
 
-- 原始旧包按 11 月 22 日命令自然重放 1/1，#49 诊断包相同条件 9/9。启动器的 Hidden 参数单独未复现。旧包运行中实际隐藏游戏窗口 25 秒，首错为 crowd subtitle missing，恢复后两段均送达。#49 包启动前隐藏实际窗口后，原生用例重现五条超时，进程 255，测试 -1。临时探针在玩家距群众 80 cm 时记录 windowActive=0、viewportFocused=1、字幕为空，旧包受控实验在恢复窗口后送达了群众和教师两段。报告目录见 tech/CURRENT。
-- 同一受控启动操作在修后检验包实跑 1/1。独立审查者 review 核对修前修后执行、原生及外部窗口记录和运行中最小化负例，批准测试入口修复。Linux GCC 13.3 本地 8/8。
-- 干净提交 a35d3f0 的 Build/Cook/Stage/Package/Archive 与 UAT 退出码 0 见 `.build/package-hidden-startup-1123.log`。同包隐藏启动夹具 1/1，外部采样确认原 HWND 395078 从隐藏恢复可见，无第二匹配窗口；游戏报告恢复记录和两份送达，启动器和测试退出码均为 0。见 `.build/startup-archive-green-1123/`。
-- 正常窗口 D3D12 十次独立启动、每次 1/1，进程和测试退出码均为 0，各无警告或错误；十份原生 JSON/HTML 完整，见 `.build/startup-archive-suite-1123/`。包内成功截图在 Windows/UEgame/Saved/Screenshots/Windows/；隐藏启动的魔法两图为 00000，正常窗口魔法两图为 00001，其余正常回归八图为 00000。
-- 运行中最小化单列为一项预期失败。Win32 确认 IsIconic=True；两个超时中 windowMinimized=1、当前字幕分别为 NAR-0002/0006，未产生送达回执。进程 255，测试退出 -1，见 `.build/during-min-archive-1123/` 和 `.build/during-min-archive-actions-1123.txt`。
-
-- 独立审查者 review 核对本包身份、UAT、全部正负例报告与日志、同一窗口的状态记录，并逐张目视隐藏启动两图和正常回归十图，批准本批交付。
+- 上批产品 a35d3f0 本轮对照中，外部采样显示窗口隐藏七秒，恢复前无群众回执，恢复后生成第三代并完成送达。见 `.build/runtime-hide-baseline-actions.txt` 和对应游戏日志。#51 所述旧包仍缺实际视口的同帧标识，其历史原因尚未证实。
+- 修改后的 Win64 Development 检验包完成 Build/Cook/Stage/Package/Archive。D3D12 魔法用例 1/1。外部和游戏均记录 HWND 526092，隐藏前第二代已有 1.304 秒，7.039 秒隐藏区间内 211 个游戏更新样本均无合格绘制或回执。恢复后群众第三代从零累计到 5.858 秒（门槛 5.833 秒），教师第四代累计 5.668 秒（门槛 5.667 秒），两份回执与业务日志一致。见 `.build/runtime-visibility-check2/`。
+- 第一版诊断因大量日志延迟写出而超时。夹具现以事件发生时采样的 UTC 与外部观测对齐，并在本项诊断中限帧到 30。Linux 核心构建后 8/8，JUnit 见 `.build/core-routes-1122/runtime-visibility.xml`。干净提交归档的身份和同包复测见本批 tech → test PR 的最新验证。
 
 ## 未满足项
 
-- 11 月 22 日历史首败缺少当时的窗口采样，本轮确定了一种充分触发条件。另一次修前对照的原生报告为 Success，外部未观察到所选 HWND 再次可见，测试夹具判失败。运行中隐藏时，仍须将游戏端实际视口 HWND 与外部窗口和绘制时间逐帧关联，以验明呈现有效性。
-- 待 test 独立接收。B01 InProgress，DISPLAY-01 仍按 test 记录为 Partial。正式声音、实物输入、输入到对应画面实际呈现小于 50 ms、本人试玩、完整战斗与导航、环境后果及世界卸载恢复仍待验证；目标版本未发布。
+由 test 独立复测并原地维护 DISPLAY-01。上述记录覆盖 Win64 原生窗口可见性和 Slate 合格绘制，物理显示时刻、端到端 50 ms、实物输入、正式语音和本人试玩仍待验证。B01 实施中，0.1.0 尚未发布。
